@@ -14551,7 +14551,7 @@
         function handleStepChange(stepVal) {
             const trimmed = stepVal.trim();
             if (trimmed === '1보') {
-                pSection3.value = '현재까지 없음';
+                pSection3.value = '확인중';
                 orgPolice.checked = true;
                 orgOffice.checked = true;
             } else if (trimmed === '초진') {
@@ -14559,8 +14559,8 @@
             } else if (trimmed === '완진') {
                 applyWanjinToSec2();
                 const curSec3 = pSection3.value.trim();
-                // 7번 인명피해 칸이 '현재까지 없음'(또는 미입력)에서 변경된 내용(구조, 자력대피 등)이 없을 때만 '없음'으로 세팅
-                if (!curSec3 || curSec3 === '현재까지 없음') {
+                // 7번 인명피해 칸이 '확인중', '현재까지 없음'(또는 미입력)에서 변경된 내용(구조, 자력대피 등)이 없을 때만 '없음'으로 세팅
+                if (!curSec3 || curSec3 === '확인중' || curSec3 === '현재까지 없음') {
                     pSection3.value = '없음';
                 }
             }
