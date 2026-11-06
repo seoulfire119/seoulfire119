@@ -3962,37 +3962,47 @@
         let casualtyState = getDefaultCasualtyState();
 
         // 사상자 성명 마스킹 함수 (가운데 글씨 O 표시: 이재오 -> 이O오, 산다라박 -> 산O라박, 이재오/중국 -> 이O오/중국, 이재오(중국) -> 이O오(중국))
+        // 단, 영어 이름(John, David 등)과 무명(무명남, 무명녀, 무명인 등)은 그대로 표출
         function maskPersonName(rawName) {
             if (!rawName) return '';
             let str = String(rawName).trim();
             if (!str) return '';
 
-            let suffix = '';
-            const suffixMatch = str.match(/([/(\[].*)$/);
-            if (suffixMatch) {
-                suffix = suffixMatch[1];
-                str = str.substring(0, suffixMatch.index).trim();
+            // 1. "무명"이 들어간 경우 (무명남, 무명녀, 무명인, 무명 등) 마스킹 없이 그대로 표출
+            if (str.includes('무명') || str.includes('신원미상')) {
+                return str;
             }
 
-            if (/[Oㅇ*]/.test(str)) {
-                return str + (suffix ? (suffix.startsWith('/') || suffix.startsWith('(') || suffix.startsWith('[') ? '' : ' ') + suffix : '');
+            // 2. 영어 이름 (알파벳, 공백, 점, 하이픈 등) 마스킹 없이 그대로 표출
+            const suffixMatch = str.match(/\s*([/(\[].*)$/);
+            const mainName = suffixMatch ? str.substring(0, suffixMatch.index).trim() : str;
+            const suffix = suffixMatch ? suffixMatch[0] : '';
+
+            if (/^[A-Za-z\s.\'-]+$/.test(mainName)) {
+                return str;
             }
 
-            const len = str.length;
+            // 3. 이미 O, ㅇ, * 등으로 마스킹되어 있다면 중복 마스킹 방지
+            if (/[Oㅇ*]/.test(mainName)) {
+                return str;
+            }
+
+            const len = mainName.length;
+            let masked = mainName;
             if (len <= 1) {
-                return str + suffix;
+                masked = mainName;
             } else if (len === 2) {
-                str = str[0] + 'O';
+                masked = mainName[0] + 'O';
             } else if (len === 3) {
-                str = str[0] + 'O' + str[2];
+                masked = mainName[0] + 'O' + mainName[2];
             } else if (len === 4) {
-                str = str[0] + 'O' + str.substring(2);
+                masked = mainName[0] + 'O' + mainName.substring(2);
             } else {
                 const mid = Math.floor(len / 2);
-                str = str.substring(0, mid) + 'O' + str.substring(mid + 1);
+                masked = mainName.substring(0, mid) + 'O' + mainName.substring(mid + 1);
             }
 
-            return str + suffix;
+            return masked + suffix;
         }
 
         function calculateCasualtyStats() {
@@ -16253,7 +16263,6 @@
 
         saveFloorImageBtn.addEventListener('click', async () => {
             const target = document.getElementById('floor-capture-area');
-            const tableContainer = document.getElementById('table-container');
             if (!target) return;
             if (document.activeElement && typeof document.activeElement.blur === 'function') {
                 document.activeElement.blur();
@@ -16263,11 +16272,7 @@
             try {
                 if (typeof html2canvas === 'undefined') throw new Error('html2canvas unavailable');
 
-                const fullWidth = target.offsetWidth;
-                const extraHeight = tableContainer ? Math.max(0, tableContainer.scrollHeight - tableContainer.clientHeight) : 0;
-                // 그림 파일 저장 시 상단에 표시되는 타이틀 배너 높이(약 44px)를 더해 안전하게 영역 확보
-                const bannerHeight = 44;
-                const totalHeight = target.offsetHeight + extraHeight + bannerHeight + 12;
+                const fullWidth = target.offsetWidth || 800;
 
                 const canvas = await html2canvas(target, {
                     scale: 2,
@@ -16275,9 +16280,6 @@
                     useCORS: true,
                     logging: false,
                     width: fullWidth,
-                    height: totalHeight,
-                    windowWidth: document.documentElement.clientWidth,
-                    windowHeight: totalHeight + 500,
                     scrollY: 0,
                     scrollX: 0,
                     onclone: (clonedDoc) => {
@@ -16296,20 +16298,28 @@
                             cModalContent.style.maxHeight = 'none';
                             cModalContent.style.overflow = 'visible';
                         }
+                        // 표 아래 여백 없이 실제 표 내용물 높이까지만 정확하게 캡처되도록 auto/minHeight:0 설정
                         if (cTarget) {
-                            cTarget.style.height = `${totalHeight}px`;
+                            cTarget.style.height = 'auto';
                             cTarget.style.maxHeight = 'none';
+                            cTarget.style.minHeight = '0';
+                            cTarget.style.flex = 'none';
                             cTarget.style.overflow = 'visible';
                             cTarget.style.width = `${fullWidth}px`;
+                            cTarget.style.padding = '8px 6px';
                         }
                         if (cReport) {
                             cReport.style.height = 'auto';
                             cReport.style.maxHeight = 'none';
+                            cReport.style.minHeight = '0';
+                            cReport.style.flex = 'none';
                             cReport.style.overflow = 'visible';
                         }
                         if (cTable) {
                             cTable.style.height = 'auto';
                             cTable.style.maxHeight = 'none';
+                            cTable.style.minHeight = '0';
+                            cTable.style.flex = 'none';
                             cTable.style.overflow = 'visible';
                         }
 
