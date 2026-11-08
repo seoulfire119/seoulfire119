@@ -13520,68 +13520,424 @@
             }
         }
 
-        // 아파트(공동주택) 준공 시기(사용승인일) 및 지상 층수에 따른 스프링클러 의무 설치 범위 판별
-        // • 1992.07.28 이전 준공: 설치 의무 없음
-        // • 1992.07.28 ~ 2004.12.31: 16층 이상 아파트의 16층 이상 층만 의무 설치 (15층 이하는 제외) -> "스프링클러 16층 이상 설치"
-        // • 2005.01.01 ~ 2018.01.26: 11층 이상 아파트의 전 층 의무 설치 -> "스프링클러 전층 설치"
-        // • 2018.01.27 ~ 현재: 6층 이상 아파트의 전 층 의무 설치 -> "스프링클러 전층 설치"
-        function evaluateApartmentSprinklerByLaw(useAprDayRaw, grndFlrRaw) {
+        // 소방시설법 시행령 별표 5 및 첨부 '스프링클러 설비.pdf' 기준 용도별/층수별/연면적별 스프링클러 및 간이스프링클러 의무 설치 기준 판별
+        function evaluateSprinklerByLawAndUsage(mainPurpsCdNm, etcPurps, useAprDayRaw, grndFlrRaw, totAreaRaw, combinedContext = '', bldNameHint = '') {
+            const rawPurps = `${mainPurpsCdNm || ''} ${etcPurps || ''} ${combinedContext || ''} ${bldNameHint || ''}`.trim();
+            
+            // 사용승인일(준공일) 8자리 숫자 파싱
             const digits = String(useAprDayRaw || '').replace(/\D/g, '');
-            if (digits.length < 4) return null;
-            let ymdStr = digits;
-            if (ymdStr.length === 4) ymdStr += '0101';
-            else if (ymdStr.length === 6) ymdStr += '01';
-            else if (ymdStr.length > 8) ymdStr = ymdStr.substring(0, 8);
-            if (ymdStr.length !== 8) return null;
-
-            const ymd = parseInt(ymdStr, 10);
+            let ymd = 0;
+            if (digits.length >= 4) {
+                let ymdStr = digits;
+                if (ymdStr.length === 4) ymdStr += '0101';
+                else if (ymdStr.length === 6) ymdStr += '01';
+                else if (ymdStr.length > 8) ymdStr = ymdStr.substring(0, 8);
+                if (ymdStr.length === 8) ymd = parseInt(ymdStr, 10);
+            }
+            
+            // 지상 층수 파싱
             const flrPart = String(grndFlrRaw || '').split('/')[0].replace(/\D/g, '');
             const grndFlr = parseInt(flrPart, 10) || 0;
-            if (!ymd || grndFlr <= 0) return null;
+            
+            // 연면적(바닥면적) 파싱
+            const areaClean = String(totAreaRaw || '').replace(/[^0-9.]/g, '');
+            const totArea = parseFloat(areaClean) || 0;
 
-            if (ymd < 19920728) {
-                return ''; // 1992년 7월 28일 이전 준공: 설치 의무 없음
-            } else if (ymd >= 19920728 && ymd <= 20041231) {
-                return grndFlr >= 16 ? '스프링클러 16층 이상 설치' : '';
-            } else if (ymd >= 20050101 && ymd <= 20180126) {
-                return grndFlr >= 11 ? '스프링클러 전층 설치' : '';
-            } else {
-                // 2018년 1월 27일 ~ 현재
-                return grndFlr >= 6 ? '스프링클러 전층 설치' : '';
+            // 용도군 식별
+            const isReligion = /종교|교회|성당|사찰|기도원|선교원/.test(rawPurps);
+            const isVillaOrMultiHousing = /빌라|다세대|다가구|연립|단독/.test(rawPurps);
+            const isApt = !isVillaOrMultiHousing && (/아파트/.test(rawPurps) || mainPurpsCdNm === '공동주택');
+            const isNursingHospital = /요양병원/.test(rawPurps);
+            const isMedical = /의료|병원|한의원|치과의원|조산원|산후조리원/.test(rawPurps);
+            const isWelfare = /노유자|어린이집|유치원|양로원|노인복지|아동복지|장애인복지/.test(rawPurps);
+            const isHotel = /숙박|호텔|모텔|여관|여인숙|콘도|리조트|고시원/.test(rawPurps);
+            const isComm = /근린생활|근생|상가/.test(rawPurps);
+            const isOffice = /업무|오피스텔|사무소/.test(rawPurps);
+            const isAssembly = /문화및집회|문화및|집회시설|공연장|집회장|영화관|전시장|동식물원/.test(rawPurps);
+            const isSales = /판매|백화점|쇼핑몰|대형마트|시장/.test(rawPurps);
+            const isTransport = /운수|터미널|역사|공항/.test(rawPurps);
+            const isSports = /운동|체육관|수영장|골프연습장/.test(rawPurps);
+            const isWarehouse = /창고|물류/.test(rawPurps);
+            const isFactory = /공장|제조업/.test(rawPurps);
+            const isEducation = /교육연구|학교|학원|기숙사/.test(rawPurps);
+            const isTraining = /수련시설|유스호스텔/.test(rawPurps);
+            const isFuneral = /장례|장례식장/.test(rawPurps);
+            const isSubway = /지하상가|지하도상가/.test(rawPurps);
+
+            // [1] 종교시설 (사용자 명시 예시: 종교시설 - 층수가 6층 이상인 모든층(18년 1월 28일))
+            if (isReligion) {
+                if (ymd >= 20180128 && grndFlr >= 6) {
+                    return {
+                        isInstalled: true,
+                        type: 'regular',
+                        text: '스프링클러 설치 대상 (종교시설 6층 이상 모든층, 18년 1월 28일)',
+                        detail: '종교시설 - 층수가 6층 이상인 모든층 (18년 1월 28일 개정 소방시설법 시행령 별표 5)'
+                    };
+                }
+                if (totArea >= 1000) {
+                    return {
+                        isInstalled: true,
+                        type: 'regular',
+                        text: '스프링클러 설치 대상 (종교시설 1,000㎡ 이상)',
+                        detail: '종교시설 - 4층 이상 또는 지하·무창층 바닥면적 1,000㎡ 이상'
+                    };
+                }
+                if (totArea >= 460) {
+                    return {
+                        isInstalled: true,
+                        type: 'regular',
+                        text: '스프링클러 설치 대상 (종교시설 수용인원 100명/460㎡ 이상)',
+                        detail: '종교시설 - 수용인원 100명(바닥면적 460㎡) 이상 모든 층'
+                    };
+                }
+                if (ymd > 0 && ymd < 20180128 && grndFlr > 0 && grndFlr < 6 && totArea > 0 && totArea < 460) {
+                    return { isInstalled: false, type: 'none', text: '', detail: '종교시설 - 6층 미만 및 면적 기준 미만으로 설치 의무 제외' };
+                }
             }
+
+            // [2] 의료시설 (요양병원은 18.6.30까지 전수 소급완료)
+            if (isNursingHospital) {
+                if (totArea >= 600 || grndFlr >= 6) {
+                    return {
+                        isInstalled: true,
+                        type: 'regular',
+                        text: '스프링클러 설치 (요양병원 전층 소급, 18년 6월 30일)',
+                        detail: '요양병원 - 2018.6.30까지 전수 소급완료 (600㎡ 이상 모든 층 스프링클러설비)'
+                    };
+                } else {
+                    return {
+                        isInstalled: true,
+                        type: 'simple',
+                        text: '간이 스프링클러 설치 (요양병원 600㎡ 미만, 18년 6월 30일 소급)',
+                        detail: '요양병원 - 2018.6.30까지 전수 소급완료 (600㎡ 미만 모든 층 간이스프링클러설비)'
+                    };
+                }
+            }
+            if (isMedical) {
+                if (ymd >= 20180128 && grndFlr >= 6) {
+                    return {
+                        isInstalled: true,
+                        type: 'regular',
+                        text: '스프링클러 설치 대상 (의료시설 6층 이상 모든층, 18년 1월 28일)',
+                        detail: '의료시설 - 층수가 6층 이상인 모든층 (18년 1월 28일)'
+                    };
+                }
+                if (totArea >= 600) {
+                    return {
+                        isInstalled: true,
+                        type: 'regular',
+                        text: '스프링클러 설치 대상 (의료시설 600㎡ 이상 모든층)',
+                        detail: '종합병원·병원·치과병원·한방병원 - 바닥면적 600㎡ 이상 모든 층 (19년 8월 6일)'
+                    };
+                }
+                if (totArea > 0 && totArea < 600) {
+                    return {
+                        isInstalled: true,
+                        type: 'simple',
+                        text: '간이 스프링클러 설치 대상 (의료시설 600㎡ 미만)',
+                        detail: '종합병원·병원·치과병원·한방병원 - 바닥면적 600㎡ 미만 (19년 8월 6일)'
+                    };
+                }
+            }
+
+            // [3] 노유자시설
+            if (isWelfare) {
+                if (ymd >= 20180128 && grndFlr >= 6) {
+                    return {
+                        isInstalled: true,
+                        type: 'regular',
+                        text: '스프링클러 설치 대상 (노유자시설 6층 이상 모든층, 18년 1월 28일)',
+                        detail: '노유자시설 - 층수가 6층 이상인 모든층 (18년 1월 28일)'
+                    };
+                }
+                if (totArea >= 600) {
+                    return {
+                        isInstalled: true,
+                        type: 'regular',
+                        text: '스프링클러 설치 대상 (노유자시설 600㎡ 이상 모든층)',
+                        detail: '노유자시설 - 바닥면적 600㎡ 이상 모든 층'
+                    };
+                }
+                if (totArea >= 300 && totArea < 600) {
+                    return {
+                        isInstalled: true,
+                        type: 'simple',
+                        text: '간이 스프링클러 설치 대상 (노유자시설 300~600㎡)',
+                        detail: '노유자 생활시설 - 바닥면적 300㎡~600㎡ 미만 (14년 2월 4일 소급)'
+                    };
+                }
+            }
+
+            // [4] 숙박시설
+            if (isHotel) {
+                if (ymd >= 20180128 && grndFlr >= 6) {
+                    return {
+                        isInstalled: true,
+                        type: 'regular',
+                        text: '스프링클러 전층 설치 (숙박시설 6층 이상 모든층, 18년 1월 28일)',
+                        detail: '숙박시설 - 층수가 6층 이상인 모든층 (18년 1월 28일)'
+                    };
+                }
+                if (ymd >= 20050101 && grndFlr >= 11) {
+                    return {
+                        isInstalled: true,
+                        type: 'regular',
+                        text: '스프링클러 전층 설치 (숙박시설 11층 이상 전층, 05년 1월 1일)',
+                        detail: '숙박시설 - 층수가 11층 이상 전층 (05년 1월 1일)'
+                    };
+                }
+                if (totArea >= 600 && ymd >= 20221201) {
+                    return {
+                        isInstalled: true,
+                        type: 'regular',
+                        text: '스프링클러 설치 대상 (숙박시설 600㎡ 이상 모든층, 22년 12월 1일)',
+                        detail: '숙박시설 - 바닥면적 합계 600㎡ 이상 모든 층 (22년 12월 1일)'
+                    };
+                }
+                if (totArea >= 300 && totArea < 600) {
+                    return {
+                        isInstalled: true,
+                        type: 'simple',
+                        text: '간이 스프링클러 설치 대상 (숙박시설 300~600㎡)',
+                        detail: '숙박시설 - 바닥면적 300㎡ 이상 600㎡ 미만'
+                    };
+                }
+            }
+
+            // [5] 공동주택 (아파트 vs 다세대/연립)
+            if (isApt) {
+                if (ymd >= 20180128 && grndFlr >= 6) {
+                    return {
+                        isInstalled: true,
+                        type: 'regular',
+                        text: '스프링클러 전층 설치 (아파트 6층 이상 모든층, 18년 1월 28일)',
+                        detail: '공동주택(아파트) - 층수가 6층 이상인 경우 모든 층 (18년 1월 28일 개정)'
+                    };
+                }
+                if (ymd >= 20050101 && ymd <= 20180126 && grndFlr >= 11) {
+                    return {
+                        isInstalled: true,
+                        type: 'regular',
+                        text: '스프링클러 전층 설치 (아파트 11층 이상 전층, 05년 1월 1일)',
+                        detail: '공동주택(아파트) - 층수가 11층 이상인 경우 전층 (05년 1월 1일 시행)'
+                    };
+                }
+                if (ymd >= 19900701 && ymd <= 20041231 && grndFlr >= 16) {
+                    return {
+                        isInstalled: true,
+                        type: 'regular',
+                        text: '스프링클러 16층 이상 설치 (아파트 16층 이상, 90년 7월 1일)',
+                        detail: '공동주택(아파트) - 16층 이상인 것은 16층 이상의 층 (90년 7월 1일 / 92년 7월 28일)'
+                    };
+                }
+                if (ymd > 0 && ymd < 19900701) {
+                    return { isInstalled: false, type: 'none', text: '', detail: '1990년 7월 1일 이전 준공: 설치 의무 없음' };
+                }
+                if (grndFlr > 0 && grndFlr < 6 && ymd >= 20180128) {
+                    return { isInstalled: false, type: 'none', text: '', detail: '6층 미만 아파트: 설치 의무 제외' };
+                }
+            }
+
+            // 연립주택 / 다세대주택 (2024.12.1부터 주택전용 간이스프링클러설비 적용)
+            if (isVillaOrMultiHousing) {
+                if (ymd >= 20241201) {
+                    return {
+                        isInstalled: true,
+                        type: 'simple',
+                        text: '간이 스프링클러 설치 대상 (연립·다세대주택, 24년 12월 1일)',
+                        detail: '공동주택 중 연립·다세대주택 주택전용 간이스프링클러 의무 (24년 12월 1일 시행)'
+                    };
+                }
+                return { isInstalled: false, type: 'none', text: '', detail: '연립·다세대·빌라: 설치 의무 대상 아님' };
+            }
+
+            // [6] 근린생활시설
+            if (isComm) {
+                if (ymd >= 20180128 && grndFlr >= 6) {
+                    return {
+                        isInstalled: true,
+                        type: 'regular',
+                        text: '스프링클러 설치 대상 (근린생활시설 6층 이상 모든층, 18년 1월 28일)',
+                        detail: '근린생활시설 - 층수가 6층 이상인 모든층 (18년 1월 28일)'
+                    };
+                }
+                if (totArea >= 1000) {
+                    return {
+                        isInstalled: true,
+                        type: 'simple',
+                        text: '간이 스프링클러 설치 대상 (근린생활시설 1,000㎡ 이상)',
+                        detail: '근린생활시설 - 바닥면적 합계 1,000㎡ 이상 모든 층 (04년 5월 30일)'
+                    };
+                }
+            }
+
+            // [7] 업무시설
+            if (isOffice) {
+                if (ymd >= 20180128 && grndFlr >= 6) {
+                    return {
+                        isInstalled: true,
+                        type: 'regular',
+                        text: '스프링클러 설치 대상 (업무시설 6층 이상 모든층, 18년 1월 28일)',
+                        detail: '업무시설 - 층수가 6층 이상인 모든층 (18년 1월 28일)'
+                    };
+                }
+                if (ymd >= 20050101 && grndFlr >= 11) {
+                    return {
+                        isInstalled: true,
+                        type: 'regular',
+                        text: '스프링클러 설치 대상 (업무시설 11층 이상 전층, 05년 1월 1일)',
+                        detail: '업무시설 - 층수가 11층 이상인 경우 전층'
+                    };
+                }
+            }
+
+            // [8] 판매시설 / 운수시설
+            if (isSales || isTransport) {
+                const facNm = isSales ? '판매시설' : '운수시설';
+                if (ymd >= 20180128 && grndFlr >= 6) {
+                    return {
+                        isInstalled: true,
+                        type: 'regular',
+                        text: `스프링클러 설치 대상 (${facNm} 6층 이상 모든층, 18년 1월 28일)`,
+                        detail: `${facNm} - 층수가 6층 이상인 모든층 (18년 1월 28일)`
+                    };
+                }
+                if (totArea >= 5000) {
+                    return {
+                        isInstalled: true,
+                        type: 'regular',
+                        text: `스프링클러 설치 대상 (${facNm} 5,000㎡ 이상 모든층)`,
+                        detail: `${facNm} - 바닥면적 5,000㎡ 이상 모든 층`
+                    };
+                }
+            }
+
+            // [9] 문화및집회시설 / 운동시설
+            if (isAssembly || isSports) {
+                const facNm = isAssembly ? '문화및집회시설' : '운동시설';
+                if (ymd >= 20180128 && grndFlr >= 6) {
+                    return {
+                        isInstalled: true,
+                        type: 'regular',
+                        text: `스프링클러 설치 대상 (${facNm} 6층 이상 모든층, 18년 1월 28일)`,
+                        detail: `${facNm} - 층수가 6층 이상인 모든층 (18년 1월 28일)`
+                    };
+                }
+                if (totArea >= 460) {
+                    return {
+                        isInstalled: true,
+                        type: 'regular',
+                        text: `스프링클러 설치 대상 (${facNm} 수용인원 100명/460㎡ 이상)`,
+                        detail: `${facNm} - 수용인원 100명(460㎡) 이상 모든 층`
+                    };
+                }
+            }
+
+            // [10] 창고시설 / 공장
+            if (isWarehouse || isFactory) {
+                const facNm = isWarehouse ? '창고시설' : '공장';
+                if (ymd >= 20180128 && grndFlr >= 6) {
+                    return {
+                        isInstalled: true,
+                        type: 'regular',
+                        text: `스프링클러 설치 대상 (${facNm} 6층 이상 모든층, 18년 1월 28일)`,
+                        detail: `${facNm} - 층수가 6층 이상인 모든층 (18년 1월 28일)`
+                    };
+                }
+                if (totArea >= 5000) {
+                    return {
+                        isInstalled: true,
+                        type: 'regular',
+                        text: `스프링클러 설치 대상 (${facNm} 5,000㎡ 이상 모든층)`,
+                        detail: `${facNm} - 바닥면적 합계 5,000㎡ 이상 모든 층`
+                    };
+                }
+            }
+
+            // [11] 교육연구시설
+            if (isEducation) {
+                if (ymd >= 20180128 && grndFlr >= 6) {
+                    return {
+                        isInstalled: true,
+                        type: 'regular',
+                        text: '스프링클러 설치 대상 (교육연구시설 6층 이상 모든층, 18년 1월 28일)',
+                        detail: '교육연구시설 - 층수가 6층 이상인 모든층 (18년 1월 28일)'
+                    };
+                }
+                if (totArea >= 5000 && /기숙사/.test(rawPurps)) {
+                    return {
+                        isInstalled: true,
+                        type: 'regular',
+                        text: '스프링클러 설치 대상 (기숙사 5,000㎡ 이상 모든층)',
+                        detail: '교육연구시설(기숙사) - 연면적 5,000㎡ 이상'
+                    };
+                }
+            }
+
+            // [12] 지하상가
+            if (isSubway && totArea >= 1000) {
+                return {
+                    isInstalled: true,
+                    type: 'regular',
+                    text: '스프링클러 설치 대상 (지하상가 1,000㎡ 이상)',
+                    detail: '지하상가 - 연면적 1,000㎡ 이상 모든 층'
+                };
+            }
+
+            // [13] 기타 특정소방대상물 (18.1.28 이후 6층 이상 공통 적용)
+            if (ymd >= 20180128 && grndFlr >= 6) {
+                const facNm = mainPurpsCdNm || '특정소방대상물';
+                return {
+                    isInstalled: true,
+                    type: 'regular',
+                    text: `스프링클러 설치 대상 (${facNm} 6층 이상 모든층, 18년 1월 28일)`,
+                    detail: `${facNm} - 층수가 6층 이상인 모든층 (18년 1월 28일 개정 소방시설법 시행령 별표 5)`
+                };
+            }
+
+            return { isInstalled: false, type: 'none', text: '', detail: '' };
         }
 
-        // 소방청 특정소방대상물 소방시설정보 오픈API 조회 및 아파트 연도/층수별 의무 설치 기준 판별
-        async function checkSprinklerInstalledFromApi(combinedContext, useAprDay, bldNameHint, roadNameKeyword, ledgerType = '', grndFlrCnt = '') {
+        // 기존 evaluateApartmentSprinklerByLaw 호환 래퍼
+        function evaluateApartmentSprinklerByLaw(useAprDayRaw, grndFlrRaw) {
+            const res = evaluateSprinklerByLawAndUsage('아파트', '', useAprDayRaw, grndFlrRaw, 0, '');
+            return res.isInstalled ? res.text : '';
+        }
+
+        // 소방청 특정소방대상물 소방시설정보 오픈API 조회 및 건축물 용도·연도·층수별 법적 설치 의무 기준 종합 판정
+        async function checkSprinklerInstalledFromApi(combinedContext, useAprDay, bldNameHint, roadNameKeyword, ledgerType = '', grndFlrCnt = '', totArea = '', mainPurpsCdNm = '', etcPurps = '') {
             let regularSprinklerInstalled = false;
             let regularSprinklerText = '';
             let simpleSprinklerInstalled = false;
 
-            const fullContextString = `${ledgerType} ${combinedContext} ${bldNameHint} ${titleLocInput ? titleLocInput.value : ''}`;
-            // 빌라, 다세대주택, 다가구주택, 연립주택, 단독주택 판별
-            const isVillaOrMultiHousing = /빌라|다세대|다가구|연립|단독/.test(fullContextString) ||
-                                          ['다세대주택', '다가구주택', '연립주택', '단독주택'].includes(ledgerType);
-
-            // 1) 아파트(공동주택) 연도/층수별 법적 설치 의무 기준 판별
-            // 다세대주택, 다가구주택, 빌라, 연립주택 등 저층 주거시설은 소방시설법상 아파트 스프링클러 의무 설치 대상에서 완전 제외
-            const isApt = !isVillaOrMultiHousing && (ledgerType === '아파트' || (/아파트/.test(fullContextString) && !/빌라|다세대|다가구|연립|단독/.test(fullContextString)));
-            if (isApt) {
-                const aptSp = evaluateApartmentSprinklerByLaw(useAprDay, grndFlrCnt);
-                if (aptSp !== null && aptSp) {
+            // 1) 법정 스프링클러/간이스프링클러 설치 기준 판별 (첨부 '스프링클러 설비.pdf' 전수 반영)
+            const lawEval = evaluateSprinklerByLawAndUsage(
+                mainPurpsCdNm || ledgerType,
+                etcPurps,
+                useAprDay,
+                grndFlrCnt,
+                totArea,
+                combinedContext,
+                bldNameHint
+            );
+            if (lawEval && lawEval.isInstalled) {
+                if (lawEval.type === 'simple') {
+                    simpleSprinklerInstalled = true;
+                    regularSprinklerText = lawEval.text;
+                } else {
                     regularSprinklerInstalled = true;
-                    regularSprinklerText = aptSp;
+                    regularSprinklerText = lawEval.text;
                 }
             }
 
             // 2) 안전지도 원문 및 컨텍스트 텍스트에서 명시적인 스프링클러 / 간이 스프링클러 언급 확인
-            // 간이 스프링클러 감지
             const hasSimpleCtx = /(?:간이\s*스프링클러|간이\s*S\/?P|간이형\s*스프링클러)/i.test(combinedContext);
             const simpleNotInstalled = /(?:간이\s*스프링클러|간이\s*S\/?P|간이형\s*스프링클러)\s*(?:미설치|미작동|무)/i.test(combinedContext);
             if (hasSimpleCtx && !simpleNotInstalled) {
                 simpleSprinklerInstalled = true;
+                if (!regularSprinklerText) regularSprinklerText = '간이 스프링클러 설치';
             }
 
-            // 일반 스프링클러 감지 (간이 스프링클러 제외)
             const cleanCtxWithoutSimple = combinedContext.replace(/(?:간이\s*스프링클러|간이\s*S\/?P|간이형\s*스프링클러)/gi, '');
             const hasRegularCtx = /(?:스프링클러|S\/P)\s*(?:설치|작동|완비|유)/i.test(cleanCtxWithoutSimple);
             const regularNotInstalled = /(?:스프링클러|S\/P)\s*(?:미설치|미작동|무)/i.test(cleanCtxWithoutSimple);
@@ -13590,17 +13946,19 @@
                 if (!regularSprinklerText) regularSprinklerText = '스프링클러 설치';
             }
 
-            // [핵심 가드레일] 빌라, 다세대주택, 다가구주택, 연립주택의 경우:
-            // 소방시설법상 5층 이하 주택은 스프링클러 설치 의무가 없으며 실제 현장에서도 대부분 미설치되어 있습니다.
-            // 안전지도 원문이나 신고내용에 사용자가 직접 '스프링클러 작동/설치'를 명시한 경우가 아니라면,
-            // 외부 소방시설정보 API의 오매칭(동일 도로명/연도의 타 대형건물 정보 유입)으로 인한 잘못된 설치 표기를 원천 차단합니다!
-            if (isVillaOrMultiHousing) {
+            const fullContextString = `${ledgerType} ${combinedContext} ${bldNameHint} ${titleLocInput ? titleLocInput.value : ''}`;
+            const isVillaOrMultiHousing = /빌라|다세대|다가구|연립|단독/.test(fullContextString) ||
+                                          ['다세대주택', '다가구주택', '연립주택', '단독주택'].includes(ledgerType);
+
+            // [가드레일] 빌라, 다세대주택, 다가구주택, 연립주택:
+            // 2024.12.1 이후 주택전용 간이SP 법정 대상이거나 명시적 설치가 아니면 외부 API 오매칭 차단
+            if (isVillaOrMultiHousing && (!lawEval || !lawEval.isInstalled)) {
                 if (regularSprinklerInstalled) return regularSprinklerText || '스프링클러 설치';
                 if (simpleSprinklerInstalled) return '간이 스프링클러 설치';
-                return ''; // 빌라, 다세대, 다가구는 스프링클러 미설치(표시 안 함)로 확정 반환
+                return '';
             }
 
-            // 3) 소방청 특정소방대상물 소방시설정보 오픈API 조회 (아파트/일반 대형 특정소방대상물 대상)
+            // 3) 소방청 특정소방대상물 소방시설정보 오픈API 조회
             const aprYear = (useAprDay && /^\d{4}/.test(String(useAprDay))) ? String(useAprDay).substring(0, 4) : '';
             const urlsToTry = [];
 
@@ -13669,7 +14027,6 @@
                     let score = 0;
                     let hasHighConfidenceMatch = false;
 
-                    // 도로명 및 건물번호가 모두 포함되어 있거나 건물명 힌트가 정확히 일치해야만 유효 매칭으로 인정
                     if (roadNameKeyword && roadNameKeyword.length >= 3 && dump.includes(roadNameKeyword)) {
                         score += 30;
                         hasHighConfidenceMatch = true;
@@ -13682,7 +14039,6 @@
                         score += 5;
                     }
 
-                    // 단순 사용승인연도(aprYear)만 일치하는 타 건물은 절대로 매칭하지 않음 (오탐 방지)
                     if (hasHighConfidenceMatch && score > bestScore) {
                         bestScore = score;
                         bestMatch = it;
@@ -13697,33 +14053,29 @@
                         const valStr = String(v).trim();
                         const valPositive = (valStr === 'Y' || valStr === '유' || valStr === '설치' || (parseInt(valStr, 10) > 0));
 
-                        // 1) 간이스프링클러 판별
                         const isSimpleKey = keyLower.includes('간이') || keyLower.includes('smp') || keyLower.includes('simple');
                         const isSprkKey = keyLower.includes('sprk') || keyLower.includes('spkl') || keyLower.includes('sprinkler') || keyLower.includes('스프링클러') || keyLower.includes('sp');
 
                         if (isSimpleKey && isSprkKey) {
                             if (valPositive || (valStr.includes('간이') && valStr.includes('스프링클러') && !valStr.includes('미설치') && !valStr.includes('무'))) {
                                 simpleSprinklerInstalled = true;
+                                if (!regularSprinklerText) regularSprinklerText = '간이 스프링클러 설치 (소방청 등록 확인)';
                             }
                         } else if (isSprkKey && !isSimpleKey) {
-                            // 2) 일반 스프링클러 판별
                             if (valPositive || (valStr.includes('스프링클러') && !valStr.includes('간이') && !valStr.includes('미설치') && !valStr.includes('무'))) {
                                 regularSprinklerInstalled = true;
-                                if (!regularSprinklerText) regularSprinklerText = '스프링클러 설치';
+                                if (!regularSprinklerText) regularSprinklerText = '스프링클러 설치 (소방청 등록 확인)';
                             }
                         }
                     }
                 }
             }
 
-            // 판정 우선순위:
-            // 1. 일반 스프링클러가 설치되어 있으면 스프링클러 명칭 반환
             if (regularSprinklerInstalled) {
                 return regularSprinklerText || '스프링클러 설치';
             }
-            // 2. 일반 스프링클러는 없고 간이 스프링클러가 설치되어 있으면 '간이 스프링클러 설치' 반환
             if (simpleSprinklerInstalled) {
-                return '간이 스프링클러 설치';
+                return regularSprinklerText || '간이 스프링클러 설치';
             }
 
             return '';
@@ -13814,9 +14166,24 @@
                 if ((etcPurps.includes('주택') || mainPurps.includes('주택') || etcPurps.includes('오피스텔')) &&
                     (etcPurps.includes('근린생활') || mainPurps.includes('근린생활') || etcPurps.includes('판매') || etcPurps.includes('업무'))) {
                     return '복합건축물';
-                }
-
-                // 2) 구체적인 주용도 / 세부 건축물 유형 판별 (오피스텔, 다가구주택, 아파트, 다세대주택, 연립주택, 근생시설 등)
+                }                // 2) 구체적인 주용도 / 세부 건축물 유형 판별 (종교시설, 의료시설, 노유자시설, 숙박시설, 아파트, 근생 등)
+                if (/종교|교회|성당|사찰|기도원/.test(mergedPurps)) return '종교시설';
+                if (/요양병원/.test(mergedPurps)) return '요양병원';
+                if (/의료시설|병원|치과병원|한방병원/.test(mergedPurps)) return '의료시설';
+                if (/노유자시설|어린이집|노인복지|유치원/.test(mergedPurps)) return '노유자시설';
+                if (/숙박시설|호텔|모텔|콘도|여관/.test(mergedPurps)) return '숙박시설';
+                if (/문화및집회|집회시설|공연장|영화관/.test(mergedPurps)) return '문화및집회시설';
+                if (/판매시설|백화점|대형마트|쇼핑몰/.test(mergedPurps)) return '판매시설';
+                if (/운수시설|터미널/.test(mergedPurps)) return '운수시설';
+                if (/운동시설|체육관/.test(mergedPurps)) return '운동시설';
+                if (/창고시설|물류창고/.test(mergedPurps)) return '창고시설';
+                if (/공장|제조업/.test(mergedPurps)) return '공장';
+                if (/교육연구시설|학교/.test(mergedPurps)) return '교육연구시설';
+                if (/수련시설/.test(mergedPurps)) return '수련시설';
+                if (/위락시설/.test(mergedPurps)) return '위락시설';
+                if (/장례시설|장례식장/.test(mergedPurps)) return '장례시설';
+                if (/위험물/.test(mergedPurps)) return '위험물시설';
+                if (/지하상가/.test(mergedPurps)) return '지하상가';
                 if (/오피스텔/.test(mergedPurps)) return '오피스텔';
                 if (/다가구\s*주택|다가구/.test(mergedPurps) || (mainPurps.includes('단독주택') && /다가구/.test(mergedPurps))) return '다가구주택';
                 if (/아파트/.test(mergedPurps)) return '아파트';
@@ -13854,9 +14221,16 @@
                 }
                 if (regstrGbNm === '일반') return '일반건축물';
                 if (regstrGbNm === '집합') return '복합건축물';
-            }
-
-            // 컨텍스트 보조 판별
+            }            // 컨텍스트 보조 판별
+            if (/종교|교회|성당|사찰|기도원/.test(combinedContext)) return '종교시설';
+            if (/요양병원/.test(combinedContext)) return '요양병원';
+            if (/의료|병원/.test(combinedContext)) return '의료시설';
+            if (/노유자|어린이집/.test(combinedContext)) return '노유자시설';
+            if (/숙박|호텔|모텔/.test(combinedContext)) return '숙박시설';
+            if (/문화및집회|집회|공연장/.test(combinedContext)) return '문화및집회시설';
+            if (/판매|백화점|마트/.test(combinedContext)) return '판매시설';
+            if (/창고/.test(combinedContext)) return '창고시설';
+            if (/공장/.test(combinedContext)) return '공장';
             if (/오피스텔/.test(combinedContext)) return '오피스텔';
             if (/다가구/.test(combinedContext)) return '다가구주택';
             if (/아파트/.test(combinedContext)) return '아파트';
@@ -14519,7 +14893,7 @@
                     if (withApr) useAprDayFinal = withApr.it.useAprDay || withApr.it.stcnsDay || '';
                 }
                 const ledgerType = resolveBuildingLedgerType(bestItem, combinedContext);
-                const spInstalled = await checkSprinklerInstalledFromApi(combinedContext, useAprDayFinal, bldNameHint || bestItem.bldNm || '', roadFullKeyword, ledgerType, grndFlrCnt);
+                const spInstalled = await checkSprinklerInstalledFromApi(combinedContext, useAprDayFinal, bldNameHint || bestItem.bldNm || '', roadFullKeyword, ledgerType, grndFlrCnt, totArea, bestItem.mainPurpsCdNm || '', bestItem.etcPurps || '');
                 applyFetchedBuildingDataToTab(reqTabId, strctCdNm, grndFlrCnt, ugrndFlrCnt, totArea, useAprDayFinal, matchedTitle, spInstalled, ledgerType);
                 return;
             }
@@ -14534,7 +14908,7 @@
             if (groundHintM) floorHintGround = parseInt(groundHintM[1], 10) || 5;
 
             const fallbackLedgerType = resolveBuildingLedgerType(null, combinedContext);
-            const spInstalledFallback = await checkSprinklerInstalledFromApi(combinedContext, bldAprDateInput.value, bldNameHint, roadFullKeyword, fallbackLedgerType, String(floorHintGround));
+            const spInstalledFallback = await checkSprinklerInstalledFromApi(combinedContext, bldAprDateInput.value, bldNameHint, roadFullKeyword, fallbackLedgerType, String(floorHintGround), bldAreaInput.value, fallbackLedgerType, '');
             applyFetchedBuildingDataToTab(
                 reqTabId,
                 '철근콘크리트구조',
@@ -14969,34 +15343,36 @@
             triggerUpdateDebounced();
         });
 
-        function syncApartmentSprinklerFromInputs() {
+        function syncSprinklerFromInputs() {
             const locText = titleLocInput ? titleLocInput.value : '';
             const addrText = eventAddrInput ? eventAddrInput.value : '';
             const mapText = safetyMapRawInput ? safetyMapRawInput.value : '';
-            const combined = `${locText} ${addrText} ${mapText}`;
+            const strctText = bldStructureInput ? bldStructureInput.value : '';
+            const flrText = bldFloorsInput ? bldFloorsInput.value : '';
+            const areaText = bldAreaInput ? bldAreaInput.value : '';
+            const aprText = bldAprDateInput ? bldAprDateInput.value : '';
+            const combined = `${locText} ${addrText} ${mapText} ${strctText}`;
 
-            // 빌라, 다세대주택, 다가구주택, 연립주택, 단독주택은 아파트 전층 스프링클러 의무 설치 대상이 아님
-            if (/빌라|다세대|다가구|연립|단독/.test(combined)) {
-                // 안전지도 원문에 명시적으로 기록된 경우가 아니면 스프링클러 자동 부착 배제
-                if (!/(?:스프링클러|S\/P)\s*(?:설치|작동|완비|유)/i.test(mapText)) {
-                    updateSprinklerBadgeUI('');
-                    return;
+            const curTab = tabs.find(t => t.id === activeTabId);
+            const mainPurps = curTab?.data?.bldLedgerType || '';
+            const spResult = evaluateSprinklerByLawAndUsage(mainPurps, '', aprText, flrText, areaText, combined);
+
+            if (spResult && spResult.isInstalled) {
+                updateSprinklerBadgeUI(spResult.text);
+                if (curTab && curTab.data) {
+                    curTab.data.bldSprinkler = spResult.text;
                 }
-            }
-
-            if (/아파트/.test(combined) && !/빌라|다세대|다가구|연립|단독/.test(combined)) {
-                const aptSp = evaluateApartmentSprinklerByLaw(bldAprDateInput.value, bldFloorsInput.value);
-                if (aptSp !== null) {
-                    if (aptSp) {
-                        updateSprinklerBadgeUI(aptSp);
-                    } else if (currentSprinklerInstalledText === '간이 스프링클러 설치') {
-                        // 이미 간이 스프링클러가 설정되어 있으면 유지
-                    } else {
-                        updateSprinklerBadgeUI('');
+            } else {
+                const hasExplicitMapSp = /(?:스프링클러|S\/P)\s*(?:설치|작동|완비|유)/i.test(mapText);
+                if (!hasExplicitMapSp) {
+                    updateSprinklerBadgeUI('');
+                    if (curTab && curTab.data) {
+                        curTab.data.bldSprinkler = '';
                     }
                 }
             }
         }
+        const syncApartmentSprinklerFromInputs = syncSprinklerFromInputs;
 
         bldFloorsInput.addEventListener('input', (e) => {
             const val = e.target.value.trim();
@@ -15014,7 +15390,11 @@
         });
 
         bldAprDateInput.addEventListener('input', () => {
-            syncApartmentSprinklerFromInputs();
+            syncSprinklerFromInputs();
+            triggerUpdateDebounced();
+        });
+        bldAreaInput.addEventListener('input', () => {
+            syncSprinklerFromInputs();
             triggerUpdateDebounced();
         });
 
