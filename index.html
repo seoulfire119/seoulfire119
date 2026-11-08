@@ -12774,7 +12774,20 @@
         });
 
         // 선착대 입력칸 허용 형식 검증 및 정제 (예: "화곡대", "마곡대"와 같이 순수 '[한글지역명]대' 형태만 허용)
-        const EXCLUDED_SEONCHAK_WORDS = /^(?:선착대|소방대|진압대|구조대|구급대|지휘대|현장대|현장도착대|도착대|현장지휘대|화재대|구급차대|펌프대|탱크대|파출소대|지구대|경찰대|한전대|가스대|구청대|시청대|병원대|관계자대|신고자대|특수대|기동대|구조대대|지원대|현장도착|도착|선착|출동|출동대|소방서|센터)$/;
+        const EXCLUDED_SEONCHAK_WORDS = /^(?:선착대|소방대|진압대|구조대|구급대|지휘대|현장대|현장도착대|도착대|현장지휘대|화재대|구급차대|펌프대|탱크대|파출소대|지구대|경찰대|한전대|가스대|구청대|시청대|병원대|관계자대|신고자대|특수대|기동대|구조대대|지원대|현장도착|도착|선착|출동|출동대|소방서|센터|열착|열착대|열비착|열비착대|열선착|열선착대|열착선착|열착선착대|열|비착)$/;
+
+        function isExcludedUnit(name) {
+            if (!name) return true;
+            const clean = String(name).trim();
+            if (EXCLUDED_SEONCHAK_WORDS.test(clean)) return true;
+            // 열착, 열비착, 열선착, 열착선착 단어 포함 시 배제
+            if (/열착|열비착|열선착|열착선착/.test(clean)) return true;
+            // 지휘, 지휘차, 지휘대 포함 시 배제 (예: 강서지휘, 서초지휘 등)
+            if (/지휘/.test(clean)) return true;
+            // 숫자 포함 시 배제 (예: 강서10, 서초100 등)
+            if (/\d+/.test(clean)) return true;
+            return false;
+        }
 
         function sanitizeSeonchakUnitValue(val) {
             if (!val) return '';
@@ -12785,23 +12798,23 @@
             const valid = [];
             tokens.forEach(rawTok => {
                 let tok = rawTok;
-                // '종암탱크', '성북지휘차' 등 탱크/지휘차는 그대로 유지 (대 붙이지 않음)
-                const isVehicleUnit = /(?:탱크|지휘차|지휘|펌프|화학차|구조차)$/.test(tok);
+                if (isExcludedUnit(tok)) return;
+                const isVehicleUnit = /(?:탱크|화학차|구조차)$/.test(tok);
                 if (isVehicleUnit) {
                     valid.push(tok);
                 } else {
-                    // '대대' 중복 제거 -> '대'
                     tok = tok.replace(/대+$/, '대');
-                    if (/^[가-힣]{1,6}대$/.test(tok) && !EXCLUDED_SEONCHAK_WORDS.test(tok)) {
+                    if (isExcludedUnit(tok)) return;
+                    if (/^[가-힣]{1,6}대$/.test(tok)) {
                         valid.push(tok);
-                    } else if (/^[가-힣]{1,6}$/.test(tok) && !EXCLUDED_SEONCHAK_WORDS.test(tok + '대')) {
+                    } else if (/^[가-힣]{1,6}$/.test(tok)) {
                         valid.push(tok.endsWith('대') ? tok : tok + '대');
                     } else {
                         valid.push(tok);
                     }
                 }
             });
-            return valid.join(', ') || val.trim();
+            return valid.join(', ') || '';
         }
 
         // 임시의료소 입력칸 허용 형식 검증 및 정제 (예: "연희구급", "북아현6", "공덕6-1" 형태 등)
@@ -12833,30 +12846,30 @@
                 .replace(/\b(?:\d{3,4}|\d{1,2}:\d{2})\b/g, ' ')
                 .replace(/^[-–—:\s\[\]<>,【】()']+|[-–—:\s\[\]<>,【】()']+$/g, '')
                 .trim();
-            if (!s) return '';
+            if (!s || isExcludedUnit(s)) return '';
 
-            // '현장도착', '도착', '선착대', '출동' 등 일반 동작/상태어는 소방대 명칭이 아니므로 즉시 배제
-            if (/^(?:현장\s*도착|도착|선착\s*대?|출동|귀소|완진|초진)/.test(s)) {
+            // '현장도착', '도착', '선착대', '출동', '열착' 등 일반 동작/상태어/무전약어는 소방대 명칭이 아니므로 즉시 배제
+            if (/^(?:현장\s*도착|도착|선착\s*대?|출동|귀소|완진|초진|열착|열비착|열선착|열착선착)/.test(s)) {
                 return '';
             }
 
-            // 1) 차량명/특수대 (예: 종암탱크, 성북지휘차, 마포지휘, 영등포구조차 등) - '대'를 붙이지 않고 그대로 반환
-            const vehicleMatch = s.match(/([가-힣]{1,5}(?:탱크|지휘차|지휘|화학차|구조차))/);
+            // 1) 차량명/특수대 (예: 종암탱크, 화학차, 구조차 등) - 지휘차/지휘는 제외
+            const vehicleMatch = s.match(/([가-힣]{1,5}(?:탱크|화학차|구조차))/);
             if (vehicleMatch && vehicleMatch[1]) {
                 const vName = vehicleMatch[1].trim();
-                if (!EXCLUDED_SEONCHAK_WORDS.test(vName)) {
+                if (!isExcludedUnit(vName)) {
                     return vName;
                 }
             }
 
-            // 2) [지역명] + (펌프차/탱크차/펌착/탱착/선착/열비착/비착/펌/탱) -> [지역명]대!
+            // 2) [지역명] + (펌프차/탱크차/펌착/탱착/선착/착/펌/탱) -> [지역명]대!
             //    예: 길음펌 -> 길음대, 서초대선착 -> 서초대(대대 중복 방지), 화곡펌 -> 화곡대, 마곡탱 -> 마곡대
-            const unitMatch = s.match(/([가-힣]{1,5}?)(?:펌프차?착?|탱크차?착?|펌착|탱착|열비착|비착|선착|착|펌|탱)(?:\s*도착|\s*착|\b|$)/);
+            const unitMatch = s.match(/([가-힣]{1,5}?)(?:펌프차?착?|탱크차?착?|펌착|탱착|선착|착|펌|탱)(?:\s*도착|\s*착|\b|$)/);
             if (unitMatch && unitMatch[1]) {
                 const base = unitMatch[1].trim();
                 let candidate = base.endsWith('대') ? base : `${base}대`;
                 candidate = candidate.replace(/대+$/, '대');
-                if (/^[가-힣]{2,6}대$/.test(candidate) && !EXCLUDED_SEONCHAK_WORDS.test(candidate)) {
+                if (/^[가-힣]{2,6}대$/.test(candidate) && !isExcludedUnit(candidate)) {
                     return candidate;
                 }
             }
@@ -12867,7 +12880,7 @@
                 const base = directMatch[1].trim();
                 let candidate = base.endsWith('대') ? base : `${base}대`;
                 candidate = candidate.replace(/대+$/, '대');
-                if (/^[가-힣]{2,6}대$/.test(candidate) && !EXCLUDED_SEONCHAK_WORDS.test(candidate)) {
+                if (/^[가-힣]{2,6}대$/.test(candidate) && !isExcludedUnit(candidate)) {
                     return candidate;
                 }
             }
@@ -12981,21 +12994,22 @@
                 addCandidate(m3[1], m3[2]);
             }
 
-            // 5. 가장 빠른 소방대를 우선 선별, 필터링되지 않으면 안전지도 상단의 현장도착시간 반영
+            // 5. 가장 빠른 소방대를 우선 선별, 필터링되지 않으면 안전지도 상단의 현장도착시간 또는 본문의 도착시각 반영
             if (seonchakCandidates.length > 0) {
                 seonchakCandidates.sort((a, b) => a.mins - b.mins);
                 const earliest = seonchakCandidates[0];
                 unitSeonchak.value = earliest.unit || '';
                 timeSeonchak.value = earliest.time || '';
-            } else if (fallbackArrivalHHMM && isValidHHMM(fallbackArrivalHHMM)) {
-                // 본문에 소방대 도착 시각이 없거나 유효하지 않으면 현장도착 시각 반영
-                timeSeonchak.value = fallbackArrivalHHMM.replace(/\D/g, '').padStart(4, '0');
-                const unitOnlyM = fullText.match(/([가-힣0-9]{1,6}(?:대|펌프?|탱크?|구조|구급|지휘차))\b/);
-                if (unitOnlyM) {
-                    unitSeonchak.value = normalizeFireUnitName(unitOnlyM[1]) || '';
-                } else {
-                    unitSeonchak.value = '';
+            } else {
+                let arrTime = fallbackArrivalHHMM;
+                if (!arrTime) {
+                    const arrMatch = fullText.match(/(?:열착선착|열선착|열비착|열착|현장도착|선착)\s*[-–—:\s]*(\d{3,4}|\d{1,2}:\d{2})/i);
+                    if (arrMatch) arrTime = arrMatch[1];
                 }
+                if (arrTime && isValidHHMM(arrTime)) {
+                    timeSeonchak.value = arrTime.replace(/\D/g, '').padStart(4, '0');
+                }
+                unitSeonchak.value = '';
             }
 
             // 6. 6번 소방 대응상황에 선착대 명칭/도착시 반영
@@ -13271,46 +13285,47 @@
                     lastExtractedDistrictWithSpace = `${guName} `;
                 }
 
-                let detailDongHoSuffix = '';
-                const dongHoPattern = /(?:(?:[가-힣A-Za-z0-9]+(?:아파트|빌라|타워|오피스텔|단지|맨션)\s*)?(?:제\s*)?\d{1,4}\s*동(?:\s*\d{1,4}\s*호)?|\b\d{1,4}동(?:\s*\d{1,4}호)?|\b[가-힣A-Za-z0-9]+동\s*\d{1,4}호|상가동|상가(?:\s*\d+호)?|관리동|복리시설동|복리동|노인정|어린이집|유치원동|유치원|부속동|(?:제\s*)?[A-Za-z]\s*동(?:\s*\d{1,4}\s*호)?|(?:^|[^\s가-힣])(?:제\s*)?[가나다라마바사아자차카타파하]\s*동(?:\s*\d{1,4}\s*호)?)/;
-                const dongHoM = (rawJibunVal && rawJibunVal.match(dongHoPattern)) ||
-                                (rawRoadVal && rawRoadVal.match(dongHoPattern)) ||
-                                (contentRawText && contentRawText.match(dongHoPattern)) ||
-                                (rawText && rawText.match(dongHoPattern));
-                if (dongHoM) {
-                    detailDongHoSuffix = dongHoM[0].trim();
-                }
-
                 if (rawRoadVal) {
                     let roadVal = rawRoadVal
                         .replace(/^서울특별시\s*/, '')
                         .replace(/^서울시\s*/, '')
                         .trim();
 
-                    if (guName) {
-                        const guRegex = new RegExp('^' + guName + '\\s*');
-                        roadVal = roadVal.replace(guRegex, '').trim();
-                        roadVal = `${guName} ${roadVal}`.trim();
+                    // 쉼표(,)나 괄호(() 뒤의 건물명, 동호수 등 부가 정보 제거
+                    roadVal = roadVal.replace(/[,(].*$/, '').trim();
+
+                    // 순수 도로명 + 건물번호만 정밀 추출 (예: "화곡로66길 50", "허준로 139", "효령로68길 102")
+                    // 뒤에 공백으로 건물명이나 동(예: "선민빌딩", "상가동", "301동")이 적혀있더라도 도로명+건물번호까지만 딱 잘라냄
+                    const roadMatch = roadVal.match(/([가-힣A-Za-z0-9]+(?:대로|로|길)(?:\d+길)?)\s*(지하\s*)?(\d{1,5}(?:-\d{1,4})?)/);
+                    if (roadMatch) {
+                        const road = roadMatch[1];
+                        const under = roadMatch[2] || '';
+                        const num = roadMatch[3];
+                        roadVal = `${road} ${under}${num}`.trim();
                     }
-                    if (detailDongHoSuffix && !roadVal.includes(detailDongHoSuffix)) {
-                        roadVal = `${roadVal}, ${detailDongHoSuffix}`;
-                    }
+
                     eventAddrInput.value = roadVal;
                 } else if (rawJibunVal) {
                     let jibunClean = rawJibunVal
                         .replace(/^서울특별시\s*/, '')
                         .replace(/^서울시\s*/, '')
                         .trim();
-                    if (guName) {
-                        const guRegex = new RegExp('^' + guName + '\\s*');
-                        jibunClean = jibunClean.replace(guRegex, '').trim();
-                        jibunClean = `${guName} ${jibunClean}`.trim();
+                    // 쉼표나 괄호 뒤의 부가 명칭 제거
+                    jibunClean = jibunClean.replace(/[,(].*$/, '').trim();
+                    const jibunMatchPattern = jibunClean.match(/([가-힣]+(?:\d+가)?동|[가-힣]+\d+가)\s+(산\s+)?(\d{1,4}(?:-\d{1,4})?)/);
+                    if (jibunMatchPattern) {
+                        const dong = jibunMatchPattern[1];
+                        const san = jibunMatchPattern[2] || '';
+                        const num = jibunMatchPattern[3];
+                        jibunClean = `${dong} ${san}${num}`.trim();
                     }
                     eventAddrInput.value = jibunClean;
                 } else if (policeLocMatch && policeLocMatch[1]) {
                     let pLoc = policeLocMatch[1].replace(/위치값.*$/, '').replace(/^서울특별시\s*/, '').replace(/^서울시\s*/, '').trim();
-                    if (guName && !pLoc.startsWith(guName)) {
-                        pLoc = `${guName} ${pLoc}`.trim();
+                    pLoc = pLoc.replace(/[,(].*$/, '').trim();
+                    const pLocMatch = pLoc.match(/([가-힣A-Za-z0-9]+(?:대로|로|길)(?:\d+길)?)\s*(지하\s*)?(\d{1,5}(?:-\d{1,4})?)/);
+                    if (pLocMatch) {
+                        pLoc = `${pLocMatch[1]} ${pLocMatch[2] || ''}${pLocMatch[3]}`.trim();
                     }
                     eventAddrInput.value = pLoc;
                 }
@@ -14906,11 +14921,16 @@
         unitSeonchak.addEventListener('blur', () => {
             let raw = unitSeonchak.value.trim();
             if (raw) {
-                // 종암탱크, 성북지휘차 등 차량명은 그대로 유지 (대 붙이지 않음)
-                const isVehicleUnit = /(?:탱크|지휘차|지휘|펌프|화학차|구조차)$/.test(raw);
+                if (isExcludedUnit(raw)) {
+                    unitSeonchak.value = '';
+                    syncSeonchakToSec2('');
+                    triggerUpdateDebounced();
+                    return;
+                }
+                const isVehicleUnit = /(?:탱크|화학차|구조차)$/.test(raw);
                 if (!isVehicleUnit) {
                     raw = raw.replace(/대+$/, '대');
-                    if (/^[가-힣]{1,6}$/.test(raw) && !raw.endsWith('대') && !EXCLUDED_SEONCHAK_WORDS.test(raw + '대')) {
+                    if (/^[가-힣]{1,6}$/.test(raw) && !raw.endsWith('대') && !isExcludedUnit(raw + '대')) {
                         raw = raw + '대';
                     }
                 }
