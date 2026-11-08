@@ -14678,21 +14678,35 @@
         });
 
         function keepMemoCursorAfterPrefix() {
+            // 마우스 드래그 또는 Ctrl+A 등으로 텍스트가 선택되어 있는 경우(머리말 포함 복사 목적)에는 선택 영역을 유지
+            if (pMemoInput.selectionStart !== pMemoInput.selectionEnd) {
+                return;
+            }
             const prefix = `${getRegionHeaderTag()} `;
             const prefixLen = prefix.length;
+            // 텍스트 선택이 없는 단순 커서 클릭/이동 상태일 때만 커서가 머리말 안쪽으로 들어가지 않도록 보정
             if (pMemoInput.selectionStart < prefixLen) {
-                pMemoInput.setSelectionRange(prefixLen, Math.max(prefixLen, pMemoInput.selectionEnd));
+                pMemoInput.setSelectionRange(prefixLen, prefixLen);
             }
         }
 
         pMemoInput.addEventListener('click', keepMemoCursorAfterPrefix);
-        pMemoInput.addEventListener('select', keepMemoCursorAfterPrefix);
 
         pMemoInput.addEventListener('keydown', (e) => {
             const prefix = `${getRegionHeaderTag()} `;
             const prefixLen = prefix.length;
 
-            // 방향키(왼쪽, 위, Home)로 접두사 [지역 화재] 내부 또는 앞쪽으로 커서 이동 차단!
+            // 1. 전체 선택(Ctrl+A / Cmd+A) 및 복사(Ctrl+C) 등은 브라우저 기본 동작으로 머리말까지 전체 선택/복사되도록 허용
+            if ((e.ctrlKey || e.metaKey) && ['a', 'A', 'c', 'C', 'x', 'X'].includes(e.key)) {
+                return;
+            }
+
+            // 2. Shift 키를 누른 상태의 선택 영역 지정(Shift+방향키, Shift+Home 등)도 머리말 포함 복사가 가능하도록 허용
+            if (e.shiftKey) {
+                return;
+            }
+
+            // 3. Shift 없이 단순 커서 이동 시: 머리말 [지역 화재] 내부 또는 앞쪽으로 커서 이동 차단!
             if (e.key === 'ArrowLeft' && pMemoInput.selectionStart <= prefixLen && pMemoInput.selectionEnd <= prefixLen) {
                 e.preventDefault();
                 pMemoInput.setSelectionRange(prefixLen, prefixLen);
@@ -14721,28 +14735,32 @@
                 if (start <= prefixLen && end >= totalLen && totalLen > prefixLen) {
                     recordMemoDeleted(pMemoInput.value);
                 }
-                if (e.key === 'Backspace' && start <= prefixLen && start === end) {
-                    e.preventDefault();
-                    pMemoInput.setSelectionRange(prefixLen, prefixLen);
-                    return;
-                }
-                if (e.key === 'Delete' && start < prefixLen && start === end) {
-                    e.preventDefault();
-                    pMemoInput.setSelectionRange(prefixLen, prefixLen);
-                    return;
+                // 단순 커서 상태에서 머리말을 지우려고 할 때만 차단
+                if (start === end) {
+                    if (e.key === 'Backspace' && start <= prefixLen) {
+                        e.preventDefault();
+                        pMemoInput.setSelectionRange(prefixLen, prefixLen);
+                        return;
+                    }
+                    if (e.key === 'Delete' && start < prefixLen) {
+                        e.preventDefault();
+                        pMemoInput.setSelectionRange(prefixLen, prefixLen);
+                        return;
+                    }
                 }
             }
 
             if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'End', 'Tab', 'Shift', 'Control', 'Alt', 'Meta'].includes(e.key) || e.ctrlKey || e.metaKey) return;
 
-            // 타이핑 입력 시 커서가 접두사 앞에 위치해 있으면 자동으로 접두사 뒤로 이동
-            if (pMemoInput.selectionStart < prefixLen) {
+            // 타이핑 입력 시: 단순 커서 상태이고 커서가 머리말 앞에 위치해 있으면 자동으로 머리말 뒤로 이동
+            if (pMemoInput.selectionStart === pMemoInput.selectionEnd && pMemoInput.selectionStart < prefixLen) {
                 pMemoInput.setSelectionRange(prefixLen, prefixLen);
             }
         });
 
         pMemoInput.addEventListener('keyup', (e) => {
-            if (['ArrowLeft', 'ArrowUp', 'Home'].includes(e.key)) {
+            // Shift 키를 누르고 있지 않은 단순 커서 이동 키에 대해서만 위치 보정
+            if (!e.shiftKey && ['ArrowLeft', 'ArrowUp', 'Home'].includes(e.key)) {
                 keepMemoCursorAfterPrefix();
             }
         });
