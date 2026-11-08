@@ -13501,10 +13501,9 @@
 
         function updateSprinklerBadgeUI(spText) {
             let cleanSpText = (spText || '').trim();
-            // 1. 뒤에 붙은 날짜 표기(예: ", 18년 1월 28일", ", 05년 1월 1일" 등) 제거
+            // 날짜 및 괄호 부가표기 제거하여 단일 설치 범위만 유지
             cleanSpText = cleanSpText.replace(/,\s*\d{2,4}(?:년|\.)\s*\d{1,2}(?:월|\.)\s*\d{1,2}일?(?:\s*시행|\s*개정|\s*소급)?/g, '');
             cleanSpText = cleanSpText.replace(/,\s*\d{2,4}년\s*\d{1,2}월\s*\d{1,2}일/g, '');
-            // 2. 스프링클러 문구 뒤에 오는 괄호 내용(예: (업무시설 6층이상 모든층), (아파트 6층 이상 모든층) 등) 완전 제거
             cleanSpText = cleanSpText.replace(/\s*\([^)]*\)/g, '').trim();
             currentSprinklerInstalledText = cleanSpText;
 
@@ -13528,6 +13527,7 @@
         }
 
         // 소방시설법 시행령 별표 5 및 첨부 '스프링클러 설비.pdf' 기준 용도별/층수별/연면적별 스프링클러 및 간이스프링클러 의무 설치 기준 판별
+        // 전층 설치면 '스프링클러 전층 설치', 특정 층 부분 설치면 '스프링클러 16층 이상 설치'와 같이 단일하고 명확한 1개의 설치 범위만 표기
         function evaluateSprinklerByLawAndUsage(mainPurpsCdNm, etcPurps, useAprDayRaw, grndFlrRaw, totAreaRaw, combinedContext = '', bldNameHint = '', ledgerType = '') {
             // 119 재난분류 '고층건물(5층이상,아파트)' 텍스트는 건축물 용도 판별 시 아파트 오인 방지를 위해 완전히 제외
             const cleanContext = String(combinedContext || '')
@@ -13673,13 +13673,11 @@
                     return {
                         isInstalled: true,
                         type: 'regular',
-                        text: '스프링클러 설치 대상',
+                        text: '스프링클러 설치',
                         detail: '업무시설 - 바닥면적 1,000㎡ 이상'
                     };
                 }
-                if (ymd > 0 && grndFlr > 0 && grndFlr < 6) {
-                    return { isInstalled: false, type: 'none', text: '', detail: '업무시설 - 6층 미만 설치 의무 제외' };
-                }
+                return { isInstalled: false, type: 'none', text: '', detail: '업무시설 - 6층 미만 및 면적 기준 미달로 설치 의무 제외' };
             }
 
             // [공동주택 (아파트)]
@@ -13708,12 +13706,7 @@
                         detail: '공동주택(아파트) - 16층 이상인 것은 16층 이상의 층'
                     };
                 }
-                if (ymd > 0 && ymd < 19900701) {
-                    return { isInstalled: false, type: 'none', text: '', detail: '1990년 7월 1일 이전 준공: 설치 의무 없음' };
-                }
-                if (grndFlr > 0 && grndFlr < 6 && ymd >= 20180128) {
-                    return { isInstalled: false, type: 'none', text: '', detail: '6층 미만 아파트: 설치 의무 제외' };
-                }
+                return { isInstalled: false, type: 'none', text: '', detail: '아파트 - 준공일 또는 층수 기준 미달로 설치 의무 제외' };
             }
 
             // [연립주택 / 다세대주택]
@@ -13722,11 +13715,11 @@
                     return {
                         isInstalled: true,
                         type: 'simple',
-                        text: '간이 스프링클러 설치 대상',
+                        text: '간이 스프링클러 설치',
                         detail: '공동주택 중 연립·다세대주택 주택전용 간이스프링클러 의무'
                     };
                 }
-                return { isInstalled: false, type: 'none', text: '', detail: '연립·다세대·빌라: 설치 의무 대상 아님' };
+                return { isInstalled: false, type: 'none', text: '', detail: '연립·다세대·빌라 - 설치 의무 제외' };
             }
 
             // [종교시설]
@@ -13743,13 +13736,11 @@
                     return {
                         isInstalled: true,
                         type: 'regular',
-                        text: '스프링클러 설치 대상',
+                        text: '스프링클러 설치',
                         detail: '종교시설 - 수용인원 100명(460㎡) 또는 바닥면적 1,000㎡ 이상'
                     };
                 }
-                if (ymd > 0 && ymd < 20180128 && grndFlr > 0 && grndFlr < 6 && totArea > 0 && totArea < 460) {
-                    return { isInstalled: false, type: 'none', text: '', detail: '종교시설 - 6층 미만 및 면적 기준 미만으로 설치 의무 제외' };
-                }
+                return { isInstalled: false, type: 'none', text: '', detail: '종교시설 - 6층 미만 및 면적 기준 미달로 설치 의무 제외' };
             }
 
             // [의료시설 / 요양병원]
@@ -13765,7 +13756,7 @@
                     return {
                         isInstalled: true,
                         type: 'simple',
-                        text: '간이 스프링클러 설치 대상',
+                        text: '간이 스프링클러 설치',
                         detail: '요양병원 - 전수 소급완료 (600㎡ 미만 모든 층 간이스프링클러설비)'
                     };
                 }
@@ -13784,18 +13775,19 @@
                     return {
                         isInstalled: true,
                         type: 'regular',
-                        text: '스프링클러 설치 대상',
+                        text: '스프링클러 설치',
                         detail: '종합병원·병원·치과병원·한방병원 - 바닥면적 600㎡ 이상 모든 층'
                     };
                 }
-                if (totArea > 0 && totArea < 600) {
+                if (totArea > 0 && totArea < 600 && /입원실/.test(rawPurps)) {
                     return {
                         isInstalled: true,
                         type: 'simple',
-                        text: '간이 스프링클러 설치 대상',
+                        text: '간이 스프링클러 설치',
                         detail: '종합병원·병원·치과병원·한방병원 - 바닥면적 600㎡ 미만'
                     };
                 }
+                return { isInstalled: false, type: 'none', text: '', detail: '의료시설 - 설치 의무 제외' };
             }
 
             // [노유자시설]
@@ -13812,7 +13804,7 @@
                     return {
                         isInstalled: true,
                         type: 'regular',
-                        text: '스프링클러 설치 대상',
+                        text: '스프링클러 설치',
                         detail: '노유자시설 - 바닥면적 600㎡ 이상 모든 층'
                     };
                 }
@@ -13820,10 +13812,11 @@
                     return {
                         isInstalled: true,
                         type: 'simple',
-                        text: '간이 스프링클러 설치 대상',
+                        text: '간이 스프링클러 설치',
                         detail: '노유자 생활시설 - 바닥면적 300㎡~600㎡ 미만'
                     };
                 }
+                return { isInstalled: false, type: 'none', text: '', detail: '노유자시설 - 300㎡ 미만 설치 의무 제외' };
             }
 
             // [숙박시설]
@@ -13848,7 +13841,7 @@
                     return {
                         isInstalled: true,
                         type: 'regular',
-                        text: '스프링클러 설치 대상',
+                        text: '스프링클러 설치',
                         detail: '숙박시설 - 바닥면적 합계 600㎡ 이상 모든 층'
                     };
                 }
@@ -13856,10 +13849,11 @@
                     return {
                         isInstalled: true,
                         type: 'simple',
-                        text: '간이 스프링클러 설치 대상',
+                        text: '간이 스프링클러 설치',
                         detail: '숙박시설 - 바닥면적 300㎡ 이상 600㎡ 미만'
                     };
                 }
+                return { isInstalled: false, type: 'none', text: '', detail: '숙박시설 - 300㎡ 미만 설치 의무 제외' };
             }
 
             // [근린생활시설]
@@ -13872,42 +13866,137 @@
                         detail: '근린생활시설 - 층수가 6층 이상인 모든층'
                     };
                 }
+                if (/조산원|산후조리원/.test(rawPurps)) {
+                    if (totArea >= 600) {
+                        return {
+                            isInstalled: true,
+                            type: 'regular',
+                            text: '스프링클러 전층 설치',
+                            detail: '산후조리원 - 바닥면적 600㎡ 이상 모든 층'
+                        };
+                    } else {
+                        return {
+                            isInstalled: true,
+                            type: 'simple',
+                            text: '간이 스프링클러 설치',
+                            detail: '산후조리원 - 연면적 600㎡ 미만'
+                        };
+                    }
+                }
+                if (/입원실/.test(rawPurps) && /의원|치과|한의원/.test(rawPurps)) {
+                    return {
+                        isInstalled: true,
+                        type: 'simple',
+                        text: '간이 스프링클러 설치',
+                        detail: '의원급 - 입원실이 있는 시설'
+                    };
+                }
                 if (totArea >= 1000) {
                     return {
                         isInstalled: true,
                         type: 'simple',
-                        text: '간이 스프링클러 설치 대상',
+                        text: '간이 스프링클러 설치',
                         detail: '근린생활시설 - 바닥면적 합계 1,000㎡ 이상 모든 층'
                     };
                 }
+                return { isInstalled: false, type: 'none', text: '', detail: '근린생활시설 - 6층 미만 및 1,000㎡ 미만 설치 의무 제외' };
             }
 
-            // [판매시설 / 운수시설 / 문화집회 / 운동 / 창고 / 공장 / 교육 / 기타 6층 이상]
-            if (isSales || isTransport || isAssembly || isSports || isWarehouse || isFactory || isEducation) {
+            // [판매시설 / 운수시설]
+            if (isSales || isTransport) {
+                const facNm = isSales ? '판매시설' : '운수시설';
                 if (ymd >= 20180128 && grndFlr >= 6) {
                     return {
                         isInstalled: true,
                         type: 'regular',
                         text: '스프링클러 전층 설치',
-                        detail: '특정소방대상물 - 층수가 6층 이상인 모든층'
+                        detail: `${facNm} - 층수가 6층 이상인 모든층`
                     };
                 }
-                if (totArea >= 5000 || (isAssembly && totArea >= 460) || (isSports && totArea >= 460)) {
+                if (totArea >= 5000) {
                     return {
                         isInstalled: true,
                         type: 'regular',
-                        text: '스프링클러 설치 대상',
-                        detail: '특정소방대상물 - 면적 및 수용인원 기준 충족'
+                        text: '스프링클러 설치',
+                        detail: `${facNm} - 바닥면적 5,000㎡ 이상 모든 층`
                     };
                 }
+                return { isInstalled: false, type: 'none', text: '', detail: `${facNm} - 설치 의무 제외` };
+            }
+
+            // [문화및집회시설 / 운동시설]
+            if (isAssembly || isSports) {
+                const facNm = isAssembly ? '문화및집회시설' : '운동시설';
+                if (ymd >= 20180128 && grndFlr >= 6) {
+                    return {
+                        isInstalled: true,
+                        type: 'regular',
+                        text: '스프링클러 전층 설치',
+                        detail: `${facNm} - 층수가 6층 이상인 모든층`
+                    };
+                }
+                if (totArea >= 460) {
+                    return {
+                        isInstalled: true,
+                        type: 'regular',
+                        text: '스프링클러 설치',
+                        detail: `${facNm} - 수용인원 100명(460㎡) 이상 모든 층`
+                    };
+                }
+                return { isInstalled: false, type: 'none', text: '', detail: `${facNm} - 설치 의무 제외` };
+            }
+
+            // [창고시설 / 공장]
+            if (isWarehouse || isFactory) {
+                const facNm = isWarehouse ? '창고시설' : '공장';
+                if (ymd >= 20180128 && grndFlr >= 6) {
+                    return {
+                        isInstalled: true,
+                        type: 'regular',
+                        text: '스프링클러 전층 설치',
+                        detail: `${facNm} - 층수가 6층 이상인 모든층`
+                    };
+                }
+                if (totArea >= 5000) {
+                    return {
+                        isInstalled: true,
+                        type: 'regular',
+                        text: '스프링클러 설치',
+                        detail: `${facNm} - 바닥면적 합계 5,000㎡ 이상 모든 층`
+                    };
+                }
+                return { isInstalled: false, type: 'none', text: '', detail: `${facNm} - 설치 의무 제외` };
+            }
+
+            // [교육연구시설]
+            const isEducation = /교육연구|학교|학원|기숙사/.test(rawPurps);
+            if (isEducation) {
+                if (ymd >= 20180128 && grndFlr >= 6) {
+                    return {
+                        isInstalled: true,
+                        type: 'regular',
+                        text: '스프링클러 전층 설치',
+                        detail: '교육연구시설 - 층수가 6층 이상인 모든층'
+                    };
+                }
+                if (totArea >= 5000 && /기숙사/.test(rawPurps)) {
+                    return {
+                        isInstalled: true,
+                        type: 'regular',
+                        text: '스프링클러 설치',
+                        detail: '교육연구시설(기숙사) - 연면적 5,000㎡ 이상'
+                    };
+                }
+                return { isInstalled: false, type: 'none', text: '', detail: '교육연구시설 - 설치 의무 제외' };
             }
 
             // [지하상가]
+            const isSubway = /지하상가|지하도상가/.test(rawPurps);
             if (isSubway && totArea >= 1000) {
                 return {
                     isInstalled: true,
                     type: 'regular',
-                    text: '스프링클러 설치 대상',
+                    text: '스프링클러 설치',
                     detail: '지하상가 - 연면적 1,000㎡ 이상 모든 층'
                 };
             }
@@ -13918,11 +14007,11 @@
                     isInstalled: true,
                     type: 'regular',
                     text: '스프링클러 전층 설치',
-                    detail: '특정소방대상물 - 층수가 6층 이상인 모든층'
+                    detail: `${effType || '특정소방대상물'} - 층수가 6층 이상인 모든층`
                 };
             }
 
-            return { isInstalled: false, type: 'none', text: '', detail: '' };
+            return { isInstalled: false, type: 'none', text: '', detail: '법령 설치기준 미충족 (설치 의무 제외)' };
         }
 
         // 기존 evaluateApartmentSprinklerByLaw 호환 래퍼
@@ -13932,196 +14021,172 @@
         }
 
         // 소방청 특정소방대상물 소방시설정보 오픈API 조회 및 법령 설치기준 2단계 순차 판정
-        // [1차 반영] 오픈API 특정소방대상물소방시설정보서비스(getAccomFirefightingSysList)에 건물이 조회되면 실제 등록 소방시설을 최우선 반영
-        // [2차 반영] 특정소방대상물소방시설정보서비스에 조회가 없을 경우에만 건축물 용도·연도·층수별 법령 설치기준에 따라 판정
+        // [1차 검증] 건축물대장 표제부의 주용도, 층수, 연면적, 사용승인일 법령 설치기준 정밀 판정
+        // [2차 검증] 특정소방대상물소방시설정보서비스 오픈API와 교차 검증하되, 기준 미달 건물에 대한 오매칭 오탐 원천 차단
         async function checkSprinklerInstalledFromApi(combinedContext, useAprDay, bldNameHint, roadNameKeyword, ledgerType = '', grndFlrCnt = '', totArea = '', mainPurpsCdNm = '', etcPurps = '') {
-            const cleanContext = String(combinedContext || '')
-                .replace(/고층건물\s*\([^)]*\)/gi, '')
-                .replace(/재난분류[^\n\r]*/gi, '');
+            try {
+                const cleanContext = String(combinedContext || '')
+                    .replace(/고층건물\s*\([^)]*\)/gi, '')
+                    .replace(/재난분류[^\n\r]*/gi, '');
 
-            const fullContextString = `${ledgerType} ${cleanContext} ${bldNameHint} ${titleLocInput ? titleLocInput.value : ''}`;
-            const isVillaOrMultiHousing = /빌라|다세대|다가구|연립|단독/.test(fullContextString) ||
-                                          ['다세대주택', '다가구주택', '연립주택', '단독주택'].includes(ledgerType);
+                const grnd = parseInt(grndFlrCnt || '0', 10);
+                const area = parseFloat(String(totArea || '').replace(/[^0-9.]/g, '')) || 0;
 
-            // =========================================================================================
-            // 1단계: 오픈API 특정소방대상물소방시설정보서비스 조회 (1차 최우선 반영)
-            // =========================================================================================
-            const aprYear = (useAprDay && /^\d{4}/.test(String(useAprDay))) ? String(useAprDay).substring(0, 4) : '';
-            const urlsToTry = [];
+                // 1) 법령 설치기준 사전 정밀 판정 (주용도, 층수, 연면적, 사용승인일)
+                const lawEval = evaluateSprinklerByLawAndUsage(
+                    mainPurpsCdNm || ledgerType,
+                    etcPurps,
+                    useAprDay,
+                    grndFlrCnt,
+                    totArea,
+                    cleanContext,
+                    bldNameHint,
+                    ledgerType
+                );
 
-            if (bldNameHint && bldNameHint.length >= 2) {
-                urlsToTry.push(`${FIRE_SYS_API_URL}?serviceKey=${encodeURIComponent(BLD_HUB_SERVICE_KEY)}&numOfRows=100&pageNo=1&resultType=xml&ctpvNm=${encodeURIComponent('서울특별시')}&fireObjNm=${encodeURIComponent(bldNameHint)}`);
-            }
-            if (roadNameKeyword && roadNameKeyword.length >= 3) {
-                urlsToTry.push(`${FIRE_SYS_API_URL}?serviceKey=${encodeURIComponent(BLD_HUB_SERVICE_KEY)}&numOfRows=100&pageNo=1&resultType=xml&ctpvNm=${encodeURIComponent('서울특별시')}&ronmAddr=${encodeURIComponent(roadNameKeyword)}`);
-            }
-            if (aprYear) {
-                urlsToTry.push(`${FIRE_SYS_API_URL}?serviceKey=${encodeURIComponent(BLD_HUB_SERVICE_KEY)}&numOfRows=100&pageNo=1&resultType=xml&ctpvNm=${encodeURIComponent('서울특별시')}&useAprvY=${encodeURIComponent(aprYear)}`);
-            }
-            urlsToTry.push(`${FIRE_SYS_API_URL}?serviceKey=${encodeURIComponent(BLD_HUB_SERVICE_KEY)}&numOfRows=100&pageNo=1&resultType=xml&ctpvNm=${encodeURIComponent('서울특별시')}`);
+                // [핵심 가드레일] 주용도, 연면적, 층수, 사용승인일 기준 미충족 시 설치 오탐 원천 차단:
+                // 지상 5층 이하이거나 법령 설치 의무 기준(층수/면적/용도)에 미달하는 소형·저층 건물이면,
+                // 외부 오픈API의 동일 도로명/연도 타 고층 건물 오매칭 유입을 원천 차단하여 미설치로 확정!
+                const isSmallLowRise = (grnd > 0 && grnd < 6 && (!area || area < 1000));
+                const isNotObligatedFacility = ['단독주택', '다세대주택', '연립주택'].includes(ledgerType) && !lawEval.isInstalled;
 
-            const fetchWrappers = [
-                (u) => u,
-                (u) => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
-                (u) => `https://corsproxy.io/?${encodeURIComponent(u)}`
-            ];
-
-            const parseFireSysResponse = (rawStr) => {
-                if (!rawStr) return [];
-                const trimmed = rawStr.trim();
-                if (trimmed.startsWith('{')) {
-                    try {
-                        const j = JSON.parse(trimmed);
-                        const item = j?.response?.body?.items?.item;
-                        if (!item) return [];
-                        return Array.isArray(item) ? item : [item];
-                    } catch (e) { return []; }
+                if ((isSmallLowRise && !lawEval.isInstalled) || isNotObligatedFacility) {
+                    return ''; // 실제 건축물대장 기준 미달 건물이므로 미설치 확정 반환
                 }
-                if (trimmed.includes('<item>')) {
-                    const xmlDoc = new DOMParser().parseFromString(trimmed, "text/xml");
-                    return Array.from(xmlDoc.querySelectorAll("item")).map(node => {
-                        const obj = {};
-                        Array.from(node.children).forEach(ch => {
-                            obj[ch.tagName] = ch.textContent.trim();
+
+                // 2) 오픈API 특정소방대상물 소방시설정보서비스 조회 (고신뢰도 매칭에 한해 인정)
+                const aprYear = (useAprDay && /^\d{4}/.test(String(useAprDay))) ? String(useAprDay).substring(0, 4) : '';
+                const urlsToTry = [];
+
+                if (bldNameHint && bldNameHint.length >= 2) {
+                    urlsToTry.push(`${FIRE_SYS_API_URL}?serviceKey=${encodeURIComponent(BLD_HUB_SERVICE_KEY)}&numOfRows=100&pageNo=1&resultType=xml&ctpvNm=${encodeURIComponent('서울특별시')}&fireObjNm=${encodeURIComponent(bldNameHint)}`);
+                }
+                if (roadNameKeyword && roadNameKeyword.length >= 3) {
+                    urlsToTry.push(`${FIRE_SYS_API_URL}?serviceKey=${encodeURIComponent(BLD_HUB_SERVICE_KEY)}&numOfRows=100&pageNo=1&resultType=xml&ctpvNm=${encodeURIComponent('서울특별시')}&ronmAddr=${encodeURIComponent(roadNameKeyword)}`);
+                }
+
+                const fetchWrappers = [
+                    (u) => u,
+                    (u) => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
+                    (u) => `https://corsproxy.io/?${encodeURIComponent(u)}`
+                ];
+
+                const parseFireSysResponse = (rawStr) => {
+                    if (!rawStr) return [];
+                    const trimmed = rawStr.trim();
+                    if (trimmed.startsWith('{')) {
+                        try {
+                            const j = JSON.parse(trimmed);
+                            const item = j?.response?.body?.items?.item;
+                            if (!item) return [];
+                            return Array.isArray(item) ? item : [item];
+                        } catch (e) { return []; }
+                    }
+                    if (trimmed.includes('<item>')) {
+                        const xmlDoc = new DOMParser().parseFromString(trimmed, "text/xml");
+                        return Array.from(xmlDoc.querySelectorAll("item")).map(node => {
+                            const obj = {};
+                            Array.from(node.children).forEach(ch => {
+                                obj[ch.tagName] = ch.textContent.trim();
+                            });
+                            return obj;
                         });
-                        return obj;
+                    }
+                    return [];
+                };
+
+                let fireItems = [];
+                outerLoop:
+                for (const qUrl of urlsToTry) {
+                    for (const wrap of fetchWrappers) {
+                        try {
+                            const controller = new AbortController();
+                            const timer = setTimeout(() => controller.abort(), 2800);
+                            const res = await fetch(wrap(qUrl), { signal: controller.signal });
+                            clearTimeout(timer);
+                            if (res.ok) {
+                                const text = await res.text();
+                                const parsed = parseFireSysResponse(text);
+                                if (parsed.length > 0) {
+                                    fireItems = parsed;
+                                    break outerLoop;
+                                }
+                            }
+                        } catch (e) {}
+                    }
+                }
+
+                if (fireItems.length > 0) {
+                    let bestMatch = null;
+                    let bestScore = 0;
+
+                    fireItems.forEach(it => {
+                        const dump = JSON.stringify(it);
+                        let score = 0;
+                        let hasHighConfidenceMatch = false;
+
+                        if (bldNameHint && bldNameHint.length >= 2 && dump.includes(bldNameHint)) {
+                            score += 60;
+                            hasHighConfidenceMatch = true;
+                        }
+                        if (roadNameKeyword && roadNameKeyword.length >= 3 && dump.includes(roadNameKeyword)) {
+                            score += 40;
+                            hasHighConfidenceMatch = true;
+                        }
+
+                        if (hasHighConfidenceMatch && score > bestScore) {
+                            bestScore = score;
+                            bestMatch = it;
+                        }
                     });
-                }
-                return [];
-            };
 
-            let fireItems = [];
-            outerLoop:
-            for (const qUrl of urlsToTry) {
-                for (const wrap of fetchWrappers) {
-                    try {
-                        const controller = new AbortController();
-                        const timer = setTimeout(() => controller.abort(), 3000);
-                        const res = await fetch(wrap(qUrl), { signal: controller.signal });
-                        clearTimeout(timer);
-                        if (res.ok) {
-                            const text = await res.text();
-                            const parsed = parseFireSysResponse(text);
-                            if (parsed.length > 0) {
-                                fireItems = parsed;
-                                break outerLoop;
+                    const targetItem = (bestScore >= 50) ? bestMatch : null;
+                    if (targetItem) {
+                        let apiSprk = false;
+                        let apiSimple = false;
+
+                        const entries = Object.entries(targetItem);
+                        for (const [k, v] of entries) {
+                            const keyLower = k.toLowerCase();
+                            const valStr = String(v).trim();
+                            const valPositive = (valStr === 'Y' || valStr === '유' || valStr === '설치' || valStr === '전층' || valStr.includes('설치') || (parseInt(valStr, 10) > 0));
+
+                            const isSimpleKey = keyLower.includes('간이') || keyLower.includes('smp') || keyLower.includes('simple');
+                            const isSprkKey = keyLower.includes('sprk') || keyLower.includes('spkl') || keyLower.includes('sprinkler') || keyLower.includes('스프링클러') || keyLower.includes('sp');
+
+                            if (isSimpleKey && isSprkKey) {
+                                if (valPositive && !valStr.includes('미설치') && !valStr.includes('무')) {
+                                    apiSimple = true;
+                                }
+                            } else if (isSprkKey && !isSimpleKey) {
+                                if (valPositive && !valStr.includes('간이') && !valStr.includes('미설치') && !valStr.includes('무')) {
+                                    apiSprk = true;
+                                }
                             }
                         }
-                    } catch (e) {}
+
+                        if (apiSprk) {
+                            return (grnd >= 6 || (apiScopeText && apiScopeText.includes('전층'))) ? '스프링클러 전층 설치' : '스프링클러 설치';
+                        }
+                        if (apiSimple) {
+                            return '간이 스프링클러 설치';
+                        }
+                        if (!lawEval.isInstalled) {
+                            return '';
+                        }
+                    }
                 }
-            }
 
-            if (fireItems.length > 0) {
-                let bestMatch = null;
-                let bestScore = 0;
-
-                fireItems.forEach(it => {
-                    const dump = JSON.stringify(it);
-                    let score = 0;
-                    let hasHighConfidenceMatch = false;
-
-                    if (bldNameHint && bldNameHint.length >= 2 && dump.includes(bldNameHint)) {
-                        score += 50;
-                        hasHighConfidenceMatch = true;
-                    }
-                    if (roadNameKeyword && roadNameKeyword.length >= 3 && dump.includes(roadNameKeyword)) {
-                        score += 40;
-                        hasHighConfidenceMatch = true;
-                    }
-                    if (hasHighConfidenceMatch && aprYear && dump.includes(aprYear)) {
-                        score += 5;
-                    }
-
-                    if (hasHighConfidenceMatch && score > bestScore) {
-                        bestScore = score;
-                        bestMatch = it;
-                    }
-                });
-
-                const targetItem = (bestScore >= 30) ? bestMatch : null;
-                if (targetItem) {
-                    let apiSprinklerInstalled = false;
-                    let apiSimpleSprinklerInstalled = false;
-                    let apiScopeText = '';
-
-                    const entries = Object.entries(targetItem);
-                    for (const [k, v] of entries) {
-                        const keyLower = k.toLowerCase();
-                        const valStr = String(v).trim();
-                        const valPositive = (valStr === 'Y' || valStr === '유' || valStr === '설치' || valStr === '전층' || valStr.includes('설치') || (parseInt(valStr, 10) > 0));
-
-                        const isSimpleKey = keyLower.includes('간이') || keyLower.includes('smp') || keyLower.includes('simple');
-                        const isSprkKey = keyLower.includes('sprk') || keyLower.includes('spkl') || keyLower.includes('sprinkler') || keyLower.includes('스프링클러') || keyLower.includes('sp');
-                        const isScopeKey = keyLower.includes('scope') || keyLower.includes('범위') || keyLower.includes('설치구역');
-
-                        if (isScopeKey && valStr && !valStr.includes('미설치') && !valStr.includes('무')) {
-                            apiScopeText = valStr;
-                        }
-
-                        if (isSimpleKey && isSprkKey) {
-                            if (valPositive && !valStr.includes('미설치') && !valStr.includes('무')) {
-                                apiSimpleSprinklerInstalled = true;
-                            }
-                        } else if (isSprkKey && !isSimpleKey) {
-                            if (valPositive && !valStr.includes('간이') && !valStr.includes('미설치') && !valStr.includes('무')) {
-                                apiSprinklerInstalled = true;
-                            }
-                        }
-                    }
-
-                    // 특정소방대상물 소방시설정보 오픈API에 건물이 조회되고 스프링클러 설비가 확인되면 1차로 이것만 단독 반영!
-                    if (apiSprinklerInstalled) {
-                        if (apiScopeText && (apiScopeText.includes('전층') || apiScopeText.includes('전 층'))) {
-                            return '전층 스프링클러설치';
-                        }
-                        const grnd = parseInt(grndFlrCnt || '0', 10);
-                        if (grnd >= 6) {
-                            return '전층 스프링클러설치';
-                        }
-                        return '스프링클러설치';
-                    }
-                    if (apiSimpleSprinklerInstalled) {
-                        return '간이스프링클러설치';
-                    }
-                    // 소방시설정보 API에 건물은 존재하나 스프링클러 설비가 명시적으로 없으면 미설치로 확정 반환
-                    return '';
+                // 3) 소방시설정보 API 매칭이 없거나 미등록된 경우: 법령 설치기준 적용
+                if (lawEval && lawEval.isInstalled) {
+                    return lawEval.text;
                 }
+
+                return '';
+            } catch (err) {
+                console.warn('checkSprinklerInstalledFromApi 예외:', err);
+                return '';
             }
-
-            // =========================================================================================
-            // 2단계: 특정소방대상물 소방시설정보서비스에 조회가 없을 경우: 법령 설치기준 적용 (2차 반영)
-            // =========================================================================================
-            // 빌라, 다세대주택, 다가구주택, 연립주택: 2024.12.1 이후 주택전용 간이SP 법정 대상이 아니면 미설치
-            const lawEval = evaluateSprinklerByLawAndUsage(
-                mainPurpsCdNm || ledgerType,
-                etcPurps,
-                useAprDay,
-                grndFlrCnt,
-                totArea,
-                cleanContext,
-                bldNameHint,
-                ledgerType
-            );
-
-            if (lawEval && lawEval.isInstalled) {
-                return lawEval.text;
-            }
-
-            // 안전지도 원문 텍스트 명시 기록 확인 (보조)
-            const hasSimpleCtx = /(?:간이\s*스프링클러|간이\s*S\/?P|간이형\s*스프링클러)/i.test(combinedContext);
-            const simpleNotInstalled = /(?:간이\s*스프링클러|간이\s*S\/?P|간이형\s*스프링클러)\s*(?:미설치|미작동|무)/i.test(combinedContext);
-            if (hasSimpleCtx && !simpleNotInstalled) {
-                return '간이스프링클러설치';
-            }
-
-            const cleanCtxWithoutSimple = combinedContext.replace(/(?:간이\s*스프링클러|간이\s*S\/?P|간이형\s*스프링클러)/gi, '');
-            const hasRegularCtx = /(?:스프링클러|S\/P)\s*(?:설치|작동|완비|유)/i.test(cleanCtxWithoutSimple);
-            const regularNotInstalled = /(?:스프링클러|S\/P)\s*(?:미설치|미작동|무)/i.test(cleanCtxWithoutSimple);
-            if (hasRegularCtx && !regularNotInstalled) {
-                return '스프링클러설치';
-            }
-
-            return '';
         }
 
         // 서울시 25개 자치구 시군구코드(5자리) 매핑
@@ -14343,7 +14408,7 @@
             const finalApr = (useAprDay || '').toString().replace(/\D/g, '').substring(0, 8);
 
             // 스프링클러 정보 뒤의 괄호 내용(예: (업무시설 6층이상 모든층) 등) 완전 제거 후 단일 반영
-            const cleanSp = (sprinklerInfo || '').replace(/\s*\([^)]*\)/g, '').trim();
+            const cleanSp = (sprinklerInfo || '').replace(/,\s*\d{2,4}(?:년|\.)\s*\d{1,2}(?:월|\.)\s*\d{1,2}일?(?:\s*시행|\s*개정|\s*소급)?/g, '').trim();
             const spSuffix = cleanSp ? ` · 💦${cleanSp}` : '';
             const statusMsg = `✓ 조회완료 (${statusLabel || '표제부 반영'}${spSuffix})`;
 
@@ -15674,8 +15739,7 @@
 
             let structRow = '';
             if (bldIncludeCheck.checked) {
-                const spReportPart = currentSprinklerInstalledText ? ` / 소방시설: ${currentSprinklerInstalledText}` : '';
-                structRow = `- 구조: ${bldStructureInput.value.trim() || '-'} / 연면적: ${formatArea(bldAreaInput.value) || '-'} / 사용승인: ${formatAprDate(bldAprDateInput.value) || '-'}${spReportPart}`;
+                structRow = `- 구조: ${bldStructureInput.value.trim() || '-'} / 연면적: ${formatArea(bldAreaInput.value) || '-'} / 사용승인: ${formatAprDate(bldAprDateInput.value) || '-'}`;
             }
 
             const sec2 = formatSec2(getCleanSec2(pSection2.value));
