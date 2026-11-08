@@ -13501,9 +13501,11 @@
 
         function updateSprinklerBadgeUI(spText) {
             let cleanSpText = (spText || '').trim();
-            // 뒤에 붙은 날짜 표기(예: ", 18년 1월 28일", ", 05년 1월 1일", ", 18.1.28" 등) 제거
+            // 1. 뒤에 붙은 날짜 표기(예: ", 18년 1월 28일", ", 05년 1월 1일" 등) 제거
             cleanSpText = cleanSpText.replace(/,\s*\d{2,4}(?:년|\.)\s*\d{1,2}(?:월|\.)\s*\d{1,2}일?(?:\s*시행|\s*개정|\s*소급)?/g, '');
             cleanSpText = cleanSpText.replace(/,\s*\d{2,4}년\s*\d{1,2}월\s*\d{1,2}일/g, '');
+            // 2. 스프링클러 문구 뒤에 오는 괄호 내용(예: (업무시설 6층이상 모든층), (아파트 6층 이상 모든층) 등) 완전 제거
+            cleanSpText = cleanSpText.replace(/\s*\([^)]*\)/g, '').trim();
             currentSprinklerInstalledText = cleanSpText;
 
             if (!bldSprinklerBadge || !bldSprinklerText) return;
@@ -13643,12 +13645,11 @@
 
             // [업무시설 / 오피스텔]
             if (isOffice) {
-                const facLabel = /오피스텔/.test(rawPurps) ? '업무시설' : '업무시설';
                 if (ymd >= 20180128 && grndFlr >= 6) {
                     return {
                         isInstalled: true,
                         type: 'regular',
-                        text: `스프링클러 전층 설치 (${facLabel} 6층 이상 모든층)`,
+                        text: '스프링클러 전층 설치',
                         detail: '업무시설 - 층수가 6층 이상인 경우 모든 층'
                     };
                 }
@@ -13656,7 +13657,7 @@
                     return {
                         isInstalled: true,
                         type: 'regular',
-                        text: `스프링클러 전층 설치 (${facLabel} 11층 이상 전층)`,
+                        text: '스프링클러 전층 설치',
                         detail: '업무시설 - 층수가 11층 이상인 경우 전층'
                     };
                 }
@@ -13664,7 +13665,7 @@
                     return {
                         isInstalled: true,
                         type: 'regular',
-                        text: `스프링클러 전층 설치 (${facLabel} 6층 이상 모든층)`,
+                        text: '스프링클러 전층 설치',
                         detail: '업무시설 - 층수가 6층 이상인 경우 모든 층'
                     };
                 }
@@ -13672,7 +13673,7 @@
                     return {
                         isInstalled: true,
                         type: 'regular',
-                        text: `스프링클러 설치 대상 (${facLabel} 1,000㎡ 이상)`,
+                        text: '스프링클러 설치 대상',
                         detail: '업무시설 - 바닥면적 1,000㎡ 이상'
                     };
                 }
@@ -13687,7 +13688,7 @@
                     return {
                         isInstalled: true,
                         type: 'regular',
-                        text: '스프링클러 전층 설치 (아파트 6층 이상 모든층)',
+                        text: '스프링클러 전층 설치',
                         detail: '공동주택(아파트) - 층수가 6층 이상인 경우 모든 층'
                     };
                 }
@@ -13695,7 +13696,7 @@
                     return {
                         isInstalled: true,
                         type: 'regular',
-                        text: '스프링클러 전층 설치 (아파트 11층 이상 전층)',
+                        text: '스프링클러 전층 설치',
                         detail: '공동주택(아파트) - 층수가 11층 이상인 경우 전층'
                     };
                 }
@@ -13703,7 +13704,7 @@
                     return {
                         isInstalled: true,
                         type: 'regular',
-                        text: '스프링클러 16층 이상 설치 (아파트 16층 이상)',
+                        text: '스프링클러 16층 이상 설치',
                         detail: '공동주택(아파트) - 16층 이상인 것은 16층 이상의 층'
                     };
                 }
@@ -13721,7 +13722,7 @@
                     return {
                         isInstalled: true,
                         type: 'simple',
-                        text: '간이 스프링클러 설치 대상 (연립·다세대주택)',
+                        text: '간이 스프링클러 설치 대상',
                         detail: '공동주택 중 연립·다세대주택 주택전용 간이스프링클러 의무'
                     };
                 }
@@ -13734,24 +13735,16 @@
                     return {
                         isInstalled: true,
                         type: 'regular',
-                        text: '스프링클러 설치 대상 (종교시설 6층 이상 모든층)',
+                        text: '스프링클러 전층 설치',
                         detail: '종교시설 - 층수가 6층 이상인 모든층'
                     };
                 }
-                if (totArea >= 1000) {
+                if (totArea >= 1000 || totArea >= 460) {
                     return {
                         isInstalled: true,
                         type: 'regular',
-                        text: '스프링클러 설치 대상 (종교시설 1,000㎡ 이상)',
-                        detail: '종교시설 - 4층 이상 또는 지하·무창층 바닥면적 1,000㎡ 이상'
-                    };
-                }
-                if (totArea >= 460) {
-                    return {
-                        isInstalled: true,
-                        type: 'regular',
-                        text: '스프링클러 설치 대상 (종교시설 수용인원 100명/460㎡ 이상)',
-                        detail: '종교시설 - 수용인원 100명(바닥면적 460㎡) 이상 모든 층'
+                        text: '스프링클러 설치 대상',
+                        detail: '종교시설 - 수용인원 100명(460㎡) 또는 바닥면적 1,000㎡ 이상'
                     };
                 }
                 if (ymd > 0 && ymd < 20180128 && grndFlr > 0 && grndFlr < 6 && totArea > 0 && totArea < 460) {
@@ -13765,14 +13758,14 @@
                     return {
                         isInstalled: true,
                         type: 'regular',
-                        text: '스프링클러 설치 (요양병원 전층 소급)',
+                        text: '스프링클러 전층 설치',
                         detail: '요양병원 - 전수 소급완료 (600㎡ 이상 모든 층 스프링클러설비)'
                     };
                 } else {
                     return {
                         isInstalled: true,
                         type: 'simple',
-                        text: '간이 스프링클러 설치 (요양병원 600㎡ 미만)',
+                        text: '간이 스프링클러 설치 대상',
                         detail: '요양병원 - 전수 소급완료 (600㎡ 미만 모든 층 간이스프링클러설비)'
                     };
                 }
@@ -13783,7 +13776,7 @@
                     return {
                         isInstalled: true,
                         type: 'regular',
-                        text: '스프링클러 설치 대상 (의료시설 6층 이상 모든층)',
+                        text: '스프링클러 전층 설치',
                         detail: '의료시설 - 층수가 6층 이상인 모든층'
                     };
                 }
@@ -13791,7 +13784,7 @@
                     return {
                         isInstalled: true,
                         type: 'regular',
-                        text: '스프링클러 설치 대상 (의료시설 600㎡ 이상 모든층)',
+                        text: '스프링클러 설치 대상',
                         detail: '종합병원·병원·치과병원·한방병원 - 바닥면적 600㎡ 이상 모든 층'
                     };
                 }
@@ -13799,7 +13792,7 @@
                     return {
                         isInstalled: true,
                         type: 'simple',
-                        text: '간이 스프링클러 설치 대상 (의료시설 600㎡ 미만)',
+                        text: '간이 스프링클러 설치 대상',
                         detail: '종합병원·병원·치과병원·한방병원 - 바닥면적 600㎡ 미만'
                     };
                 }
@@ -13811,7 +13804,7 @@
                     return {
                         isInstalled: true,
                         type: 'regular',
-                        text: '스프링클러 설치 대상 (노유자시설 6층 이상 모든층)',
+                        text: '스프링클러 전층 설치',
                         detail: '노유자시설 - 층수가 6층 이상인 모든층'
                     };
                 }
@@ -13819,7 +13812,7 @@
                     return {
                         isInstalled: true,
                         type: 'regular',
-                        text: '스프링클러 설치 대상 (노유자시설 600㎡ 이상 모든층)',
+                        text: '스프링클러 설치 대상',
                         detail: '노유자시설 - 바닥면적 600㎡ 이상 모든 층'
                     };
                 }
@@ -13827,7 +13820,7 @@
                     return {
                         isInstalled: true,
                         type: 'simple',
-                        text: '간이 스프링클러 설치 대상 (노유자시설 300~600㎡)',
+                        text: '간이 스프링클러 설치 대상',
                         detail: '노유자 생활시설 - 바닥면적 300㎡~600㎡ 미만'
                     };
                 }
@@ -13839,7 +13832,7 @@
                     return {
                         isInstalled: true,
                         type: 'regular',
-                        text: '스프링클러 전층 설치 (숙박시설 6층 이상 모든층)',
+                        text: '스프링클러 전층 설치',
                         detail: '숙박시설 - 층수가 6층 이상인 모든층'
                     };
                 }
@@ -13847,7 +13840,7 @@
                     return {
                         isInstalled: true,
                         type: 'regular',
-                        text: '스프링클러 전층 설치 (숙박시설 11층 이상 전층)',
+                        text: '스프링클러 전층 설치',
                         detail: '숙박시설 - 층수가 11층 이상 전층'
                     };
                 }
@@ -13855,7 +13848,7 @@
                     return {
                         isInstalled: true,
                         type: 'regular',
-                        text: '스프링클러 설치 대상 (숙박시설 600㎡ 이상 모든층)',
+                        text: '스프링클러 설치 대상',
                         detail: '숙박시설 - 바닥면적 합계 600㎡ 이상 모든 층'
                     };
                 }
@@ -13863,7 +13856,7 @@
                     return {
                         isInstalled: true,
                         type: 'simple',
-                        text: '간이 스프링클러 설치 대상 (숙박시설 300~600㎡)',
+                        text: '간이 스프링클러 설치 대상',
                         detail: '숙박시설 - 바닥면적 300㎡ 이상 600㎡ 미만'
                     };
                 }
@@ -13875,7 +13868,7 @@
                     return {
                         isInstalled: true,
                         type: 'regular',
-                        text: '스프링클러 설치 대상 (근린생활시설 6층 이상 모든층)',
+                        text: '스프링클러 전층 설치',
                         detail: '근린생활시설 - 층수가 6층 이상인 모든층'
                     };
                 }
@@ -13883,115 +13876,49 @@
                     return {
                         isInstalled: true,
                         type: 'simple',
-                        text: '간이 스프링클러 설치 대상 (근린생활시설 1,000㎡ 이상)',
+                        text: '간이 스프링클러 설치 대상',
                         detail: '근린생활시설 - 바닥면적 합계 1,000㎡ 이상 모든 층'
                     };
                 }
             }
 
-            // [판매시설 / 운수시설]
-            if (isSales || isTransport) {
-                const facNm = isSales ? '판매시설' : '운수시설';
+            // [판매시설 / 운수시설 / 문화집회 / 운동 / 창고 / 공장 / 교육 / 기타 6층 이상]
+            if (isSales || isTransport || isAssembly || isSports || isWarehouse || isFactory || isEducation) {
                 if (ymd >= 20180128 && grndFlr >= 6) {
                     return {
                         isInstalled: true,
                         type: 'regular',
-                        text: `스프링클러 설치 대상 (${facNm} 6층 이상 모든층)`,
-                        detail: `${facNm} - 층수가 6층 이상인 모든층`
+                        text: '스프링클러 전층 설치',
+                        detail: '특정소방대상물 - 층수가 6층 이상인 모든층'
                     };
                 }
-                if (totArea >= 5000) {
+                if (totArea >= 5000 || (isAssembly && totArea >= 460) || (isSports && totArea >= 460)) {
                     return {
                         isInstalled: true,
                         type: 'regular',
-                        text: `스프링클러 설치 대상 (${facNm} 5,000㎡ 이상 모든층)`,
-                        detail: `${facNm} - 바닥면적 5,000㎡ 이상 모든 층`
-                    };
-                }
-            }
-
-            // [문화및집회시설 / 운동시설]
-            if (isAssembly || isSports) {
-                const facNm = isAssembly ? '문화및집회시설' : '운동시설';
-                if (ymd >= 20180128 && grndFlr >= 6) {
-                    return {
-                        isInstalled: true,
-                        type: 'regular',
-                        text: `스프링클러 설치 대상 (${facNm} 6층 이상 모든층)`,
-                        detail: `${facNm} - 층수가 6층 이상인 모든층`
-                    };
-                }
-                if (totArea >= 460) {
-                    return {
-                        isInstalled: true,
-                        type: 'regular',
-                        text: `스프링클러 설치 대상 (${facNm} 수용인원 100명/460㎡ 이상)`,
-                        detail: `${facNm} - 수용인원 100명(460㎡) 이상 모든 층`
-                    };
-                }
-            }
-
-            // [창고시설 / 공장]
-            if (isWarehouse || isFactory) {
-                const facNm = isWarehouse ? '창고시설' : '공장';
-                if (ymd >= 20180128 && grndFlr >= 6) {
-                    return {
-                        isInstalled: true,
-                        type: 'regular',
-                        text: `스프링클러 설치 대상 (${facNm} 6층 이상 모든층)`,
-                        detail: `${facNm} - 층수가 6층 이상인 모든층`
-                    };
-                }
-                if (totArea >= 5000) {
-                    return {
-                        isInstalled: true,
-                        type: 'regular',
-                        text: `스프링클러 설치 대상 (${facNm} 5,000㎡ 이상 모든층)`,
-                        detail: `${facNm} - 바닥면적 합계 5,000㎡ 이상 모든 층`
-                    };
-                }
-            }
-
-            // [교육연구시설]
-            const isEducation = /교육연구|학교|학원|기숙사/.test(rawPurps);
-            if (isEducation) {
-                if (ymd >= 20180128 && grndFlr >= 6) {
-                    return {
-                        isInstalled: true,
-                        type: 'regular',
-                        text: '스프링클러 설치 대상 (교육연구시설 6층 이상 모든층)',
-                        detail: '교육연구시설 - 층수가 6층 이상인 모든층'
-                    };
-                }
-                if (totArea >= 5000 && /기숙사/.test(rawPurps)) {
-                    return {
-                        isInstalled: true,
-                        type: 'regular',
-                        text: '스프링클러 설치 대상 (기숙사 5,000㎡ 이상 모든층)',
-                        detail: '교육연구시설(기숙사) - 연면적 5,000㎡ 이상'
+                        text: '스프링클러 설치 대상',
+                        detail: '특정소방대상물 - 면적 및 수용인원 기준 충족'
                     };
                 }
             }
 
             // [지하상가]
-            const isSubway = /지하상가|지하도상가/.test(rawPurps);
             if (isSubway && totArea >= 1000) {
                 return {
                     isInstalled: true,
                     type: 'regular',
-                    text: '스프링클러 설치 대상 (지하상가 1,000㎡ 이상)',
+                    text: '스프링클러 설치 대상',
                     detail: '지하상가 - 연면적 1,000㎡ 이상 모든 층'
                 };
             }
 
             // [기타 특정소방대상물]
             if (ymd >= 20180128 && grndFlr >= 6) {
-                const facNm = effType || '특정소방대상물';
                 return {
                     isInstalled: true,
                     type: 'regular',
-                    text: `스프링클러 설치 대상 (${facNm} 6층 이상 모든층)`,
-                    detail: `${facNm} - 층수가 6층 이상인 모든층`
+                    text: '스프링클러 전층 설치',
+                    detail: '특정소방대상물 - 층수가 6층 이상인 모든층'
                 };
             }
 
@@ -14415,8 +14342,9 @@
             const finalArea = (totArea || '').toString().replace(/[^0-9.]/g, '');
             const finalApr = (useAprDay || '').toString().replace(/\D/g, '').substring(0, 8);
 
-            // 스프링클러 정보 및 건물명이 중복 나열되지 않도록 단일하고 명확하게 반영
-            const spSuffix = sprinklerInfo ? ` · 💦${sprinklerInfo}` : '';
+            // 스프링클러 정보 뒤의 괄호 내용(예: (업무시설 6층이상 모든층) 등) 완전 제거 후 단일 반영
+            const cleanSp = (sprinklerInfo || '').replace(/\s*\([^)]*\)/g, '').trim();
+            const spSuffix = cleanSp ? ` · 💦${cleanSp}` : '';
             const statusMsg = `✓ 조회완료 (${statusLabel || '표제부 반영'}${spSuffix})`;
 
             // 1. 해당 탭의 data 객체에 독립 저장
