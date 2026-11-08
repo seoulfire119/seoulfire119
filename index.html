@@ -13272,7 +13272,7 @@
                 }
 
                 let detailDongHoSuffix = '';
-                const dongHoPattern = /(?:(?:[가-힣A-Za-z0-9]+(?:아파트|빌라|타워|오피스텔|단지|맨션)\s*)?(?:제\s*)?\d{1,4}\s*동(?:\s*\d{1,4}\s*호)?|\b\d{1,4}동(?:\s*\d{1,4}호)?|\b[가-힣A-Za-z0-9]+동\s*\d{1,4}호)/;
+                const dongHoPattern = /(?:(?:[가-힣A-Za-z0-9]+(?:아파트|빌라|타워|오피스텔|단지|맨션)\s*)?(?:제\s*)?\d{1,4}\s*동(?:\s*\d{1,4}\s*호)?|\b\d{1,4}동(?:\s*\d{1,4}호)?|\b[가-힣A-Za-z0-9]+동\s*\d{1,4}호|상가동|상가(?:\s*\d+호)?|관리동|복리시설동|복리동|노인정|어린이집|유치원동|유치원|부속동|(?:제\s*)?[A-Za-z]\s*동(?:\s*\d{1,4}\s*호)?|(?:^|[^\s가-힣])(?:제\s*)?[가나다라마바사아자차카타파하]\s*동(?:\s*\d{1,4}\s*호)?)/;
                 const dongHoM = (rawJibunVal && rawJibunVal.match(dongHoPattern)) ||
                                 (rawRoadVal && rawRoadVal.match(dongHoPattern)) ||
                                 (contentRawText && contentRawText.match(dongHoPattern)) ||
@@ -13783,12 +13783,18 @@
         // 건축물대장 표제부 항목에서 대장종류 또는 주용도 명칭 추출 (예: 일반건축물, 복합건축물, 오피스텔, 다가구주택, 아파트, 근생시설 등)
         function resolveBuildingLedgerType(bestItem, combinedContext = '') {
             if (bestItem) {
+                const dongNm = (bestItem.dongNm || '').trim();
                 const regstrKindNm = (bestItem.regstrKindCdNm || '').trim();
                 const regstrGbNm = (bestItem.regstrGbCdNm || '').trim();
                 const mainPurps = (bestItem.mainPurpsCdNm || '').trim();
                 const etcPurps = (bestItem.etcPurps || '').trim();
                 const bldNm = (bestItem.bldNm || '').trim();
-                const mergedPurps = `${etcPurps} ${mainPurps} ${bldNm} ${regstrKindNm} ${regstrGbNm}`;
+                const mergedPurps = `${etcPurps} ${mainPurps} ${bldNm} ${dongNm} ${regstrKindNm} ${regstrGbNm}`;
+
+                // 상가동이거나 근린생활시설인 경우 근생시설 판정
+                if (/상가동|상가/.test(dongNm) || /상가동|상가/.test(bldNm) || (/근린생활/.test(mergedPurps) && !/아파트|공동주택/.test(mergedPurps))) {
+                    return '근생시설';
+                }
 
                 // 1) 복수 용도(예: 근린생활시설 + 주택/오피스텔 등)인 경우 복합건축물 우선 판별
                 if (/복합\s*건축물|주상\s*복합/.test(mergedPurps)) return '복합건축물';
@@ -14024,11 +14030,30 @@
                 }
             }
 
-            // 5) 아파트/건물 동 번호 정밀 추출 (대치삼성아파트 112동, 제112동 등 완벽 대응)
-            targetDongNum = extractTargetDong(fullSearchContext) || extractTargetDong(combined);
+            // 5) [우선순위 동(Dong) 추출: 1순위 2번 도로명주소 -> 2순위 4번 신고내용 -> 3순위 안전지도 법정동주소/원문]
+            const sec1Val = (pSection1 ? pSection1.value : '').trim();
+            targetDongNum = extractTargetDong(roadOrJibunAddr);
+            if (!targetDongNum && sec1Val) {
+                targetDongNum = extractTargetDong(sec1Val);
+            }
+            if (!targetDongNum && explicitJibunLine) {
+                targetDongNum = extractTargetDong(explicitJibunLine);
+            }
+            if (!targetDongNum) {
+                targetDongNum = extractTargetDong(rawMapText);
+            }
 
-            // 6) 건물명/단지명 힌트 정밀 추출
-            bldNameHint = extractBldNameHint(fullSearchContext) || extractBldNameHint(combined);
+            // 6) [우선순위 건물명/단지명 힌트 추출: 1순위 2번 도로명주소 -> 2순위 4번 신고내용 -> 3순위 안전지도 법정동주소/원문]
+            bldNameHint = extractBldNameHint(roadOrJibunAddr);
+            if (!bldNameHint && sec1Val) {
+                bldNameHint = extractBldNameHint(sec1Val);
+            }
+            if (!bldNameHint && explicitJibunLine) {
+                bldNameHint = extractBldNameHint(explicitJibunLine);
+            }
+            if (!bldNameHint) {
+                bldNameHint = extractBldNameHint(rawMapText);
+            }
 
             // 7) 도로명주소만 있고 지번(bun/ji)이나 법정동코드(bjdongCd)가 없을 때:
             //    VWorld / 행안부 / OSM 지오코딩으로 도로명주소에 매칭되는 정확한 법정동 + 본번/부번을 획득
@@ -14099,7 +14124,7 @@
             if (!fullContext) return '';
             const s = String(fullContext);
 
-            // 1) 명시적 동 번호 (예: 112동, 제112동, 112 동, 제 112 동, 112동 502호)
+            // 1) 명시적 숫자 동 (예: 112동, 제112동, 112 동, 302동, 112동 502호)
             const mNumDong = s.match(/(?:제\s*)?(\d{1,4})\s*동(?!\s*(?:호선|대교|역|서로|동로|대로|번지|길|로))/);
             if (mNumDong) return mNumDong[1];
 
@@ -14111,12 +14136,19 @@
             const mDash = s.match(/(\d{1,4})\s*-\s*\d{1,4}\s*호/);
             if (mDash) return mDash[1];
 
-            // 4) 알파벳 동 (예: A동, 제A동, B동)
+            // 4) 특수 목적 동 (상가동, 상가, 관리동, 복리동, 노인정, 어린이집, 유치원 등)
+            const mSpecialDong = s.match(/(상가동|상가|관리동|복리시설동|복리동|복리시설|노인정|어린이집|유치원동|유치원|주민공동시설|부속동)/);
+            if (mSpecialDong) {
+                const res = mSpecialDong[1].trim();
+                return (res === '상가' || res === '상가동') ? '상가동' : res;
+            }
+
+            // 5) 알파벳 동 (예: A동, 제A동, B동)
             const mAlphaDong = s.match(/(?:제\s*)?([A-Za-z])\s*동\b/);
             if (mAlphaDong) return mAlphaDong[1].toUpperCase();
 
-            // 5) 한 글자 한글 동 (예: 가동, 나동, 다동)
-            const mKorDong = s.match(/(?:제\s*)?([가나다라마바사아자차카타파하])\s*동\b/);
+            // 6) 한 글자 한글 동 (예: 가동, 나동 - '상가동'의 '가동' 오매칭 방지를 위해 앞에 다른 한글이 없어야 함)
+            const mKorDong = s.match(/(?:^|[^\s가-힣])(?:제\s*)?([가나다라마바사아자차카타파하])\s*동\b/);
             if (mKorDong) return mKorDong[1];
 
             return '';
@@ -14153,10 +14185,21 @@
             if (!it) return '';
             const dongStr = String(it.dongNm || '').trim();
             const bldStr = String(it.bldNm || '').trim();
+            const etcStr = String(it.etcPurps || '').trim();
+            const mainPurps = String(it.mainPurpsCdNm || '').trim();
+
+            // 특수 목적 동 (상가동, 관리동 등)
+            if (/상가/.test(dongStr) || /상가/.test(bldStr) || (/근린생활/.test(mainPurps) && !/아파트|공동주택/.test(mainPurps))) {
+                return '상가동';
+            }
+            if (/관리동|관리사무소/.test(dongStr) || /관리동/.test(bldStr)) return '관리동';
+            if (/노인정|경로당/.test(dongStr) || /노인정/.test(bldStr)) return '노인정';
+            if (/어린이집|보육시설/.test(dongStr) || /어린이집/.test(bldStr)) return '어린이집';
+            if (/유치원/.test(dongStr) || /유치원/.test(bldStr)) return '유치원동';
+            if (/복리시설/.test(dongStr) || /복리시설/.test(bldStr)) return '복리시설동';
 
             for (const s of [dongStr, bldStr]) {
                 if (!s) continue;
-                // '제112동', '112동', '제 112 동', '112동(제112동)' 등 매칭
                 const m = s.match(/(?:제\s*)?(\d{1,4}|[A-Za-z]|[가나다라마바사아자차카타파하])\s*동(?!\s*(?:호선|대교|역))/);
                 if (m) return m[1].toUpperCase();
 
@@ -14258,14 +14301,30 @@
                 }
             }
 
-            // 4) 동 번호(예: 112동 vs 제112동, 31동 vs 제31동) 정밀 매칭
+            // 4) 동(Dong) 정밀 매칭 (상가동 vs 숫자 동 vs 문자 동)
             if (target.targetDongNum) {
-                if (itemDongToken === target.targetDongNum) {
-                    score += 400; // 타겟 동 번호(예: 112동)와 정확히 일치 시 압도적 가점 부여!
-                } else if (dongNm.includes(target.targetDongNum) || bldNm.includes(target.targetDongNum)) {
-                    score += 300;
-                } else if (itemDongToken && itemDongToken !== target.targetDongNum) {
-                    score -= 250; // 다른 동(101동, 102동 등)은 감점하여 오매칭 방지!
+                const targetIsSangga = (target.targetDongNum === '상가동' || target.targetDongNum === '상가');
+                const etcPurps = (it.etcPurps || '').trim();
+                const mainPurps = (it.mainPurpsCdNm || '').trim();
+                const itemIsSangga = (dongNm.includes('상가') || bldNm.includes('상가') || etcPurps.includes('상가') || etcPurps.includes('근린생활') || mainPurps.includes('근린생활'));
+
+                if (targetIsSangga) {
+                    if (itemIsSangga) {
+                        score += 600; // 상가동/근린생활시설에 압도적 가점 부여!
+                    } else if (itemDongToken || /공동주택|아파트/.test(mainPurps)) {
+                        score -= 400; // 일반 주거 아파트 동(301동, 311동 등)은 강력 감점!
+                    }
+                } else {
+                    if (itemDongToken === target.targetDongNum) {
+                        score += 500; // 타겟 동 번호(예: 302동, 112동)와 정확히 일치 시 압도적 가점 부여!
+                    } else if (dongNm.includes(target.targetDongNum) || bldNm.includes(target.targetDongNum)) {
+                        score += 350;
+                    } else if (itemDongToken && itemDongToken !== target.targetDongNum) {
+                        score -= 300; // 다른 동(301동 등)은 강력 감점하여 오매칭 방지!
+                    }
+                    if (itemIsSangga) {
+                        score -= 200; // 타겟이 숫자 동인데 상가동이면 감점
+                    }
                 }
             } else {
                 // 동 지정이 없을 때는 주건축물(mainAtchGbCd === '0') 우선
@@ -14393,9 +14452,21 @@
 
                                 if (validMatches.length > 0) {
                                     matchedItems = validMatches;
-                                    // 타겟 동(예: 112동)이 요청된 경우 해당 동이 존재하면 최우선으로 즉시 매칭 확정!
+                                    // 타겟 동(예: 112동 또는 상가동)이 요청된 경우 해당 동이 존재하면 최우선으로 즉시 매칭 확정!
                                     if (targetDongNum) {
-                                        const exactDongMatches = validMatches.filter(x => x.itemDongToken === targetDongNum || extractDongFromItem(x.it) === targetDongNum);
+                                        let exactDongMatches = [];
+                                        if (targetDongNum === '상가동' || targetDongNum === '상가') {
+                                            exactDongMatches = validMatches.filter(x => {
+                                                const d = x.it.dongNm || '';
+                                                const b = x.it.bldNm || '';
+                                                const ep = x.it.etcPurps || '';
+                                                const mp = x.it.mainPurpsCdNm || '';
+                                                return d.includes('상가') || b.includes('상가') || ep.includes('상가') || ep.includes('근린생활') || mp.includes('근린생활');
+                                            });
+                                        } else {
+                                            exactDongMatches = validMatches.filter(x => x.itemDongToken === targetDongNum || extractDongFromItem(x.it) === targetDongNum || (x.it.dongNm && x.it.dongNm.includes(targetDongNum)));
+                                        }
+
                                         if (exactDongMatches.length > 0) {
                                             exactDongMatches.sort((a, b) => b.score - a.score);
                                             matchedItems = exactDongMatches;
@@ -14423,7 +14494,10 @@
                 const totArea = bestItem.totArea || bestItem.archArea || '';
                 const useAprDay = bestItem.useAprDay || bestItem.stcnsDay || '';
                 const bldPart = bestItem.bldNm || bldNameHint || '';
-                const dongPart = bestItem.dongNm || (targetDongNum ? `제${targetDongNum}동` : '');
+                let dongPart = bestItem.dongNm || '';
+                if (!dongPart && targetDongNum) {
+                    dongPart = targetDongNum.endsWith('동') ? targetDongNum : `제${targetDongNum}동`;
+                }
                 const matchedTitle = [bldPart, dongPart].filter(Boolean).join(' ') || bestItem.newPlatPlc || bestItem.platPlc || displayAddr;
 
                 let useAprDayFinal = useAprDay;
