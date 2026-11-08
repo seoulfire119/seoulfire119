@@ -13526,9 +13526,12 @@
         }
 
         // 소방시설법 시행령 별표 5 및 첨부 '스프링클러 설비.pdf' 기준 용도별/층수별/연면적별 스프링클러 및 간이스프링클러 의무 설치 기준 판별
-        function evaluateSprinklerByLawAndUsage(mainPurpsCdNm, etcPurps, useAprDayRaw, grndFlrRaw, totAreaRaw, combinedContext = '', bldNameHint = '') {
-            const rawPurps = `${mainPurpsCdNm || ''} ${etcPurps || ''} ${combinedContext || ''} ${bldNameHint || ''}`.trim();
-            
+        function evaluateSprinklerByLawAndUsage(mainPurpsCdNm, etcPurps, useAprDayRaw, grndFlrRaw, totAreaRaw, combinedContext = '', bldNameHint = '', ledgerType = '') {
+            // 119 재난분류 '고층건물(5층이상,아파트)' 텍스트는 건축물 용도 판별 시 아파트 오인 방지를 위해 완전히 제외
+            const cleanContext = String(combinedContext || '')
+                .replace(/고층건물\s*\([^)]*\)/gi, '')
+                .replace(/재난분류[^\n\r]*/gi, '');
+
             // 사용승인일(준공일) 8자리 숫자 파싱
             const digits = String(useAprDayRaw || '').replace(/\D/g, '');
             let ymd = 0;
@@ -13548,18 +13551,137 @@
             const areaClean = String(totAreaRaw || '').replace(/[^0-9.]/g, '');
             const totArea = parseFloat(areaClean) || 0;
 
-            // [최우선 판별] 아파트 및 공동주택
-            // 아파트 단지 표제부 부속시설(어린이집, 경로당 등)로 인한 노유자시설 오판별 원천 차단
-            const isVillaOrMultiHousing = /빌라|다세대|다가구|연립|단독/.test(rawPurps) && !/아파트/.test(rawPurps) && mainPurpsCdNm !== '공동주택';
-            const isApt = !isVillaOrMultiHousing && (
-                mainPurpsCdNm === '공동주택' ||
-                mainPurpsCdNm === '아파트' ||
-                /아파트/.test(bldNameHint) ||
-                /아파트/.test(combinedContext) ||
-                /아파트/.test(rawPurps)
+            const effType = (ledgerType || mainPurpsCdNm || '').trim();
+            const rawPurps = `${effType} ${etcPurps || ''} ${bldNameHint || ''} ${cleanContext}`.trim();
+
+            // 1. 업무시설 / 오피스텔 (최우선 판별: 오피스텔이나 업무시설은 재난분류 '고층건물'의 아파트 키워드에 절대 오염되지 않음)
+            const isOffice = effType === '업무시설' || effType === '오피스텔' ||
+                             /업무시설|오피스텔/.test(mainPurpsCdNm || '') ||
+                             /오피스텔/.test(bldNameHint) ||
+                             /오피스텔/.test(etcPurps) ||
+                             (/오피스텔/.test(cleanContext) && !/아파트|공동주택/.test(effType));
+
+            // 2. 종교시설
+            const isReligion = !isOffice && (
+                effType === '종교시설' ||
+                /종교시설|종교/.test(mainPurpsCdNm || '') ||
+                /종교|교회|성당|사찰|기도원/.test(bldNameHint) ||
+                /종교|교회|성당|사찰|기도원/.test(etcPurps) ||
+                /종교|교회|성당|사찰|기도원/.test(cleanContext)
             );
 
-            // [1] 공동주택 (아파트)
+            // 3. 의료시설 / 요양병원
+            const isNursingHospital = !isOffice && !isReligion && (
+                effType === '요양병원' ||
+                /요양병원/.test(mainPurpsCdNm || '') ||
+                /요양병원/.test(bldNameHint) ||
+                /요양병원/.test(etcPurps) ||
+                /요양병원/.test(cleanContext)
+            );
+            const isMedical = !isOffice && !isReligion && !isNursingHospital && (
+                effType === '의료시설' ||
+                /의료시설|의료/.test(mainPurpsCdNm || '') ||
+                /의료|병원|한의원|치과의원|조산원|산후조리원/.test(bldNameHint) ||
+                /의료|병원|한의원|치과의원|조산원|산후조리원/.test(etcPurps) ||
+                /의료|병원|한의원|치과의원|조산원|산후조리원/.test(cleanContext)
+            );
+
+            // 4. 노유자시설 (주용도가 명확한 노유자시설인 경우에만 적용)
+            const isWelfare = !isOffice && !isReligion && !isNursingHospital && !isMedical && (
+                effType === '노유자시설' ||
+                /노유자시설/.test(mainPurpsCdNm || '') ||
+                (/노유자시설/.test(bldNameHint) && !/아파트|주택/.test(bldNameHint)) ||
+                (/노유자시설/.test(etcPurps) && !/아파트|주택|공동주택/.test(effType + etcPurps)) ||
+                (/노유자시설|어린이집|유치원|양로원/.test(cleanContext) && !/아파트|주택|공동주택|오피스텔/.test(effType))
+            );
+
+            // 5. 숙박시설
+            const isHotel = !isOffice && !isReligion && !isNursingHospital && !isMedical && !isWelfare && (
+                effType === '숙박시설' ||
+                /숙박시설|숙박/.test(mainPurpsCdNm || '') ||
+                /호텔|모텔|여관|여인숙|콘도|리조트/.test(bldNameHint) ||
+                /숙박|호텔|모텔|콘도/.test(etcPurps) ||
+                /호텔|모텔|여관/.test(cleanContext)
+            );
+
+            // 6. 근린생활시설
+            const isComm = !isOffice && !isReligion && !isNursingHospital && !isMedical && !isWelfare && !isHotel && (
+                effType === '근생시설' ||
+                /근린생활시설|근생/.test(mainPurpsCdNm || '') ||
+                /상가|근린생활/.test(bldNameHint) ||
+                /근린생활/.test(etcPurps)
+            );
+
+            // 7. 판매시설 / 운수시설
+            const isSales = !isOffice && !isReligion && !isNursingHospital && !isMedical && !isWelfare && !isHotel && !isComm && (
+                effType === '판매시설' || /판매시설/.test(mainPurpsCdNm || '') || /백화점|쇼핑몰|대형마트/.test(bldNameHint)
+            );
+            const isTransport = !isOffice && !isReligion && !isNursingHospital && !isMedical && !isWelfare && !isHotel && !isComm && (
+                effType === '운수시설' || /운수시설/.test(mainPurpsCdNm || '') || /터미널|역사/.test(bldNameHint)
+            );
+
+            // 8. 창고 / 공장
+            const isWarehouse = !isOffice && !isReligion && !isNursingHospital && !isMedical && !isWelfare && !isHotel && !isComm && (
+                effType === '창고시설' || /창고시설/.test(mainPurpsCdNm || '') || /물류창고|물류센터/.test(bldNameHint)
+            );
+            const isFactory = !isOffice && !isReligion && !isNursingHospital && !isMedical && !isWelfare && !isHotel && !isComm && (
+                effType === '공장' || /공장/.test(mainPurpsCdNm || '')
+            );
+
+            // 9. 공동주택 (아파트 vs 다세대/연립)
+            const isVillaOrMultiHousing = !isOffice && !isReligion && !isNursingHospital && !isMedical && !isWelfare && !isHotel && !isComm && (
+                /다세대주택|연립주택|다가구주택|단독주택/.test(effType) ||
+                (/빌라|다세대|다가구|연립|단독/.test(rawPurps) && !/아파트/.test(rawPurps) && effType !== '아파트')
+            );
+
+            const isApt = !isOffice && !isReligion && !isNursingHospital && !isMedical && !isWelfare && !isHotel && !isComm && !isVillaOrMultiHousing && (
+                effType === '아파트' ||
+                mainPurpsCdNm === '공동주택' ||
+                /아파트/.test(bldNameHint) ||
+                (/아파트/.test(cleanContext) && !/오피스텔|빌라|다세대/.test(cleanContext))
+            );
+
+            // [업무시설 / 오피스텔]
+            if (isOffice) {
+                const facLabel = /오피스텔/.test(rawPurps) ? '업무시설' : '업무시설';
+                if (ymd >= 20180128 && grndFlr >= 6) {
+                    return {
+                        isInstalled: true,
+                        type: 'regular',
+                        text: `스프링클러 전층 설치 (${facLabel} 6층 이상 모든층)`,
+                        detail: '업무시설 - 층수가 6층 이상인 경우 모든 층'
+                    };
+                }
+                if (ymd >= 20050101 && grndFlr >= 11) {
+                    return {
+                        isInstalled: true,
+                        type: 'regular',
+                        text: `스프링클러 전층 설치 (${facLabel} 11층 이상 전층)`,
+                        detail: '업무시설 - 층수가 11층 이상인 경우 전층'
+                    };
+                }
+                if (grndFlr >= 6) {
+                    return {
+                        isInstalled: true,
+                        type: 'regular',
+                        text: `스프링클러 전층 설치 (${facLabel} 6층 이상 모든층)`,
+                        detail: '업무시설 - 층수가 6층 이상인 경우 모든 층'
+                    };
+                }
+                if (totArea >= 1000) {
+                    return {
+                        isInstalled: true,
+                        type: 'regular',
+                        text: `스프링클러 설치 대상 (${facLabel} 1,000㎡ 이상)`,
+                        detail: '업무시설 - 바닥면적 1,000㎡ 이상'
+                    };
+                }
+                if (ymd > 0 && grndFlr > 0 && grndFlr < 6) {
+                    return { isInstalled: false, type: 'none', text: '', detail: '업무시설 - 6층 미만 설치 의무 제외' };
+                }
+            }
+
+            // [공동주택 (아파트)]
             if (isApt) {
                 if (ymd >= 20180128 && grndFlr >= 6) {
                     return {
@@ -13593,7 +13715,7 @@
                 }
             }
 
-            // [2] 연립주택 / 다세대주택 (2024.12.1부터 주택전용 간이스프링클러설비 적용)
+            // [연립주택 / 다세대주택]
             if (isVillaOrMultiHousing) {
                 if (ymd >= 20241201) {
                     return {
@@ -13606,8 +13728,7 @@
                 return { isInstalled: false, type: 'none', text: '', detail: '연립·다세대·빌라: 설치 의무 대상 아님' };
             }
 
-            // [3] 종교시설 (사용자 명시 예시: 종교시설 - 층수가 6층 이상인 모든층)
-            const isReligion = /종교|교회|성당|사찰|기도원|선교원/.test(rawPurps);
+            // [종교시설]
             if (isReligion) {
                 if (ymd >= 20180128 && grndFlr >= 6) {
                     return {
@@ -13638,8 +13759,7 @@
                 }
             }
 
-            // [4] 의료시설 (요양병원은 전수 소급완료)
-            const isNursingHospital = /요양병원/.test(rawPurps);
+            // [의료시설 / 요양병원]
             if (isNursingHospital) {
                 if (totArea >= 600 || grndFlr >= 6) {
                     return {
@@ -13658,7 +13778,6 @@
                 }
             }
 
-            const isMedical = /의료|병원|한의원|치과의원|조산원|산후조리원/.test(rawPurps);
             if (isMedical) {
                 if (ymd >= 20180128 && grndFlr >= 6) {
                     return {
@@ -13686,9 +13805,7 @@
                 }
             }
 
-            // [5] 노유자시설 (주용도가 명확한 노유자시설인 경우에만 적용, 아파트 부속 어린이집 오판정 방지)
-            const isWelfare = (mainPurpsCdNm === '노유자시설' || /노유자/.test(mainPurpsCdNm || '')) ||
-                              (/노유자시설/.test(etcPurps || '') && !/아파트|공동주택|단독주택/.test(rawPurps));
+            // [노유자시설]
             if (isWelfare) {
                 if (ymd >= 20180128 && grndFlr >= 6) {
                     return {
@@ -13716,8 +13833,7 @@
                 }
             }
 
-            // [6] 숙박시설
-            const isHotel = /숙박|호텔|모텔|여관|여인숙|콘도|리조트|고시원/.test(rawPurps);
+            // [숙박시설]
             if (isHotel) {
                 if (ymd >= 20180128 && grndFlr >= 6) {
                     return {
@@ -13753,8 +13869,7 @@
                 }
             }
 
-            // [7] 근린생활시설
-            const isComm = /근린생활|근생|상가/.test(rawPurps);
+            // [근린생활시설]
             if (isComm) {
                 if (ymd >= 20180128 && grndFlr >= 6) {
                     return {
@@ -13774,30 +13889,7 @@
                 }
             }
 
-            // [8] 업무시설
-            const isOffice = /업무|오피스텔|사무소/.test(rawPurps);
-            if (isOffice) {
-                if (ymd >= 20180128 && grndFlr >= 6) {
-                    return {
-                        isInstalled: true,
-                        type: 'regular',
-                        text: '스프링클러 설치 대상 (업무시설 6층 이상 모든층)',
-                        detail: '업무시설 - 층수가 6층 이상인 모든층'
-                    };
-                }
-                if (ymd >= 20050101 && grndFlr >= 11) {
-                    return {
-                        isInstalled: true,
-                        type: 'regular',
-                        text: '스프링클러 설치 대상 (업무시설 11층 이상 전층)',
-                        detail: '업무시설 - 층수가 11층 이상인 경우 전층'
-                    };
-                }
-            }
-
-            // [9] 판매시설 / 운수시설
-            const isSales = /판매|백화점|쇼핑몰|대형마트|시장/.test(rawPurps);
-            const isTransport = /운수|터미널|역사|공항/.test(rawPurps);
+            // [판매시설 / 운수시설]
             if (isSales || isTransport) {
                 const facNm = isSales ? '판매시설' : '운수시설';
                 if (ymd >= 20180128 && grndFlr >= 6) {
@@ -13818,9 +13910,7 @@
                 }
             }
 
-            // [10] 문화및집회시설 / 운동시설
-            const isAssembly = /문화및집회|문화및|집회시설|공연장|집회장|영화관|전시장|동식물원/.test(rawPurps);
-            const isSports = /운동|체육관|수영장|골프연습장/.test(rawPurps);
+            // [문화및집회시설 / 운동시설]
             if (isAssembly || isSports) {
                 const facNm = isAssembly ? '문화및집회시설' : '운동시설';
                 if (ymd >= 20180128 && grndFlr >= 6) {
@@ -13841,9 +13931,7 @@
                 }
             }
 
-            // [11] 창고시설 / 공장
-            const isWarehouse = /창고|물류/.test(rawPurps);
-            const isFactory = /공장|제조업/.test(rawPurps);
+            // [창고시설 / 공장]
             if (isWarehouse || isFactory) {
                 const facNm = isWarehouse ? '창고시설' : '공장';
                 if (ymd >= 20180128 && grndFlr >= 6) {
@@ -13864,7 +13952,7 @@
                 }
             }
 
-            // [12] 교육연구시설
+            // [교육연구시설]
             const isEducation = /교육연구|학교|학원|기숙사/.test(rawPurps);
             if (isEducation) {
                 if (ymd >= 20180128 && grndFlr >= 6) {
@@ -13885,7 +13973,7 @@
                 }
             }
 
-            // [13] 지하상가
+            // [지하상가]
             const isSubway = /지하상가|지하도상가/.test(rawPurps);
             if (isSubway && totArea >= 1000) {
                 return {
@@ -13896,9 +13984,9 @@
                 };
             }
 
-            // [14] 기타 특정소방대상물 (18.1.28 이후 6층 이상 공통 적용)
+            // [기타 특정소방대상물]
             if (ymd >= 20180128 && grndFlr >= 6) {
-                const facNm = mainPurpsCdNm || '특정소방대상물';
+                const facNm = effType || '특정소방대상물';
                 return {
                     isInstalled: true,
                     type: 'regular',
@@ -13930,7 +14018,8 @@
                 grndFlrCnt,
                 totArea,
                 combinedContext,
-                bldNameHint
+                bldNameHint,
+                ledgerType
             );
             if (lawEval && lawEval.isInstalled) {
                 if (lawEval.type === 'simple') {
@@ -14311,7 +14400,8 @@
             const finalArea = (totArea || '').toString().replace(/[^0-9.]/g, '');
             const finalApr = (useAprDay || '').toString().replace(/\D/g, '').substring(0, 8);
 
-            const ledgerSuffix = ledgerType ? ` · ${ledgerType}` : '';
+            // 스프링클러 표기 내에 이미 건물 유형(예: 업무시설, 아파트 등)이 포함되어 있으면 중복 표기 방지
+            const ledgerSuffix = (ledgerType && !sprinklerInfo.includes(ledgerType)) ? ` · ${ledgerType}` : '';
             const spSuffix = sprinklerInfo ? ` · 💦${sprinklerInfo}` : '';
             const statusMsg = `✓ 조회완료 (${statusLabel || '표제부 반영'}${ledgerSuffix}${spSuffix})`;
 
@@ -15391,8 +15481,8 @@
             const combined = `${locText} ${addrText} ${mapText} ${strctText}`;
 
             const curTab = tabs.find(t => t.id === activeTabId);
-            const mainPurps = curTab?.data?.bldLedgerType || '';
-            const spResult = evaluateSprinklerByLawAndUsage(mainPurps, '', aprText, flrText, areaText, combined);
+            const ledgerType = curTab?.data?.bldLedgerType || '';
+            const spResult = evaluateSprinklerByLawAndUsage(ledgerType, '', aprText, flrText, areaText, combined, '', ledgerType);
 
             if (spResult && spResult.isInstalled) {
                 updateSprinklerBadgeUI(spResult.text);
