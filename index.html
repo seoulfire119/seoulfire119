@@ -12998,8 +12998,8 @@
             if (seonchakCandidates.length > 0) {
                 seonchakCandidates.sort((a, b) => a.mins - b.mins);
                 const earliest = seonchakCandidates[0];
-                unitSeonchak.value = earliest.unit || '';
-                timeSeonchak.value = earliest.time || '';
+                if (earliest.unit) unitSeonchak.value = earliest.unit;
+                if (earliest.time) timeSeonchak.value = earliest.time;
             } else {
                 let arrTime = fallbackArrivalHHMM;
                 if (!arrTime) {
@@ -13009,7 +13009,7 @@
                 if (arrTime && isValidHHMM(arrTime)) {
                     timeSeonchak.value = arrTime.replace(/\D/g, '').padStart(4, '0');
                 }
-                unitSeonchak.value = '';
+                // 본문에 소방대 명칭이 없더라도 기존에 입력된 선착대(unitSeonchak.value)는 절대 지우지 않고 유지
             }
 
             // 6. 6번 소방 대응상황에 선착대 명칭/도착시 반영
@@ -13185,9 +13185,7 @@
             return pureParts.join(', ');
         }
 
-        pSection1.addEventListener('input', () => {
-            parseSection1ForTimeline(pSection1.value);
-        });
+
 
         // 소방안전지도 텍스트 파싱 및 전체 필드 자동 세팅
         function parseAndApplySafetyMapText(rawText) {
