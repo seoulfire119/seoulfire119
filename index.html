@@ -14004,65 +14004,30 @@
             return res.isInstalled ? res.text : '';
         }
 
-        // 소방청 특정소방대상물 소방시설정보 오픈API 조회 및 건축물 용도·연도·층수별 법적 설치 의무 기준 종합 판정
+        // 소방청 특정소방대상물 소방시설정보 오픈API 조회 및 법령 설치기준 2단계 순차 판정
+        // [1차 반영] 오픈API 특정소방대상물소방시설정보서비스(getAccomFirefightingSysList)에 건물이 조회되면 실제 등록 소방시설을 최우선 반영
+        // [2차 반영] 특정소방대상물소방시설정보서비스에 조회가 없을 경우에만 건축물 용도·연도·층수별 법령 설치기준에 따라 판정
         async function checkSprinklerInstalledFromApi(combinedContext, useAprDay, bldNameHint, roadNameKeyword, ledgerType = '', grndFlrCnt = '', totArea = '', mainPurpsCdNm = '', etcPurps = '') {
-            let regularSprinklerInstalled = false;
-            let regularSprinklerText = '';
-            let simpleSprinklerInstalled = false;
+            const cleanContext = String(combinedContext || '')
+                .replace(/고층건물\s*\([^)]*\)/gi, '')
+                .replace(/재난분류[^\n\r]*/gi, '');
 
-            // 1) 법정 스프링클러/간이스프링클러 설치 기준 판별 (첨부 '스프링클러 설비.pdf' 전수 반영)
-            const lawEval = evaluateSprinklerByLawAndUsage(
-                mainPurpsCdNm || ledgerType,
-                etcPurps,
-                useAprDay,
-                grndFlrCnt,
-                totArea,
-                combinedContext,
-                bldNameHint,
-                ledgerType
-            );
-            if (lawEval && lawEval.isInstalled) {
-                if (lawEval.type === 'simple') {
-                    simpleSprinklerInstalled = true;
-                    regularSprinklerText = lawEval.text;
-                } else {
-                    regularSprinklerInstalled = true;
-                    regularSprinklerText = lawEval.text;
-                }
-            }
-
-            // 2) 안전지도 원문 및 컨텍스트 텍스트에서 명시적인 스프링클러 / 간이 스프링클러 언급 확인
-            const hasSimpleCtx = /(?:간이\s*스프링클러|간이\s*S\/?P|간이형\s*스프링클러)/i.test(combinedContext);
-            const simpleNotInstalled = /(?:간이\s*스프링클러|간이\s*S\/?P|간이형\s*스프링클러)\s*(?:미설치|미작동|무)/i.test(combinedContext);
-            if (hasSimpleCtx && !simpleNotInstalled) {
-                simpleSprinklerInstalled = true;
-                if (!regularSprinklerText) regularSprinklerText = '간이 스프링클러 설치';
-            }
-
-            const cleanCtxWithoutSimple = combinedContext.replace(/(?:간이\s*스프링클러|간이\s*S\/?P|간이형\s*스프링클러)/gi, '');
-            const hasRegularCtx = /(?:스프링클러|S\/P)\s*(?:설치|작동|완비|유)/i.test(cleanCtxWithoutSimple);
-            const regularNotInstalled = /(?:스프링클러|S\/P)\s*(?:미설치|미작동|무)/i.test(cleanCtxWithoutSimple);
-            if (hasRegularCtx && !regularNotInstalled) {
-                regularSprinklerInstalled = true;
-                if (!regularSprinklerText) regularSprinklerText = '스프링클러 설치';
-            }
-
-            const fullContextString = `${ledgerType} ${combinedContext} ${bldNameHint} ${titleLocInput ? titleLocInput.value : ''}`;
+            const fullContextString = `${ledgerType} ${cleanContext} ${bldNameHint} ${titleLocInput ? titleLocInput.value : ''}`;
             const isVillaOrMultiHousing = /빌라|다세대|다가구|연립|단독/.test(fullContextString) ||
                                           ['다세대주택', '다가구주택', '연립주택', '단독주택'].includes(ledgerType);
 
-            // [가드레일] 빌라, 다세대주택, 다가구주택, 연립주택:
-            // 2024.12.1 이후 주택전용 간이SP 법정 대상이거나 명시적 설치가 아니면 외부 API 오매칭 차단
-            if (isVillaOrMultiHousing && (!lawEval || !lawEval.isInstalled)) {
-                if (regularSprinklerInstalled) return regularSprinklerText || '스프링클러 설치';
-                if (simpleSprinklerInstalled) return '간이 스프링클러 설치';
-                return '';
-            }
-
-            // 3) 소방청 특정소방대상물 소방시설정보 오픈API 조회
+            // =========================================================================================
+            // 1단계: 오픈API 특정소방대상물소방시설정보서비스 조회 (1차 최우선 반영)
+            // =========================================================================================
             const aprYear = (useAprDay && /^\d{4}/.test(String(useAprDay))) ? String(useAprDay).substring(0, 4) : '';
             const urlsToTry = [];
 
+            if (bldNameHint && bldNameHint.length >= 2) {
+                urlsToTry.push(`${FIRE_SYS_API_URL}?serviceKey=${encodeURIComponent(BLD_HUB_SERVICE_KEY)}&numOfRows=100&pageNo=1&resultType=xml&ctpvNm=${encodeURIComponent('서울특별시')}&fireObjNm=${encodeURIComponent(bldNameHint)}`);
+            }
+            if (roadNameKeyword && roadNameKeyword.length >= 3) {
+                urlsToTry.push(`${FIRE_SYS_API_URL}?serviceKey=${encodeURIComponent(BLD_HUB_SERVICE_KEY)}&numOfRows=100&pageNo=1&resultType=xml&ctpvNm=${encodeURIComponent('서울특별시')}&ronmAddr=${encodeURIComponent(roadNameKeyword)}`);
+            }
             if (aprYear) {
                 urlsToTry.push(`${FIRE_SYS_API_URL}?serviceKey=${encodeURIComponent(BLD_HUB_SERVICE_KEY)}&numOfRows=100&pageNo=1&resultType=xml&ctpvNm=${encodeURIComponent('서울특별시')}&useAprvY=${encodeURIComponent(aprYear)}`);
             }
@@ -14128,11 +14093,11 @@
                     let score = 0;
                     let hasHighConfidenceMatch = false;
 
-                    if (roadNameKeyword && roadNameKeyword.length >= 3 && dump.includes(roadNameKeyword)) {
-                        score += 30;
+                    if (bldNameHint && bldNameHint.length >= 2 && dump.includes(bldNameHint)) {
+                        score += 50;
                         hasHighConfidenceMatch = true;
                     }
-                    if (bldNameHint && bldNameHint.length >= 2 && dump.includes(bldNameHint)) {
+                    if (roadNameKeyword && roadNameKeyword.length >= 3 && dump.includes(roadNameKeyword)) {
                         score += 40;
                         hasHighConfidenceMatch = true;
                     }
@@ -14148,35 +14113,85 @@
 
                 const targetItem = (bestScore >= 30) ? bestMatch : null;
                 if (targetItem) {
+                    let apiSprinklerInstalled = false;
+                    let apiSimpleSprinklerInstalled = false;
+                    let apiScopeText = '';
+
                     const entries = Object.entries(targetItem);
                     for (const [k, v] of entries) {
                         const keyLower = k.toLowerCase();
                         const valStr = String(v).trim();
-                        const valPositive = (valStr === 'Y' || valStr === '유' || valStr === '설치' || (parseInt(valStr, 10) > 0));
+                        const valPositive = (valStr === 'Y' || valStr === '유' || valStr === '설치' || valStr === '전층' || valStr.includes('설치') || (parseInt(valStr, 10) > 0));
 
                         const isSimpleKey = keyLower.includes('간이') || keyLower.includes('smp') || keyLower.includes('simple');
                         const isSprkKey = keyLower.includes('sprk') || keyLower.includes('spkl') || keyLower.includes('sprinkler') || keyLower.includes('스프링클러') || keyLower.includes('sp');
+                        const isScopeKey = keyLower.includes('scope') || keyLower.includes('범위') || keyLower.includes('설치구역');
+
+                        if (isScopeKey && valStr && !valStr.includes('미설치') && !valStr.includes('무')) {
+                            apiScopeText = valStr;
+                        }
 
                         if (isSimpleKey && isSprkKey) {
-                            if (valPositive || (valStr.includes('간이') && valStr.includes('스프링클러') && !valStr.includes('미설치') && !valStr.includes('무'))) {
-                                simpleSprinklerInstalled = true;
-                                if (!regularSprinklerText) regularSprinklerText = '간이 스프링클러 설치 (소방청 등록 확인)';
+                            if (valPositive && !valStr.includes('미설치') && !valStr.includes('무')) {
+                                apiSimpleSprinklerInstalled = true;
                             }
                         } else if (isSprkKey && !isSimpleKey) {
-                            if (valPositive || (valStr.includes('스프링클러') && !valStr.includes('간이') && !valStr.includes('미설치') && !valStr.includes('무'))) {
-                                regularSprinklerInstalled = true;
-                                if (!regularSprinklerText) regularSprinklerText = '스프링클러 설치 (소방청 등록 확인)';
+                            if (valPositive && !valStr.includes('간이') && !valStr.includes('미설치') && !valStr.includes('무')) {
+                                apiSprinklerInstalled = true;
                             }
                         }
                     }
+
+                    // 특정소방대상물 소방시설정보 오픈API에 건물이 조회되고 스프링클러 설비가 확인되면 1차로 이것만 단독 반영!
+                    if (apiSprinklerInstalled) {
+                        if (apiScopeText && (apiScopeText.includes('전층') || apiScopeText.includes('전 층'))) {
+                            return '전층 스프링클러설치';
+                        }
+                        const grnd = parseInt(grndFlrCnt || '0', 10);
+                        if (grnd >= 6) {
+                            return '전층 스프링클러설치';
+                        }
+                        return '스프링클러설치';
+                    }
+                    if (apiSimpleSprinklerInstalled) {
+                        return '간이스프링클러설치';
+                    }
+                    // 소방시설정보 API에 건물은 존재하나 스프링클러 설비가 명시적으로 없으면 미설치로 확정 반환
+                    return '';
                 }
             }
 
-            if (regularSprinklerInstalled) {
-                return regularSprinklerText || '스프링클러 설치';
+            // =========================================================================================
+            // 2단계: 특정소방대상물 소방시설정보서비스에 조회가 없을 경우: 법령 설치기준 적용 (2차 반영)
+            // =========================================================================================
+            // 빌라, 다세대주택, 다가구주택, 연립주택: 2024.12.1 이후 주택전용 간이SP 법정 대상이 아니면 미설치
+            const lawEval = evaluateSprinklerByLawAndUsage(
+                mainPurpsCdNm || ledgerType,
+                etcPurps,
+                useAprDay,
+                grndFlrCnt,
+                totArea,
+                cleanContext,
+                bldNameHint,
+                ledgerType
+            );
+
+            if (lawEval && lawEval.isInstalled) {
+                return lawEval.text;
             }
-            if (simpleSprinklerInstalled) {
-                return regularSprinklerText || '간이 스프링클러 설치';
+
+            // 안전지도 원문 텍스트 명시 기록 확인 (보조)
+            const hasSimpleCtx = /(?:간이\s*스프링클러|간이\s*S\/?P|간이형\s*스프링클러)/i.test(combinedContext);
+            const simpleNotInstalled = /(?:간이\s*스프링클러|간이\s*S\/?P|간이형\s*스프링클러)\s*(?:미설치|미작동|무)/i.test(combinedContext);
+            if (hasSimpleCtx && !simpleNotInstalled) {
+                return '간이스프링클러설치';
+            }
+
+            const cleanCtxWithoutSimple = combinedContext.replace(/(?:간이\s*스프링클러|간이\s*S\/?P|간이형\s*스프링클러)/gi, '');
+            const hasRegularCtx = /(?:스프링클러|S\/P)\s*(?:설치|작동|완비|유)/i.test(cleanCtxWithoutSimple);
+            const regularNotInstalled = /(?:스프링클러|S\/P)\s*(?:미설치|미작동|무)/i.test(cleanCtxWithoutSimple);
+            if (hasRegularCtx && !regularNotInstalled) {
+                return '스프링클러설치';
             }
 
             return '';
@@ -14400,10 +14415,9 @@
             const finalArea = (totArea || '').toString().replace(/[^0-9.]/g, '');
             const finalApr = (useAprDay || '').toString().replace(/\D/g, '').substring(0, 8);
 
-            // 스프링클러 표기 내에 이미 건물 유형(예: 업무시설, 아파트 등)이 포함되어 있으면 중복 표기 방지
-            const ledgerSuffix = (ledgerType && !sprinklerInfo.includes(ledgerType)) ? ` · ${ledgerType}` : '';
+            // 스프링클러 정보 및 건물명이 중복 나열되지 않도록 단일하고 명확하게 반영
             const spSuffix = sprinklerInfo ? ` · 💦${sprinklerInfo}` : '';
-            const statusMsg = `✓ 조회완료 (${statusLabel || '표제부 반영'}${ledgerSuffix}${spSuffix})`;
+            const statusMsg = `✓ 조회완료 (${statusLabel || '표제부 반영'}${spSuffix})`;
 
             // 1. 해당 탭의 data 객체에 독립 저장
             if (!targetTab.data) targetTab.data = {};
@@ -15471,6 +15485,12 @@
         });
 
         function syncSprinklerFromInputs() {
+            const curTab = tabs.find(t => t.id === activeTabId);
+            // 1차 특정소방대상물소방시설정보서비스 오픈API에서 확인된 정보(예: 전층 스프링클러설치 등)가 이미 있으면 유지
+            if (curTab?.data?.bldSprinkler && !curTab.data.bldSprinkler.includes('(')) {
+                return;
+            }
+
             const locText = titleLocInput ? titleLocInput.value : '';
             const addrText = eventAddrInput ? eventAddrInput.value : '';
             const mapText = safetyMapRawInput ? safetyMapRawInput.value : '';
@@ -15480,7 +15500,6 @@
             const aprText = bldAprDateInput ? bldAprDateInput.value : '';
             const combined = `${locText} ${addrText} ${mapText} ${strctText}`;
 
-            const curTab = tabs.find(t => t.id === activeTabId);
             const ledgerType = curTab?.data?.bldLedgerType || '';
             const spResult = evaluateSprinklerByLawAndUsage(ledgerType, '', aprText, flrText, areaText, combined, '', ledgerType);
 
