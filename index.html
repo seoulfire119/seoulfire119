@@ -3800,14 +3800,14 @@
                 typeBadge: '대용량 배수',
                 station: '강남, 양천',
                 spec: '• 배수양정 : 30m에서 3.5톤/분, 5m에서 50톤/분\n• 대용량 배수, 대형 화재진압, 소방차량 급수지원',
-                imgUrl: 'https://newsx.ecn.cdn.infralab.net/www.fpn119.co.kr/imgdata/fpn119_co_kr/202605/202605290347482.jpg'
+                imgUrl: 'https://www.winusrna.com/data/file/sub0203/1935168685_o9yIBlFO_f1e6b6151aa0645ceb1e8dfeed96f8abc81753bf.jpg'
             },
             {
                 name: '저상형 소방차',
                 typeBadge: '지하특화',
                 station: '동작, 강북, 동대문, 송파',
                 spec: '• 차량높이 2.15m, 지하주차장 진입가능\n• 물탱크 용량 : 1,200ℓ, 운행중 방수, 양압필터 적용\n• 도강능력 80Cm으로 침수지역 및 산악지역 운영',
-                imgUrl: 'https://image.newdaily.co.kr/site/data/img/2026/02/26/2026022600391_0.jpg'
+                imgUrl: 'https://image.news1.kr/system/photos/2026/2/26/7769780/high.jpg'
             },
             {
                 name: '음압배연차',
@@ -13223,6 +13223,7 @@
             try {
 
             // 1. 재난종별 -> 1번 재난 유형
+            let isRescueDisaster = false;
             try {
                 const typeMatch = rawText.match(/\[?\s*재난종별\s*\]?[ \t:]*([^\s\n\r\]]+)/);
                 if (typeMatch) {
@@ -13238,6 +13239,9 @@
                     } else {
                         titleTypeSelect.value = '기타';
                     }
+                }
+                if (titleTypeSelect.value === '구조') {
+                    isRescueDisaster = true;
                 }
             } catch (e1) { console.warn('재난종별 파싱 예외:', e1); }
 
@@ -13306,8 +13310,19 @@
                 }
 
                 if (guName) {
-                    titleLocInput.value = guName;
-                    lastExtractedDistrictWithSpace = `${guName} `;
+                    // 재난유형이 구조이고 신고내용에 교통사고 관련 키워드가 있는 경우 "구명칭 교통사고"로 세팅
+                    const trafficAccidentRegex = /교통사고|\d+중\s*추돌|다중\s*추돌|단독\s*사고|차\s*대\s*전봇대|차\s*\+\s*전봇대|차량\s*추돌|차량\s*전복|차량\s*충돌|차량\s*단독|차\s*대\s*차|차\s*대\s*보행자|차\s*대\s*사람|차\s*대\s*오토|트럭\s*\+\s*오토|승용차\s*\+\s*오토/i;
+                    const catTrafficMatch = rawText.match(/재난분류[ \t:]*([^\s\n\r]+)/);
+                    const isTrafficClassification = catTrafficMatch && catTrafficMatch[1].includes('교통');
+                    const hasTrafficKeyword = trafficAccidentRegex.test(contentRawText) || trafficAccidentRegex.test(rawText) || isTrafficClassification;
+
+                    if (isRescueDisaster && hasTrafficKeyword) {
+                        titleLocInput.value = `${guName} 교통사고`;
+                        lastExtractedDistrictWithSpace = `${guName} `;
+                    } else {
+                        titleLocInput.value = guName;
+                        lastExtractedDistrictWithSpace = `${guName} `;
+                    }
                 }
 
                 if (rawRoadVal) {
