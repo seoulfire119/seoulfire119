@@ -14446,6 +14446,7 @@
             }
 
             // 컨텍스트 보조 판별 (bestItem이 없을 때)
+            if (/단독\s*주택|일반화재\s*\(주택\)|주택/.test(combinedContext) && !/아파트|공동주택|오피스텔/.test(combinedContext)) return '단독주택';
             if (/아파트/.test(combinedContext)) return '아파트';
             if (/다세대|빌라/.test(combinedContext)) return '다세대주택';
             if (/연립/.test(combinedContext)) return '연립주택';
@@ -14770,11 +14771,13 @@
             if (!fullContext) return '';
             const s = String(fullContext);
 
-            // 1) 법정동주소 또는 도로명주소 뒤에 기재된 상호/건물명 (예: "상월곡동 7-114 장명의원,", "봉천동 881-2 지번 오피스텔")
-            const mAddrBld = s.match(/법정동주소[ \t:]*[가-힣A-Za-z0-9\s]+?\d{1,4}(?:-\d{1,4})?\s+([가-힣A-Za-z0-9]{2,20})/);
+            const EXCLUDED_BLD_WORDS = /^(?:도로명주소|법정동주소|취약지역|화재예방|화재취약|중점시설|노유자|통행불가|신고자연락처|신고자|연락처|관할서|안전센터|출동정보|출동차량|재난종별|재난분류|신고접수|출동지령|현장도착|종결일시|인근|인근건물|북서|남동|남서|북동|지하|지상|없음|미상|-)$/;
+
+            // 1) 법정동주소 또는 도로명주소 뒤(동일 줄)에 기재된 상호/건물명 (예: "상월곡동 7-114 장명의원,", "봉천동 881-2 오피스텔")
+            const mAddrBld = s.match(/법정동주소[ \t:]*[가-힣A-Za-z0-9 \t]+?\d{1,4}(?:-\d{1,4})?[ \t]+([가-힣A-Za-z0-9]{2,20})/);
             if (mAddrBld) {
                 const bld = mAddrBld[1].replace(/[,(].*$/, '').trim();
-                if (bld.length >= 2 && !/^(?:인근|인근건물|북서|남동|남서|북동|지하|지상|없음|미상)$/.test(bld)) {
+                if (bld.length >= 2 && !EXCLUDED_BLD_WORDS.test(bld)) {
                     return bld;
                 }
             }
@@ -14877,7 +14880,7 @@
                 if (itemBunPad === targetBunPad && itemJiPad === targetJiPad) {
                     score += 200;
                     isAddressMatched = true;
-                } else if (itemBunPad === targetBunPad && targetJiPad === '0000') {
+                } else if (itemBunPad === targetBunPad && targetJiPad === '0000' && (itemJiPad === '0000' || !it.ji)) {
                     score += 120;
                     isAddressMatched = true;
                 } else {
@@ -14887,8 +14890,10 @@
                     if (exactJibunRegex.test(platRaw)) {
                         score += 180;
                         isAddressMatched = true;
+                    } else if (targetJiPad !== '0000' && itemJiPad !== targetJiPad) {
+                        score -= 300; // 부번이 명시되었는데 다른 부번(또는 본번 단독 아파트단지 등)이면 완전히 다른 필지이므로 강력 배제!
                     } else if (itemBunPad && itemBunPad !== targetBunPad) {
-                        score -= 150; // 다른 번지 건물은 강력 배제
+                        score -= 200; // 다른 번지 건물은 강력 배제
                     }
                 }
             }
@@ -15006,11 +15011,18 @@
             const queryUrls = [];
             if (bjdongCd && bun) {
                 if (ji && ji !== '0000') {
+                    // 부번(ji)이 명시된 경우 해당 부번(bun-ji)만 정밀 조회 (부번 없이 본번만 조회하여 다른 단지/아파트가 오매칭되는 현상 차단)
                     queryUrls.push(`${BLD_HUB_API_URL}?sigunguCd=${sigunguCd}&bjdongCd=${bjdongCd}&platGbCd=${platGbCd}&bun=${bun}&ji=${ji}&numOfRows=500&pageNo=1&serviceKey=${BLD_HUB_SERVICE_KEY}`);
                     queryUrls.push(`${BLD_HUB_API_URL}?sigunguCd=${sigunguCd}&bjdongCd=${bjdongCd}&bun=${bun}&ji=${ji}&numOfRows=500&pageNo=1&serviceKey=${BLD_HUB_SERVICE_KEY}`);
+                    const bunInt = String(parseInt(bun, 10));
+                    const jiInt = String(parseInt(ji, 10));
+                    if (bunInt !== bun || jiInt !== ji) {
+                        queryUrls.push(`${BLD_HUB_API_URL}?sigunguCd=${sigunguCd}&bjdongCd=${bjdongCd}&bun=${bunInt}&ji=${jiInt}&numOfRows=500&pageNo=1&serviceKey=${BLD_HUB_SERVICE_KEY}`);
+                    }
+                } else {
+                    queryUrls.push(`${BLD_HUB_API_URL}?sigunguCd=${sigunguCd}&bjdongCd=${bjdongCd}&platGbCd=${platGbCd}&bun=${bun}&numOfRows=500&pageNo=1&serviceKey=${BLD_HUB_SERVICE_KEY}`);
+                    queryUrls.push(`${BLD_HUB_API_URL}?sigunguCd=${sigunguCd}&bjdongCd=${bjdongCd}&bun=${bun}&numOfRows=500&pageNo=1&serviceKey=${BLD_HUB_SERVICE_KEY}`);
                 }
-                queryUrls.push(`${BLD_HUB_API_URL}?sigunguCd=${sigunguCd}&bjdongCd=${bjdongCd}&platGbCd=${platGbCd}&bun=${bun}&numOfRows=500&pageNo=1&serviceKey=${BLD_HUB_SERVICE_KEY}`);
-                queryUrls.push(`${BLD_HUB_API_URL}?sigunguCd=${sigunguCd}&bjdongCd=${bjdongCd}&bun=${bun}&numOfRows=500&pageNo=1&serviceKey=${BLD_HUB_SERVICE_KEY}`);
             } else if (bjdongCd) {
                 queryUrls.push(`${BLD_HUB_API_URL}?sigunguCd=${sigunguCd}&bjdongCd=${bjdongCd}&numOfRows=500&pageNo=1&serviceKey=${BLD_HUB_SERVICE_KEY}`);
             }
@@ -15071,7 +15083,7 @@
                             if (parsed.length > 0) {
                                 // 실제 도로명주소 또는 지번주소가 일치하는 후보가 있는지 확인
                                 const scored = parsed.map(it => ({ it, ...scoreBuildingCandidate(it, scoreTarget) }));
-                                const validMatches = scored.filter(x => x.isAddressMatched || x.score >= 100);
+                                const validMatches = scored.filter(x => x.isAddressMatched && x.score > 0);
 
                                 if (validMatches.length > 0) {
                                     matchedItems = validMatches;
@@ -15098,8 +15110,6 @@
                                     } else {
                                         break outerLoop;
                                     }
-                                } else if (matchedItems.length === 0 && bun) {
-                                    matchedItems = scored;
                                 }
                             }
                         }
@@ -15139,20 +15149,21 @@
 
             // 공공데이터포털에서 일치하는 건물이 없을 때 엉뚱한 다른 번지 건물을 넣지 않고 입력 주소 기준 기본값 세팅
             setBldFetchStatus(`✓ 조회완료 (${displayAddr})`, '#059669');
-            let floorHintGround = 5;
-            let floorHintUnder = 1;
+            const fallbackLedgerType = resolveBuildingLedgerType(null, combinedContext);
+            const defaultStrct = (fallbackLedgerType === '단독주택' || fallbackLedgerType === '다가구주택') ? '벽돌구조' : '철근콘크리트구조';
+
+            let floorHintGround = (fallbackLedgerType === '단독주택' || fallbackLedgerType === '다가구주택') ? 2 : 5;
+            let floorHintUnder = 0;
             const underHintM = combinedContext.match(/지하\s*(\d+)\s*층/) || combinedContext.match(/B(\d+)층?/i);
             if (underHintM) floorHintUnder = parseInt(underHintM[1], 10) || 1;
             const groundHintM = combinedContext.match(/(?:지상\s*)?(\d+)\s*층/);
-            if (groundHintM) floorHintGround = parseInt(groundHintM[1], 10) || 5;
-
-            const fallbackLedgerType = resolveBuildingLedgerType(null, combinedContext);
+            if (groundHintM) floorHintGround = parseInt(groundHintM[1], 10) || floorHintGround;
             const spResultFallback = await checkSprinklerInstalledFromApi(combinedContext, (bldAprDateInput ? bldAprDateInput.value : ''), bldNameHint, roadFullKeyword, fallbackLedgerType, String(floorHintGround), (bldAreaInput ? bldAreaInput.value : ''), fallbackLedgerType, '');
             const spInstalledFallback = (typeof spResultFallback === 'object' && spResultFallback) ? (spResultFallback.text || '') : (spResultFallback || '');
             const spDetailFallback = (typeof spResultFallback === 'object' && spResultFallback) ? (spResultFallback.detail || '') : '';
             applyFetchedBuildingDataToTab(
                 reqTabId,
-                '철근콘크리트구조',
+                defaultStrct,
                 String(floorHintGround),
                 String(floorHintUnder),
                 '-',
