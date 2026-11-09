@@ -13590,7 +13590,7 @@
         }
 
         // 소방시설법 시행령 별표 5 및 첨부 '스프링클러 설비.pdf' 기준 용도별/층수별/연면적별 스프링클러 및 간이스프링클러 의무 설치 기준 판별
-        function evaluateSprinklerByLawAndUsage(mainPurpsCdNm, etcPurps, useAprDayRaw, grndFlrRaw, totAreaRaw, combinedContext = '', bldNameHint = '', ledgerType = '') {
+        function evaluateSprinklerByLawAndUsage(mainPurpsCdNm, etcPurps, useAprDayRaw, grndFlrRaw, totAreaRaw, combinedContext = '', bldNameHint = '', ledgerType = '', archAreaRaw = 0) {
             const cleanContext = String(combinedContext || '')
                 .replace(/고층건물\s*\([^)]*\)/gi, '')
                 .replace(/재난분류[^\n\r]*/gi, '');
@@ -13605,11 +13605,21 @@
                 if (ymdStr.length === 8) ymd = parseInt(ymdStr, 10);
             }
             
-            const flrPart = String(grndFlrRaw || '').split('/')[0].replace(/\D/g, '');
+            const flrStr = String(grndFlrRaw || '');
+            const flrPart = flrStr.split('/')[0].replace(/\D/g, '');
             const grndFlr = parseInt(flrPart, 10) || 0;
+            const ugrndPart = flrStr.includes('/') ? flrStr.split('/')[1].replace(/\D/g, '') : '0';
+            const ugrndFlr = parseInt(ugrndPart, 10) || 0;
+            const totalFlr = Math.max(1, (grndFlr > 0 ? grndFlr : 1) + (ugrndFlr > 0 ? ugrndFlr : 0));
             
             const areaClean = String(totAreaRaw || '').replace(/[^0-9.]/g, '');
             const totArea = parseFloat(areaClean) || 0;
+
+            const archClean = String(archAreaRaw || '').replace(/[^0-9.]/g, '');
+            const archArea = parseFloat(archClean) || 0;
+
+            // 각 층 바닥면적 산출: 건축면적(archArea)이 있으면 이를 우선 반영하고, 없을 경우 전체 연면적을 총 층수로 나눈 1개 층 평균 바닥면적으로 판정
+            const floorArea = archArea > 0 ? archArea : (totalFlr > 0 ? (totArea / totalFlr) : totArea);
 
             const effType = (ledgerType || mainPurpsCdNm || '').trim();
             const rawPurps = `${effType} ${etcPurps || ''} ${bldNameHint || ''} ${cleanContext}`.trim();
@@ -13688,7 +13698,15 @@
                 effType === '공장' || /공장/.test(mainPurpsCdNm || '')
             );
 
-            // 9. 공동주택
+            // 9. 문화및집회시설 / 운동시설
+            const isAssembly = !isOffice && !isReligion && !isNursingHospital && !isMedical && !isWelfare && !isHotel && !isComm && (
+                effType === '문화및집회시설' || /문화및집회|집회시설|공연장|관람장|전시장/.test(mainPurpsCdNm || '') || /공연장|집회장|영화관/.test(bldNameHint)
+            );
+            const isSports = !isOffice && !isReligion && !isNursingHospital && !isMedical && !isWelfare && !isHotel && !isComm && (
+                effType === '운동시설' || /운동시설|체육/.test(mainPurpsCdNm || '') || /체육관|볼링장|수영장|헬스/.test(bldNameHint)
+            );
+
+            // 10. 공동주택
             const isVillaOrMultiHousing = !isOffice && !isReligion && !isNursingHospital && !isMedical && !isWelfare && !isHotel && !isComm && (
                 /다세대주택|연립주택|다가구주택|단독주택/.test(effType) ||
                 (/빌라|다세대|다가구|연립|단독/.test(rawPurps) && !/아파트/.test(rawPurps) && effType !== '아파트')
@@ -13727,15 +13745,15 @@
                         detail: '[적용기준: 업무시설 (`18.1.28) 층수가 6층 이상인 경우 모든 층]'
                     };
                 }
-                if (totArea >= 1000) {
+                if (grndFlr >= 4 && floorArea >= 1000) {
                     return {
                         isInstalled: true,
                         type: 'regular',
                         text: '스프링클러 설치',
-                        detail: '[적용기준: 업무시설 바닥면적 1,000㎡ 이상]'
+                        detail: '[적용기준: 업무시설 4층 이상 층 바닥면적 1,000㎡ 이상]'
                     };
                 }
-                return { isInstalled: false, type: 'none', text: '', detail: '업무시설 - 6층 미만 및 면적 기준 미달로 설치 의무 제외' };
+                return { isInstalled: false, type: 'none', text: '', detail: '업무시설 - 6층 미만 및 바닥면적 기준 미달로 설치 의무 제외' };
             }
 
             // [공동주택 (아파트)]
@@ -13790,7 +13808,7 @@
                         detail: '[적용기준: 종교시설 (`18.1.28) 층수가 6층 이상인 경우 모든 층]'
                     };
                 }
-                if (totArea >= 1000 || totArea >= 460) {
+                if (floorArea >= 460 || (grndFlr >= 4 && floorArea >= 1000)) {
                     return {
                         isInstalled: true,
                         type: 'regular',
@@ -13798,7 +13816,7 @@
                         detail: '[적용기준: 종교시설 수용인원 100명(460㎡) 또는 바닥면적 1,000㎡ 이상]'
                     };
                 }
-                return { isInstalled: false, type: 'none', text: '', detail: '종교시설 - 6층 미만 및 면적 기준 미달로 설치 의무 제외' };
+                return { isInstalled: false, type: 'none', text: '', detail: '종교시설 - 6층 미만 및 바닥면적 기준 미달로 설치 의무 제외' };
             }
 
             // [의료시설 / 요양병원]
@@ -13829,7 +13847,7 @@
                         detail: '[적용기준: 의료시설 (`18.1.28) 층수가 6층 이상인 경우 모든 층]'
                     };
                 }
-                if (totArea >= 600) {
+                if (totArea >= 600 || floorArea >= 600) {
                     return {
                         isInstalled: true,
                         type: 'regular',
@@ -13837,7 +13855,7 @@
                         detail: '[적용기준: 의료시설 (`19.8.6) 바닥면적 600㎡ 이상 모든 층]'
                     };
                 }
-                if (totArea > 0 && totArea < 600 && /입원실/.test(rawPurps)) {
+                if (totArea > 0 && /입원실/.test(rawPurps)) {
                     return {
                         isInstalled: true,
                         type: 'simple',
@@ -13858,7 +13876,7 @@
                         detail: '[적용기준: 노유자시설 (`18.1.28) 층수가 6층 이상인 경우 모든 층]'
                     };
                 }
-                if (totArea >= 600) {
+                if (totArea >= 600 || floorArea >= 600) {
                     return {
                         isInstalled: true,
                         type: 'regular',
@@ -13895,7 +13913,7 @@
                         detail: '[적용기준: 숙박시설 (`05.1.1) 층수가 11층 이상 전층]'
                     };
                 }
-                if (totArea >= 600 && ymd >= 20221201) {
+                if ((totArea >= 600 || floorArea >= 600) && ymd >= 20221201) {
                     return {
                         isInstalled: true,
                         type: 'regular',
@@ -13903,7 +13921,7 @@
                         detail: '[적용기준: 숙박시설 (`22.12.1) 바닥면적 600㎡ 이상 모든 층]'
                     };
                 }
-                if (totArea >= 300 && totArea < 600) {
+                if ((totArea >= 300 || floorArea >= 300) && (totArea < 600 || floorArea < 600)) {
                     return {
                         isInstalled: true,
                         type: 'simple',
@@ -13925,7 +13943,7 @@
                     };
                 }
                 if (/조산원|산후조리원/.test(rawPurps)) {
-                    if (totArea >= 600) {
+                    if (floorArea >= 600 || totArea >= 600) {
                         return {
                             isInstalled: true,
                             type: 'regular',
@@ -13949,7 +13967,8 @@
                         detail: '[적용기준: 의원급 (`19.8.6) 입원실이 있는 시설]'
                     };
                 }
-                if (totArea >= 1000) {
+                // 바닥면적의 합계가 1,000㎡ 이상 모든 층: 연면적이 아닌 각 층 바닥면적(또는 단층 바닥면적)이 1,000㎡ 이상일 때만 적용!
+                if (floorArea >= 1000) {
                     return {
                         isInstalled: true,
                         type: 'simple',
@@ -13957,7 +13976,7 @@
                         detail: '[적용기준: 근린생활시설 (`04.5.30) 바닥면적 1,000㎡ 이상 모든 층]'
                     };
                 }
-                return { isInstalled: false, type: 'none', text: '', detail: '근린생활시설 - 6층 미만 및 1,000㎡ 미만 설치 의무 제외' };
+                return { isInstalled: false, type: 'none', text: '', detail: '근린생활시설 - 6층 미만 및 각 층 바닥면적(1,000㎡) 기준 미달로 설치 의무 제외' };
             }
 
             // [판매시설 / 운수시설]
@@ -13971,12 +13990,12 @@
                         detail: `[적용기준: ${facNm} (\`18.1.28) 층수가 6층 이상인 경우 모든 층]`
                     };
                 }
-                if (totArea >= 5000) {
+                if (totArea >= 5000 || floorArea >= 1500) {
                     return {
                         isInstalled: true,
                         type: 'regular',
                         text: '스프링클러 설치',
-                        detail: `[적용기준: ${facNm} 바닥면적 5,000㎡ 이상 모든 층]`
+                        detail: `[적용기준: ${facNm} 바닥면적 합계 5,000㎡ 이상 또는 1,500㎡ 이상 모든 층]`
                     };
                 }
                 return { isInstalled: false, type: 'none', text: '', detail: `${facNm} - 설치 의무 제외` };
@@ -13993,15 +14012,15 @@
                         detail: `[적용기준: ${facNm} (\`18.1.28) 층수가 6층 이상인 경우 모든 층]`
                     };
                 }
-                if (totArea >= 460) {
+                if (floorArea >= 460 || (grndFlr >= 4 && floorArea >= 1000)) {
                     return {
                         isInstalled: true,
                         type: 'regular',
                         text: '스프링클러 설치',
-                        detail: `[적용기준: ${facNm} 수용인원 100명(460㎡) 이상 모든 층]`
+                        detail: `[적용기준: ${facNm} 수용인원 100명(460㎡) 또는 바닥면적 1,000㎡ 이상 모든 층]`
                     };
                 }
-                return { isInstalled: false, type: 'none', text: '', detail: `${facNm} - 설치 의무 제외` };
+                return { isInstalled: false, type: 'none', text: '', detail: `${facNm} - 6층 미만 및 바닥면적 기준 미달로 설치 의무 제외` };
             }
 
             // [창고시설 / 공장]
@@ -14015,12 +14034,12 @@
                         detail: `[적용기준: ${facNm} (\`18.1.28) 층수가 6층 이상인 경우 모든 층]`
                     };
                 }
-                if (totArea >= 5000) {
+                if (totArea >= 5000 || (grndFlr >= 4 && floorArea >= 1000)) {
                     return {
                         isInstalled: true,
                         type: 'regular',
                         text: '스프링클러 설치',
-                        detail: `[적용기준: ${facNm} 바닥면적 합계 5,000㎡ 이상 모든 층]`
+                        detail: `[적용기준: ${facNm} 바닥면적 합계 5,000㎡ 이상 또는 4층 이상 1,000㎡ 이상]`
                     };
                 }
                 return { isInstalled: false, type: 'none', text: '', detail: `${facNm} - 설치 의무 제외` };
@@ -14068,6 +14087,14 @@
                     detail: `[적용기준: ${effType || '특정소방대상물'} (\`18.1.28) 층수가 6층 이상인 경우 모든 층]`
                 };
             }
+            if (grndFlr >= 4 && floorArea >= 1000) {
+                return {
+                    isInstalled: true,
+                    type: 'regular',
+                    text: '스프링클러 설치',
+                    detail: `[적용기준: ${effType || '특정소방대상물'} 4층 이상 바닥면적 1,000㎡ 이상인 층]`
+                };
+            }
 
             return { isInstalled: false, type: 'none', text: '', detail: '법령 설치기준 미충족 (설치 의무 제외)' };
         }
@@ -14081,7 +14108,7 @@
         // 소방청 특정소방대상물 소방시설정보 오픈API 조회 및 법령 설치기준 2단계 순차 판정
         // [1차 검증] 건축물대장 표제부의 주용도, 층수, 연면적, 사용승인일 법령 설치기준 정밀 판정
         // [2차 검증] 특정소방대상물소방시설정보서비스 오픈API와 교차 검증하되, 기준 미달 건물에 대한 오매칭 오탐 원천 차단
-        async function checkSprinklerInstalledFromApi(combinedContext, useAprDay, bldNameHint, roadNameKeyword, ledgerType = '', grndFlrCnt = '', totArea = '', mainPurpsCdNm = '', etcPurps = '') {
+        async function checkSprinklerInstalledFromApi(combinedContext, useAprDay, bldNameHint, roadNameKeyword, ledgerType = '', grndFlrCnt = '', totArea = '', mainPurpsCdNm = '', etcPurps = '', archArea = '') {
             try {
                 const cleanContext = String(combinedContext || '')
                     .replace(/고층건물\s*\([^)]*\)/gi, '')
@@ -14089,8 +14116,10 @@
 
                 const grnd = parseInt(grndFlrCnt || '0', 10);
                 const area = parseFloat(String(totArea || '').replace(/[^0-9.]/g, '')) || 0;
+                const arch = parseFloat(String(archArea || '').replace(/[^0-9.]/g, '')) || 0;
+                const approxFloorArea = arch > 0 ? arch : (grnd > 0 ? (area / grnd) : area);
 
-                // 1) 법령 설치기준 사전 정밀 판정 (주용도, 층수, 연면적, 사용승인일)
+                // 1) 법령 설치기준 사전 정밀 판정 (주용도, 층수, 연면적, 사용승인일, 각 층 바닥면적)
                 const lawEval = evaluateSprinklerByLawAndUsage(
                     mainPurpsCdNm || ledgerType,
                     etcPurps,
@@ -14099,11 +14128,12 @@
                     totArea,
                     cleanContext,
                     bldNameHint,
-                    ledgerType
+                    ledgerType,
+                    archArea
                 );
 
-                // [핵심 가드레일] 주용도, 연면적, 층수, 사용승인일 기준 미충족 시 설치 오탐 원천 차단:
-                const isSmallLowRise = (grnd > 0 && grnd < 6 && (!area || area < 1000));
+                // [핵심 가드레일] 주용도, 연면적, 층수, 바닥면적, 사용승인일 기준 미충족 시 설치 오탐 원천 차단:
+                const isSmallLowRise = (grnd > 0 && grnd < 6 && approxFloorArea < 1000);
                 const isNotObligatedFacility = ['단독주택', '다세대주택', '연립주택'].includes(ledgerType) && !lawEval.isInstalled;
 
                 if ((isSmallLowRise && !lawEval.isInstalled) || isNotObligatedFacility) {
@@ -15099,7 +15129,8 @@
                     if (withApr) useAprDayFinal = withApr.it.useAprDay || withApr.it.stcnsDay || '';
                 }
                 const ledgerType = resolveBuildingLedgerType(bestItem, combinedContext);
-                const spResult = await checkSprinklerInstalledFromApi(combinedContext, useAprDayFinal, bldNameHint || bestItem.bldNm || '', roadFullKeyword, ledgerType, grndFlrCnt, totArea, bestItem.mainPurpsCdNm || '', bestItem.etcPurps || '');
+                const archArea = bestItem.archArea || '';
+                const spResult = await checkSprinklerInstalledFromApi(combinedContext, useAprDayFinal, bldNameHint || bestItem.bldNm || '', roadFullKeyword, ledgerType, grndFlrCnt, totArea, bestItem.mainPurpsCdNm || '', bestItem.etcPurps || '', archArea);
                 const spInstalled = (typeof spResult === 'object' && spResult) ? (spResult.text || '') : (spResult || '');
                 const spDetail = (typeof spResult === 'object' && spResult) ? (spResult.detail || '') : '';
                 applyFetchedBuildingDataToTab(reqTabId, strctCdNm, grndFlrCnt, ugrndFlrCnt, totArea, useAprDayFinal, matchedTitle, spInstalled, ledgerType, spDetail);
@@ -15571,7 +15602,7 @@
             const combined = `${locText} ${addrText} ${mapText} ${strctText}`;
 
             const ledgerType = curTab?.data?.bldLedgerType || '';
-            const spResult = evaluateSprinklerByLawAndUsage(ledgerType, '', aprText, flrText, areaText, combined, '', ledgerType);
+            const spResult = evaluateSprinklerByLawAndUsage(ledgerType, '', aprText, flrText, areaText, combined, '', ledgerType, 0);
 
             if (spResult && spResult.isInstalled) {
                 updateSprinklerBadgeUI(spResult.text, spResult.detail);
