@@ -13712,8 +13712,11 @@
                 (/빌라|다세대|다가구|연립|단독/.test(rawPurps) && !/아파트/.test(rawPurps) && effType !== '아파트')
             );
 
+            const isUrbanHousing = effType === '도시형생활주택' || /도시형\s*생활\s*주택/.test(rawPurps);
+
             const isApt = !isOffice && !isReligion && !isNursingHospital && !isMedical && !isWelfare && !isHotel && !isComm && !isVillaOrMultiHousing && (
                 effType === '아파트' ||
+                isUrbanHousing ||
                 mainPurpsCdNm === '공동주택' ||
                 /아파트/.test(bldNameHint) ||
                 (/아파트/.test(cleanContext) && !/오피스텔|빌라|다세대/.test(cleanContext))
@@ -13756,14 +13759,15 @@
                 return { isInstalled: false, type: 'none', text: '', detail: '업무시설 - 6층 미만 및 바닥면적 기준 미달로 설치 의무 제외' };
             }
 
-            // [공동주택 (아파트)]
+            // [공동주택 (아파트 / 도시형생활주택)]
             if (isApt) {
+                const targetLabel = isUrbanHousing ? '도시형생활주택' : '공동주택(아파트)';
                 if (ymd >= 20180128 && grndFlr >= 6) {
                     return {
                         isInstalled: true,
                         type: 'regular',
                         text: '스프링클러 전층 설치',
-                        detail: '[적용기준: 공동주택(아파트) (`18.1.28) 층수가 6층 이상인 경우 모든 층]'
+                        detail: `[적용기준: ${targetLabel} (\`18.1.28) 층수가 6층 이상인 경우 모든 층]`
                     };
                 }
                 if (ymd >= 20050101 && ymd <= 20180126 && grndFlr >= 11) {
@@ -13771,7 +13775,7 @@
                         isInstalled: true,
                         type: 'regular',
                         text: '스프링클러 전층 설치',
-                        detail: '[적용기준: 공동주택(아파트) (`05.1.1) 층수가 11층 이상인 경우 전층]'
+                        detail: `[적용기준: ${targetLabel} (\`05.1.1) 층수가 11층 이상인 경우 전층]`
                     };
                 }
                 if (ymd >= 19900701 && ymd <= 20041231 && grndFlr >= 16) {
@@ -13779,10 +13783,10 @@
                         isInstalled: true,
                         type: 'regular',
                         text: '스프링클러 16층 이상 설치',
-                        detail: '[적용기준: 공동주택(아파트) (`90.7.1) 16층 이상인 것은 16층 이상의 층]'
+                        detail: `[적용기준: ${targetLabel} (\`90.7.1) 16층 이상인 것은 16층 이상의 층]`
                     };
                 }
-                return { isInstalled: false, type: 'none', text: '', detail: '아파트 - 준공일 또는 층수 기준 미달로 설치 의무 제외' };
+                return { isInstalled: false, type: 'none', text: '', detail: `${targetLabel} - 준공일 또는 층수 기준 미달로 설치 의무 제외` };
             }
 
             // [연립주택 / 다세대주택]
@@ -14352,6 +14356,12 @@
                 const bldNm = (bestItem.bldNm || '').trim();
                 const mergedPurps = `${etcPurps} ${mainPurps} ${bldNm} ${dongNm} ${regstrKindNm} ${regstrGbNm}`;
 
+                // -1) 도시형생활주택 우선 판별:
+                // 건축물대장 기타용도, 건물명, 주용도 또는 입력 컨텍스트에 '도시형생활주택'이 있는 경우 아파트가 아닌 '도시형생활주택'으로 명시
+                if (/도시형\s*생활\s*주택/.test(mergedPurps) || /도시형\s*생활\s*주택/.test(combinedContext)) {
+                    return '도시형생활주택';
+                }
+
                 // 0) 아파트 / 공동주택 최우선 보호:
                 // 아파트 단지 표제부에는 부속용도로 '어린이집', '노인정', '관리사무소' 등이 흔히 포함되므로
                 // 주용도가 공동주택이거나 아파트 명칭이 있는 경우 노유자시설 등으로 오판정되는 것을 절대 방지
@@ -14446,6 +14456,7 @@
             }
 
             // 컨텍스트 보조 판별 (bestItem이 없을 때)
+            if (/도시형\s*생활\s*주택/.test(combinedContext)) return '도시형생활주택';
             if (/단독\s*주택|일반화재\s*\(주택\)|주택/.test(combinedContext) && !/아파트|공동주택|오피스텔/.test(combinedContext)) return '단독주택';
             if (/아파트/.test(combinedContext)) return '아파트';
             if (/다세대|빌라/.test(combinedContext)) return '다세대주택';
