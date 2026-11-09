@@ -2279,7 +2279,7 @@
                                     <span>💦</span>
                                     <span id="bldSprinklerText" style="font-size: 12px; font-weight: 900;">스프링클러 전층 설치</span>
                                 </div>
-                                <div id="bldSprinklerDetail" style="font-size: 12px; font-weight: 900; color: #047857; padding-left: 20px;">[적용기준: 업무시설 (`18.1.28) 층수가 6층 이상인 경우 모든 층]</div>
+                                <div id="bldSprinklerDetail" style="font-size: 12px; font-weight: normal; color: #047857; padding-left: 20px;">[적용기준: 업무시설 (`18.1.28) 층수가 6층 이상인 경우 모든 층]</div>
                             </div>
                             <button type="button" id="removeSprinklerBadgeBtn" title="스프링클러 표시 삭제" style="background: none; border: none; color: #047857; font-size: 15px; font-weight: 900; cursor: pointer; padding: 0 2px; line-height: 1;">&times;</button>
                         </div>
@@ -15562,6 +15562,7 @@
                 updateSprinklerBadgeUI(spResult.text, spResult.detail);
                 if (curTab && curTab.data) {
                     curTab.data.bldSprinkler = spResult.text;
+                    curTab.data.bldSprinklerDetail = spResult.detail;
                 }
             } else {
                 const hasExplicitMapSp = /(?:스프링클러|S\/P)\s*(?:설치|작동|완비|유)/i.test(mapText);
@@ -15569,6 +15570,7 @@
                     updateSprinklerBadgeUI('');
                     if (curTab && curTab.data) {
                         curTab.data.bldSprinkler = '';
+                        curTab.data.bldSprinklerDetail = '';
                     }
                 }
             }
@@ -17220,7 +17222,7 @@
                     timeJiryeong: '', timeChuldong: '', unitSeonchak: '', timeSeonchak: '',
                     unitMedical: '', timeMedical: '', timeChojin: '', timeWanjin: '', dynamicTimeline: [],
                     pSection1: '', stationName: '', jinapCnt: '', gujoCnt: '', gugeupCnt: '',
-                    bldInclude: false, bldStructure: '', bldFloors: '', bldArea: '', bldAprDate: '', bldSprinkler: '',
+                    bldInclude: false, bldStructure: '', bldFloors: '', bldArea: '', bldAprDate: '', bldSprinkler: '', bldSprinklerDetail: '',
                     bldLedgerType: '', bldFetchStatus: '', bldFetchStatusColor: '#0284c7',
                     pSection2: '', pSection3: '', orgPolice: false, orgOffice: false, orgKepco: false, orgGas: false,
                     etcCheck: false, etcInput: '', pMemo: '', outputText: ''
@@ -17263,6 +17265,7 @@
                 gujoCnt: gujoCntInput.value, gugeupCnt: gugeupCntInput.value, bldInclude: bldIncludeCheck.checked,
                 bldStructure: bldStructureInput.value, bldFloors: bldFloorsInput.value, bldArea: bldAreaInput.value,
                 bldAprDate: bldAprDateInput.value, bldSprinkler: currentSprinklerInstalledText,
+                bldSprinklerDetail: currentSprinklerDetailText,
                 bldFetchStatus: (bldFetchStatusText && bldFetchStatusText.style.display !== 'none') ? bldFetchStatusText.textContent : '',
                 bldFetchStatusColor: (bldFetchStatusText && bldFetchStatusText.style.color) ? bldFetchStatusText.style.color : '#0284c7',
                 pSection2: pSection2.value, pSection3: pSection3.value,
@@ -17529,7 +17532,7 @@
                         timeJiryeong: '', timeChuldong: '', unitSeonchak: '', timeSeonchak: '',
                         unitMedical: '', timeMedical: '', timeChojin: '', timeWanjin: '', dynamicTimeline: [],
                         pSection1: '', stationName: '', jinapCnt: '', gujoCnt: '', gugeupCnt: '',
-                        bldInclude: false, bldStructure: '', bldFloors: '', bldArea: '', bldAprDate: '', bldSprinkler: '',
+                        bldInclude: false, bldStructure: '', bldFloors: '', bldArea: '', bldAprDate: '', bldSprinkler: '', bldSprinklerDetail: '',
                         pSection2: '', pSection3: '', orgPolice: false, orgOffice: false, orgKepco: false, orgGas: false,
                         etcCheck: false, etcInput: '', pMemo: '', outputText: ''
                     };
