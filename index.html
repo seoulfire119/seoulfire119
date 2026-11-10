@@ -6,7 +6,262 @@
     <title>재난상황 리포트 자동 생성기</title>
 
     <!-- html2canvas 라이브러리 (그림 파일 고화질 저장용) -->
-    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js">
+        // ==========================================
+        // 전역 한글 우선 입력 및 한/영 전환 엔진 (두벌식 오토마타)
+        // ==========================================
+        const CHO_LIST = ['ㄱ', 'ㄲ', 'ㄴ', 'ㄷ', 'ㄸ', 'ㄹ', 'ㅁ', 'ㅂ', 'ㅃ', 'ㅅ', 'ㅆ', 'ㅇ', 'ㅈ', 'ㅉ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ'];
+        const JUNG_LIST = ['ㅏ', 'ㅐ', 'ㅑ', 'ㅒ', 'ㅓ', 'ㅔ', 'ㅕ', 'ㅖ', 'ㅗ', 'ㅘ', 'ㅙ', 'ㅚ', 'ㅛ', 'ㅜ', 'ㅝ', 'ㅞ', 'ㅟ', 'ㅠ', 'ㅡ', 'ㅢ', 'ㅣ'];
+        const JONG_LIST = ['', 'ㄱ', 'ㄲ', 'ㄳ', 'ㄴ', 'ㄵ', 'ㄶ', 'ㄷ', 'ㄹ', 'ㄺ', 'ㄻ', 'ㄼ', 'ㄽ', 'ㄾ', 'ㄿ', 'ㅀ', 'ㅁ', 'ㅂ', 'ㅄ', 'ㅅ', 'ㅆ', 'ㅇ', 'ㅈ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ'];
+
+        const ENG_TO_KOR_MAP = {
+            'r': 'ㄱ', 'R': 'ㄲ', 's': 'ㄴ', 'e': 'ㄷ', 'E': 'ㄸ', 'f': 'ㄹ', 'a': 'ㅁ', 'q': 'ㅂ', 'Q': 'ㅃ', 't': 'ㅅ', 'T': 'ㅆ',
+            'd': 'ㅇ', 'w': 'ㅈ', 'W': 'ㅉ', 'c': 'ㅊ', 'z': 'ㅋ', 'x': 'ㅌ', 'v': 'ㅍ', 'g': 'ㅎ',
+            'k': 'ㅏ', 'o': 'ㅐ', 'i': 'ㅑ', 'O': 'ㅒ', 'j': 'ㅓ', 'p': 'ㅔ', 'u': 'ㅕ', 'P': 'ㅖ', 'h': 'ㅗ', 'y': 'ㅛ',
+            'n': 'ㅜ', 'b': 'ㅠ', 'm': 'ㅡ', 'l': 'ㅣ'
+        };
+
+        const DOUBLE_JUNG_MAP = {
+            'ㅗㅏ': 'ㅘ', 'ㅗㅐ': 'ㅙ', 'ㅗㅣ': 'ㅚ', 'ㅜㅓ': 'ㅝ', 'ㅜㅔ': 'ㅞ', 'ㅜㅣ': 'ㅟ', 'ㅡㅣ': 'ㅢ'
+        };
+
+        const DOUBLE_JONG_MAP = {
+            'ㄱㅅ': 'ㄳ', 'ㄴㅈ': 'ㄵ', 'ㄴㅎ': 'ㄶ', 'ㄹㄱ': 'ㄺ', 'ㄹㅁ': 'ㄻ', 'ㄹㅂ': 'ㄼ', 'ㄹㅅ': 'ㄽ', 'ㄹㄾ': 'ㄾ', 'ㄹㅍ': 'ㄿ', 'ㄹㅎ': 'ㅀ', 'ㅂㅅ': 'ㅄ'
+        };
+
+        function convertEngToHangul(str) {
+            let result = '';
+            let cho = -1, jung = -1, jong = -1;
+            let jungChar = '', jongChar = '';
+
+            const flush = () => {
+                if (cho !== -1) {
+                    if (jung !== -1) {
+                        result += String.fromCharCode(0xAC00 + (cho * 21 + jung) * 28 + (jong === -1 ? 0 : jong));
+                    } else {
+                        result += CHO_LIST[cho];
+                    }
+                } else if (jung !== -1) {
+                    result += jungChar;
+                } else if (jong !== -1) {
+                    result += JONG_LIST[jong];
+                }
+                cho = -1; jung = -1; jong = -1;
+                jungChar = ''; jongChar = '';
+            };
+
+            for (let i = 0; i < str.length; i++) {
+                const c = str[i];
+                const k = ENG_TO_KOR_MAP[c];
+                if (!k) {
+                    flush();
+                    result += c;
+                    continue;
+                }
+
+                const isVowel = JUNG_LIST.includes(k);
+
+                if (isVowel) {
+                    if (cho === -1) {
+                        if (jung !== -1) {
+                            const combined = DOUBLE_JUNG_MAP[jungChar + k];
+                            if (combined) {
+                                jungChar = combined;
+                                jung = JUNG_LIST.indexOf(combined);
+                            } else {
+                                flush();
+                                jungChar = k;
+                                jung = JUNG_LIST.indexOf(k);
+                            }
+                        } else {
+                            jungChar = k;
+                            jung = JUNG_LIST.indexOf(k);
+                        }
+                    } else {
+                        if (jung === -1) {
+                            jungChar = k;
+                            jung = JUNG_LIST.indexOf(k);
+                        } else if (jong === -1) {
+                            const combined = DOUBLE_JUNG_MAP[jungChar + k];
+                            if (combined) {
+                                jungChar = combined;
+                                jung = JUNG_LIST.indexOf(combined);
+                            } else {
+                                flush();
+                                jungChar = k;
+                                jung = JUNG_LIST.indexOf(k);
+                            }
+                        } else {
+                            let prevJong = -1;
+                            let nextCho = -1;
+                            const reverseDouble = Object.entries(DOUBLE_JONG_MAP).find(([k2, v2]) => v2 === JONG_LIST[jong]);
+                            if (reverseDouble) {
+                                const [j1, j2] = reverseDouble[0];
+                                prevJong = JONG_LIST.indexOf(j1);
+                                nextCho = CHO_LIST.indexOf(j2);
+                            } else {
+                                nextCho = CHO_LIST.indexOf(JONG_LIST[jong]);
+                                prevJong = -1;
+                            }
+
+                            result += String.fromCharCode(0xAC00 + (cho * 21 + jung) * 28 + (prevJong === -1 ? 0 : prevJong));
+                            cho = nextCho;
+                            jung = JUNG_LIST.indexOf(k);
+                            jungChar = k;
+                            jong = -1;
+                            jongChar = '';
+                        }
+                    }
+                } else {
+                    if (cho === -1) {
+                        if (jung !== -1) {
+                            flush();
+                        }
+                        cho = CHO_LIST.indexOf(k);
+                    } else if (jung === -1) {
+                        flush();
+                        cho = CHO_LIST.indexOf(k);
+                    } else if (jong === -1) {
+                        const jIdx = JONG_LIST.indexOf(k);
+                        if (jIdx !== -1) {
+                            jong = jIdx;
+                            jongChar = k;
+                        } else {
+                            flush();
+                            cho = CHO_LIST.indexOf(k);
+                        }
+                    } else {
+                        const combined = DOUBLE_JONG_MAP[jongChar + k];
+                        if (combined) {
+                            jong = JONG_LIST.indexOf(combined);
+                            jongChar = combined;
+                        } else {
+                            flush();
+                            cho = CHO_LIST.indexOf(k);
+                        }
+                    }
+                }
+            }
+            flush();
+            return result;
+        }
+
+        let isEnglishInputMode = false;
+        let hangulEngBuffer = '';
+        let lastInsertedHangul = '';
+        let activeImeTarget = null;
+
+        function updateImeIndicator() {
+            const btn = document.getElementById('imeToggleBtn');
+            if (!btn) return;
+            if (isEnglishInputMode) {
+                btn.textContent = '🔤 영문 입력 (ENG)';
+                btn.style.background = '#f1f5f9';
+                btn.style.color = '#475569';
+                btn.style.borderColor = '#cbd5e1';
+            } else {
+                btn.textContent = '🇰🇷 한글 입력 (한/영)';
+                btn.style.background = '#e0f2fe';
+                btn.style.color = '#0369a1';
+                btn.style.borderColor = '#bae6fd';
+            }
+        }
+
+        function resetHangulBuffer() {
+            hangulEngBuffer = '';
+            lastInsertedHangul = '';
+            activeImeTarget = null;
+        }
+
+
+
+        // 한/영키 및 영타 자동 변환 핸들러
+        document.addEventListener('keydown', (e) => {
+            // 1. 키보드 한영키 감지
+            if (e.key === 'HangulMode' || e.code === 'Lang1' || e.keyCode === 21) {
+                isEnglishInputMode = !isEnglishInputMode;
+                resetHangulBuffer();
+                updateImeIndicator();
+                showToast(isEnglishInputMode ? '영문 입력 모드로 변경되었습니다.' : '한글 입력 모드로 변경되었습니다.');
+                e.preventDefault();
+                return;
+            }
+
+            const target = e.target;
+            const isTextControl = (target instanceof HTMLInputElement && ['text', 'search', ''].includes(target.type)) || (target instanceof HTMLTextAreaElement);
+            if (!isTextControl || target.readOnly || target.disabled) {
+                resetHangulBuffer();
+                return;
+            }
+
+            // 단축키 (Ctrl, Meta, Alt)는 그대로 통과
+            if (e.ctrlKey || e.metaKey || e.altKey) {
+                resetHangulBuffer();
+                return;
+            }
+
+            // 브라우저 자체 IME 한글 조합이 진행 중인 경우 개입 안 함
+            if (e.isComposing || isComposingInput || e.key === 'Process') {
+                resetHangulBuffer();
+                return;
+            }
+
+            // 영문 입력 모드인 경우 변환 안 함
+            if (isEnglishInputMode) {
+                resetHangulBuffer();
+                return;
+            }
+
+            // 백스페이스 처리
+            if (e.key === 'Backspace') {
+                if (activeImeTarget === target && hangulEngBuffer.length > 0) {
+                    e.preventDefault();
+                    hangulEngBuffer = hangulEngBuffer.slice(0, -1);
+                    const newKor = hangulEngBuffer ? convertEngToHangul(hangulEngBuffer) : '';
+                    const startPos = Math.max(0, target.selectionStart - lastInsertedHangul.length);
+                    const endPos = target.selectionStart;
+                    target.setRangeText(newKor, startPos, endPos, 'end');
+                    lastInsertedHangul = newKor;
+                    target.dispatchEvent(new Event('input', { bubbles: true }));
+                    if (!hangulEngBuffer) resetHangulBuffer();
+                    return;
+                }
+                resetHangulBuffer();
+                return;
+            }
+
+            // 영문 알파벳 타이핑 감지 (a-z, A-Z)
+            if (/^[a-zA-Z]$/.test(e.key)) {
+                e.preventDefault();
+                if (activeImeTarget !== target) {
+                    resetHangulBuffer();
+                    activeImeTarget = target;
+                }
+
+                hangulEngBuffer += e.key;
+                const newKor = convertEngToHangul(hangulEngBuffer);
+                const startPos = Math.max(0, target.selectionStart - lastInsertedHangul.length);
+                const endPos = target.selectionStart;
+                target.setRangeText(newKor, startPos, endPos, 'end');
+                lastInsertedHangul = newKor;
+                target.dispatchEvent(new Event('input', { bubbles: true }));
+                return;
+            }
+
+            // 그 외 키(스페이스, 엔터, 탭, 숫자, 기호 등)는 한글 글자 조합 완료(flush)
+            resetHangulBuffer();
+        }, true);
+
+        // 복사/붙여넣기 및 포커스 이동, 마우스 클릭 시에는 버퍼 초기화 (붙여넣기 내용은 영문/한글 무관하게 100% 원본 보존)
+        window.addEventListener('paste', () => { resetHangulBuffer(); }, true);
+        window.addEventListener('blur', () => { resetHangulBuffer(); }, true);
+        window.addEventListener('click', (e) => {
+            if (e.target !== activeImeTarget) {
+                resetHangulBuffer();
+            }
+        }, true);
+
+    </script>
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <!-- Pretendard(고딕) 웹폰트 CDN -->
@@ -2068,7 +2323,8 @@
             margin-bottom: 8px;
         }
 
-</style>
+input, textarea { ime-mode: active !important; }
+    </style>
 </head>
 <body>
 
@@ -12745,12 +13001,33 @@
 
         function cleanSpaces(t) { return t ? t.replace(/[ \t]+/g, ' ') : ''; }
 
+        let isComposingInput = false;
+        document.addEventListener('compositionstart', () => {
+            isComposingInput = true;
+        }, true);
+        document.addEventListener('compositionend', () => {
+            isComposingInput = false;
+            triggerUpdateDebounced();
+        }, true);
+
         let debounceTimer = null;
         function triggerUpdateDebounced() {
             if (debounceTimer) clearTimeout(debounceTimer);
             debounceTimer = setTimeout(() => {
+                if (isComposingInput) {
+                    // 한글 조합(IME) 중에는 보고서 조립 및 탭 저장을 지연시켜 마지막 글자가 잘리는 현상 방지
+                    return;
+                }
                 assembleReportText();
-            }, 100);
+            }, 250);
+        }
+
+        let saveStorageTimer = null;
+        function saveToLocalStorageHistoryDebounced() {
+            if (saveStorageTimer) clearTimeout(saveStorageTimer);
+            saveStorageTimer = setTimeout(() => {
+                saveToLocalStorageHistory();
+            }, 400);
         }
 
         pSection1.addEventListener('paste', (e) => {
@@ -12785,7 +13062,11 @@
             }, 20);
         });
         pSection1.addEventListener('blur', () => {
-            pSection1.value = pSection1.value.replace(/^[\s\n\r\t]+/, '');
+            const curVal = pSection1.value;
+            const trimmed = curVal.replace(/^[\s\n\r\t]+/, '');
+            if (curVal !== trimmed) {
+                pSection1.value = trimmed;
+            }
             triggerUpdateDebounced();
         });
 
@@ -12796,7 +13077,11 @@
             }, 10);
         });
         eventAddrInput.addEventListener('blur', () => {
-            eventAddrInput.value = cleanSpaces(eventAddrInput.value).trim();
+            const curVal = eventAddrInput.value;
+            const cleaned = cleanSpaces(curVal).trim();
+            if (curVal !== cleaned) {
+                eventAddrInput.value = cleaned;
+            }
             triggerUpdateDebounced();
         });
 
@@ -12811,8 +13096,9 @@
             if (/열착|열비착|열선착|열착선착/.test(clean)) return true;
             // 지휘, 지휘차, 지휘대 포함 시 배제 (예: 강서지휘, 서초지휘 등)
             if (/지휘/.test(clean)) return true;
-            // 숫자 포함 시 배제 (예: 강서10, 서초100 등)
-            if (/\d+/.test(clean)) return true;
+            // 순수 숫자(시간, 인원수 등) 또는 시각(HH:MM) 형식만 있는 경우 배제 (예: 1352, 23:15, 100 등)
+            // 단, '용산100', '한강로6', '연희6-1'처럼 한글이 포함된 단위대/차량호출명은 허용!
+            if (/^\d+(?:-\d+)?$/.test(clean) || /^\d{1,2}:\d{2}$/.test(clean)) return true;
             return false;
         }
 
@@ -12829,16 +13115,22 @@
                 const isVehicleUnit = /(?:탱크|화학차|구조차)$/.test(tok);
                 if (isVehicleUnit) {
                     valid.push(tok);
+                    return;
+                }
+                // 숫자가 포함된 호출부호 (예: 용산100, 용산10, 한강로6, 연희6-1, 신수6-2, 용산200 등)
+                // 뒤에 '대'를 붙이지 않고 그대로 허용!
+                if (/^[가-힣]{1,6}\d{1,4}(?:-\d{1,2})?$/.test(tok)) {
+                    valid.push(tok);
+                    return;
+                }
+                tok = tok.replace(/대+$/, '대');
+                if (isExcludedUnit(tok)) return;
+                if (/^[가-힣]{1,6}대$/.test(tok)) {
+                    valid.push(tok);
+                } else if (/^[가-힣]{1,6}$/.test(tok)) {
+                    valid.push(tok.endsWith('대') ? tok : tok + '대');
                 } else {
-                    tok = tok.replace(/대+$/, '대');
-                    if (isExcludedUnit(tok)) return;
-                    if (/^[가-힣]{1,6}대$/.test(tok)) {
-                        valid.push(tok);
-                    } else if (/^[가-힣]{1,6}$/.test(tok)) {
-                        valid.push(tok.endsWith('대') ? tok : tok + '대');
-                    } else {
-                        valid.push(tok);
-                    }
+                    valid.push(tok);
                 }
             });
             return valid.join(', ') || '';
@@ -12878,6 +13170,15 @@
             // '현장도착', '도착', '선착대', '출동', '열착' 등 일반 동작/상태어/무전약어는 소방대 명칭이 아니므로 즉시 배제
             if (/^(?:현장\s*도착|도착|선착\s*대?|출동|귀소|완진|초진|열착|열비착|열선착|열착선착)/.test(s)) {
                 return '';
+            }
+
+            // 0) 숫자 포함 차량 호출부호 (예: 용산100, 용산200, 용산10, 한강로6, 연희6-1, 신수6-2, 관악100, 관악6-1)
+            const codeMatch = s.match(/([가-힣]{2,6}\d{1,4}(?:-\d{1,2})?)/);
+            if (codeMatch && codeMatch[1]) {
+                const cName = codeMatch[1].trim();
+                if (!isExcludedUnit(cName)) {
+                    return cName;
+                }
             }
 
             // 1) 차량명/특수대 (예: 종암탱크, 화학차, 구조차 등) - 지휘차/지휘는 제외
@@ -13716,6 +14017,7 @@
 
             const isApt = !isOffice && !isReligion && !isNursingHospital && !isMedical && !isWelfare && !isHotel && !isComm && !isVillaOrMultiHousing && (
                 effType === '아파트' ||
+                effType === '공동주택' ||
                 isUrbanHousing ||
                 mainPurpsCdNm === '공동주택' ||
                 /아파트/.test(bldNameHint) ||
@@ -14363,12 +14665,11 @@
                 }
 
                 // 0) 아파트 / 공동주택 최우선 보호:
-                // 아파트 단지 표제부에는 부속용도로 '어린이집', '노인정', '관리사무소' 등이 흔히 포함되므로
-                // 주용도가 공동주택이거나 아파트 명칭이 있는 경우 노유자시설 등으로 오판정되는 것을 절대 방지
+                // 공동주택(아파트)의 경우 1번 구/동 명칭에 '공동주택'으로 표기 (예: "관악구 공동주택")
                 const isApt = (mainPurps === '공동주택' && (/아파트/.test(mergedPurps) || /아파트/.test(combinedContext) || !/다세대|연립|빌라/.test(mergedPurps))) ||
                               /아파트/.test(bldNm) || /아파트/.test(dongNm);
                 if (isApt) {
-                    return '아파트';
+                    return '공동주택';
                 }
 
                 // 상가동이거나 근린생활시설인 경우 근생시설 판정
@@ -14386,11 +14687,11 @@
                 // 2) 주용도 코드명(mainPurpsCdNm) 기준 1순위 판정 (건축물대장 공적 주용도 우선)
                 if (mainPurps) {
                     if (mainPurps === '공동주택') {
-                        if (/아파트/.test(combinedContext) || /아파트/.test(bldNm)) return '아파트';
+                        if (/아파트/.test(combinedContext) || /아파트/.test(bldNm)) return '공동주택';
                         if (/다세대|빌라/.test(combinedContext) || /다세대|빌라/.test(bldNm)) return '다세대주택';
                         if (/연립/.test(combinedContext) || /연립/.test(bldNm)) return '연립주택';
                         const grnd = parseInt(bestItem.grndFlrCnt || '0', 10);
-                        return (grnd > 0 && grnd <= 5) ? '다세대주택' : '아파트';
+                        return (grnd > 0 && grnd <= 5) ? '다세대주택' : '공동주택';
                     }
                     if (mainPurps === '단독주택') {
                         if (/다가구/.test(combinedContext) || /다가구/.test(etcPurps)) return '다가구주택';
@@ -14419,7 +14720,7 @@
                 // 3) 주용도가 비어있거나 불명확할 때 키워드 세부 판정
                 if (/오피스텔/.test(mergedPurps)) return '오피스텔';
                 if (/다가구\s*주택|다가구/.test(mergedPurps)) return '다가구주택';
-                if (/아파트/.test(mergedPurps)) return '아파트';
+                if (/아파트/.test(mergedPurps)) return '공동주택';
                 if (/다세대\s*주택|다세대|빌라/.test(mergedPurps)) return '다세대주택';
                 if (/연립\s*주택|연립/.test(mergedPurps)) return '연립주택';
                 if (/근린생활시설|근생시설|제1종근린생활|제2종근린생활/.test(mergedPurps)) return '근생시설';
@@ -14458,7 +14759,7 @@
             // 컨텍스트 보조 판별 (bestItem이 없을 때)
             if (/도시형\s*생활\s*주택/.test(combinedContext)) return '도시형생활주택';
             if (/단독\s*주택|일반화재\s*\(주택\)|주택/.test(combinedContext) && !/아파트|공동주택|오피스텔/.test(combinedContext)) return '단독주택';
-            if (/아파트/.test(combinedContext)) return '아파트';
+            if (/아파트/.test(combinedContext)) return '공동주택';
             if (/다세대|빌라/.test(combinedContext)) return '다세대주택';
             if (/연립/.test(combinedContext)) return '연립주택';
             if (/오피스텔/.test(combinedContext)) return '오피스텔';
@@ -15324,6 +15625,7 @@
 
         // 3번 타임라인에서 완진 시간을 변경할 때 6번 소방 대응상황의 ※완진(시간)도 실시간 연동
         timeWanjin.addEventListener('input', () => {
+            if (document.activeElement === pSection2) return;
             const wTime = formatTime(timeWanjin.value.trim()) || timeWanjin.value.trim() || '';
             const wanjinStr = wTime ? `※완진(${wTime}) - ` : `※완진 - `;
             const wanjinPat = /※\s*완진(?:\([^)]*\))?\s*-\s*/;
@@ -15512,6 +15814,10 @@
 
         let isSyncing = false;
         function syncSeonchakToSec2(validName) {
+            if (document.activeElement === pSection2) {
+                // 사용자가 6번 소방대응상황을 직접 타이핑 중일 때는 스크립트가 덮어써서 마지막 글자가 잘리는 현상 완전 차단
+                return;
+            }
             let text = pSection2.value;
             const pat = /^\s*\*?\s*선착대(?:\([^)]*\))?\s*도착\s*시/m;
             const hasTime = Boolean(timeSeonchak && timeSeonchak.value.trim());
@@ -15545,8 +15851,8 @@
             triggerUpdateDebounced();
         });
 
-        unitSeonchak.addEventListener('input', () => {
-            if (isSyncing) return;
+        unitSeonchak.addEventListener('input', (e) => {
+            if (isSyncing || (e && e.isComposing)) return;
             isSyncing = true;
             const validName = (unitSeonchak.value || '').trim();
             syncSeonchakToSec2(validName);
@@ -15555,7 +15861,8 @@
         });
 
         unitSeonchak.addEventListener('blur', () => {
-            let raw = unitSeonchak.value.trim();
+            let curVal = unitSeonchak.value;
+            let raw = curVal.trim();
             if (raw) {
                 if (isExcludedUnit(raw)) {
                     unitSeonchak.value = '';
@@ -15564,13 +15871,16 @@
                     return;
                 }
                 const isVehicleUnit = /(?:탱크|화학차|구조차)$/.test(raw);
-                if (!isVehicleUnit) {
+                const isNumberedUnit = /^[가-힣]{1,6}\d{1,4}(?:-\d{1,2})?$/.test(raw);
+                if (!isVehicleUnit && !isNumberedUnit) {
                     raw = raw.replace(/대+$/, '대');
                     if (/^[가-힣]{1,6}$/.test(raw) && !raw.endsWith('대') && !isExcludedUnit(raw + '대')) {
                         raw = raw + '대';
                     }
                 }
-                unitSeonchak.value = raw;
+                if (curVal !== raw) {
+                    unitSeonchak.value = raw;
+                }
                 syncSeonchakToSec2(unitSeonchak.value.trim());
                 triggerUpdateDebounced();
             }
@@ -15581,17 +15891,24 @@
         });
 
         unitMedical.addEventListener('blur', () => {
-            unitMedical.value = cleanSpaces(unitMedical.value).trim();
+            const curVal = unitMedical.value;
+            const cleaned = cleanSpaces(curVal).trim();
+            if (curVal !== cleaned) {
+                unitMedical.value = cleaned;
+            }
             triggerUpdateDebounced();
         });
 
-        pSection2.addEventListener('input', () => {
-            if (isSyncing) return;
+        pSection2.addEventListener('input', (e) => {
+            if (isSyncing || (e && e.isComposing)) return;
+            if (document.activeElement === unitSeonchak) return; // 3번 선착대 입력 중 덮어쓰기 방지
             isSyncing = true;
             const match = pSection2.value.match(/선착대(?:\((.*?)\))?\s*도착\s*시/);
             if (match && match[1] !== undefined) {
                 const sanitized = sanitizeSeonchakUnitValue(match[1].trim());
-                unitSeonchak.value = sanitized;
+                if (unitSeonchak.value !== sanitized) {
+                    unitSeonchak.value = sanitized;
+                }
             }
             isSyncing = false;
             triggerUpdateDebounced();
@@ -17309,7 +17626,9 @@
             });
 
             const tag = getRegionHeaderTag();
-            cur.name = titleLocInput.value.trim() ? tag : (cur.defaultName || '상황 1');
+            const newTabName = titleLocInput.value.trim() ? tag : (cur.defaultName || '상황 1');
+            const nameChanged = (cur.name !== newTabName);
+            cur.name = newTabName;
             cur.floorState = JSON.parse(JSON.stringify(floorState));
             cur.casualtyState = JSON.parse(JSON.stringify(casualtyState));
 
@@ -17354,8 +17673,10 @@
                 }
             }
 
-            renderTabList();
-            saveToLocalStorageHistory();
+            if (nameChanged) {
+                renderTabList();
+            }
+            saveToLocalStorageHistoryDebounced();
         }
 
         function loadTabData(tabId) {
