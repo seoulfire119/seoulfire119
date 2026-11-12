@@ -12957,7 +12957,7 @@
             return valid.join(', ') || '';
         }
 
-        // 임시의료소 입력칸 허용 형식 검증 및 정제 (예: "연희구급", "북아현6", "공덕6-1" 형태 등)
+        // 임시의료소 입력칸 허용 형식 검증 및 정제 (구급대는 6, 6-1, 6-2 또는 구급; 예: "독산6-2", "등촌6-1", "연희6")
         const EXCLUDED_MEDICAL_PREFIX = /^(?:임시의료소|의료소|구급대|소방대|선착대|진압대|구조대|지휘대|경찰|구청|한전|가스|병원)$/;
 
         function sanitizeMedicalUnitValue(val) {
@@ -12968,10 +12968,17 @@
                 .filter(Boolean);
             const valid = [];
             tokens.forEach(tok => {
-                // '연희구급', '북아현6', '공덕6-1' 등
-                const m = tok.match(/^([가-힣]{1,6})(구급|\d+(?:-\d+)?)$/);
+                const m = tok.match(/^([가-힣]{1,6})(?:(구급)(?:대|차)?|(6(?:-\d+)?)|([1-9]\d*))$/);
                 if (m && !EXCLUDED_MEDICAL_PREFIX.test(m[1])) {
-                    valid.push(tok);
+                    const prefix = m[1];
+                    if (m[2]) {
+                        valid.push(`${prefix}구급`);
+                    } else if (m[3]) {
+                        valid.push(`${prefix}${m[3]}`);
+                    } else if (m[4]) {
+                        // '등촌1' -> '등촌6-1', '독산2' -> '독산6-2'
+                        valid.push(`${prefix}6-${m[4]}`);
+                    }
                 } else if (!EXCLUDED_MEDICAL_PREFIX.test(tok)) {
                     valid.push(tok);
                 }
@@ -13037,7 +13044,7 @@
             return '';
         }
 
-        // 임시의료소 구급대 명칭 정제 헬퍼 (오직 "연희구급", "북아현6", "공덕6-1" 형태만 추출, 그 외 문구는 차단)
+        // 임시의료소 구급대 명칭 정제 헬퍼 (구급대 명칭인 6, 6-1, 6-2 또는 구급 형태로 추출; '독산2' -> '독산6-2', '등촌1' -> '등촌6-1' 자동 보정)
         function normalizeMedicalUnitName(rawSeg) {
             if (!rawSeg) return '';
             let s = rawSeg
@@ -13046,13 +13053,14 @@
                 .replace(/^[-–—:\s]+|[-–—:\s]+$/g, '')
                 .trim();
 
-            // 구급대 명칭 패턴 추출 (예: 공덕6-1, 북아현6, 연희구급 등)
-            const medTokenMatch = s.match(/([가-힣]{1,6})(?:(구급)(?:대|차)?|(\d+(?:-\d+)?))(?:\s|$)/);
+            // 구급대 명칭 패턴 추출 (예: 독산6-2, 등촌6-1, 북아현6, 연희구급, 또는 약칭 독산2/등촌1 -> 독산6-2/등촌6-1 변환)
+            const medTokenMatch = s.match(/([가-힣]{1,6})(?:(구급)(?:대|차)?|(6(?:-\d+)?)|([1-9]\d*))(?:\s|$)/);
             if (medTokenMatch) {
                 const prefix = medTokenMatch[1];
                 if (EXCLUDED_MEDICAL_PREFIX.test(prefix)) return '';
-                const suffix = medTokenMatch[2] ? '구급' : medTokenMatch[3];
-                return `${prefix}${suffix}`;
+                if (medTokenMatch[2]) return `${prefix}구급`;
+                if (medTokenMatch[3]) return `${prefix}${medTokenMatch[3]}`;
+                if (medTokenMatch[4]) return `${prefix}6-${medTokenMatch[4]}`;
             }
             return '';
         }
