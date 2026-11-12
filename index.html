@@ -14474,12 +14474,12 @@
                     return '도시형생활주택';
                 }
 
-                // 0) 아파트 / 공동주택 최우선 보호:
-                // 공동주택(아파트)의 경우 1번 구/동 명칭에 '공동주택'으로 표기 (예: "관악구 공동주택")
+                // 0) 아파트 최우선 보호:
+                // 아파트(공동주택 중 아파트)의 경우 1번 구/동 명칭에 '아파트'로 표기 (예: "강서구 아파트")
                 const isApt = (mainPurps === '공동주택' && (/아파트/.test(mergedPurps) || /아파트/.test(combinedContext) || !/다세대|연립|빌라/.test(mergedPurps))) ||
                               /아파트/.test(bldNm) || /아파트/.test(dongNm);
                 if (isApt) {
-                    return '공동주택';
+                    return '아파트';
                 }
 
                 // 1) 근생시설 + 주택 복합 용도 판별:
@@ -14504,11 +14504,11 @@
                 // 2) 주용도 코드명(mainPurpsCdNm) 기준 1순위 판정 (건축물대장 공적 주용도 우선)
                 if (mainPurps) {
                     if (mainPurps === '공동주택') {
-                        if (/아파트/.test(combinedContext) || /아파트/.test(bldNm)) return '공동주택';
+                        if (/아파트/.test(combinedContext) || /아파트/.test(bldNm)) return '아파트';
                         if (/다세대|빌라/.test(combinedContext) || /다세대|빌라/.test(bldNm)) return '다세대주택';
                         if (/연립/.test(combinedContext) || /연립/.test(bldNm)) return '연립주택';
                         const grnd = parseInt(bestItem.grndFlrCnt || '0', 10);
-                        return (grnd > 0 && grnd <= 5) ? '다세대주택' : '공동주택';
+                        return (grnd > 0 && grnd <= 5) ? '다세대주택' : '아파트';
                     }
                     if (mainPurps === '단독주택') {
                         if (/다가구/.test(combinedContext) || /다가구/.test(etcPurps)) return '다가구주택';
@@ -14537,7 +14537,7 @@
                 // 3) 주용도가 비어있거나 불명확할 때 키워드 세부 판정
                 if (/오피스텔/.test(mergedPurps)) return '오피스텔';
                 if (/다가구\s*주택|다가구/.test(mergedPurps)) return '다가구주택';
-                if (/아파트/.test(mergedPurps)) return '공동주택';
+                if (/아파트/.test(mergedPurps)) return '아파트';
                 if (/다세대\s*주택|다세대|빌라/.test(mergedPurps)) return '다세대주택';
                 if (/연립\s*주택|연립/.test(mergedPurps)) return '연립주택';
                 if (/근린생활시설|근생시설|제1종근린생활|제2종근린생활/.test(mergedPurps)) return '근생시설';
@@ -14577,7 +14577,7 @@
             if (/도시형\s*생활\s*주택/.test(combinedContext)) return '도시형생활주택';
             if (/근린생활|근생|상가/.test(combinedContext) && /주택|단독|다가구/.test(combinedContext) && !/아파트|공동주택|도시형/.test(combinedContext)) return '일반건축물';
             if (/단독\s*주택|일반화재\s*\(주택\)|주택/.test(combinedContext) && !/아파트|공동주택|오피스텔/.test(combinedContext)) return '단독주택';
-            if (/아파트/.test(combinedContext)) return '공동주택';
+            if (/아파트/.test(combinedContext)) return '아파트';
             if (/다세대|빌라/.test(combinedContext)) return '다세대주택';
             if (/연립/.test(combinedContext)) return '연립주택';
             if (/오피스텔/.test(combinedContext)) return '오피스텔';
