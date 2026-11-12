@@ -13755,13 +13755,17 @@
                              /오피스텔/.test(etcPurps) ||
                              (/오피스텔/.test(cleanContext) && !/아파트|공동주택/.test(effType));
 
-            // 2. 종교시설
-            const isReligion = !isOffice && (
+            // 2. 종교시설 (공적 주용도가 문화 및 집회시설 등 다른 명확한 시설로 확정된 경우 제외)
+            const isMainAssembly = effType === '문화및집회시설' || /문화\s*및\s*집회|집회시설/.test(mainPurpsCdNm || '');
+            const hasOtherMainPurps = Boolean((mainPurpsCdNm || '').trim()) && !/종교/.test(mainPurpsCdNm || '');
+            const isReligion = !isOffice && !isMainAssembly && (
                 effType === '종교시설' ||
                 /종교시설|종교/.test(mainPurpsCdNm || '') ||
-                /종교|교회|성당|사찰|기도원/.test(bldNameHint) ||
-                /종교|교회|성당|사찰|기도원/.test(etcPurps) ||
-                /종교|교회|성당|사찰|기도원/.test(cleanContext)
+                (!hasOtherMainPurps && (
+                    /종교|교회|성당|사찰|기도원/.test(bldNameHint) ||
+                    /종교|교회|성당|사찰|기도원/.test(etcPurps) ||
+                    /종교|교회|성당|사찰|기도원/.test(cleanContext)
+                ))
             );
 
             // 3. 의료시설 / 요양병원
@@ -13824,7 +13828,7 @@
 
             // 9. 문화및집회시설 / 운동시설
             const isAssembly = !isOffice && !isReligion && !isNursingHospital && !isMedical && !isWelfare && !isHotel && !isComm && (
-                effType === '문화및집회시설' || /문화및집회|집회시설|공연장|관람장|전시장/.test(mainPurpsCdNm || '') || /공연장|집회장|영화관/.test(bldNameHint)
+                effType === '문화및집회시설' || /문화\s*및\s*집회|집회시설|공연장|관람장|전시장/.test(mainPurpsCdNm || '') || /공연장|집회장|영화관/.test(bldNameHint)
             );
             const isSports = !isOffice && !isReligion && !isNursingHospital && !isMedical && !isWelfare && !isHotel && !isComm && (
                 effType === '운동시설' || /운동시설|체육/.test(mainPurpsCdNm || '') || /체육관|볼링장|수영장|헬스/.test(bldNameHint)
@@ -14504,7 +14508,7 @@
                 }
 
                 // 2) 순수 상가동이거나 순수 근린생활시설 (주택이 없는 순수 상업용 건물)
-                if (/상가동/.test(dongNm) || /상가동/.test(bldNm) || (hasCommInBld && !hasHouseInBld && !/아파트|공동주택/.test(mergedPurps))) {
+                if (/상가동/.test(dongNm) || /상가동/.test(bldNm) || (hasCommInBld && !hasHouseInBld && (!mainPurps || /근린생활|근생/.test(mainPurps)) && !/아파트|공동주택/.test(mergedPurps))) {
                     return '근생시설';
                 }
 
@@ -14540,7 +14544,7 @@
                     if (mainPurps === '판매시설' || /판매/.test(mainPurps)) return '판매시설';
                     if (mainPurps === '운수시설' || /운수/.test(mainPurps)) return '운수시설';
                     if (mainPurps === '운동시설' || /운동/.test(mainPurps)) return '운동시설';
-                    if (/문화및집회|문화/.test(mainPurps)) return '문화및집회시설';
+                    if (/문화\s*및\s*집회|문화/.test(mainPurps)) return '문화및집회시설';
                     if (mainPurps === '창고시설' || /창고/.test(mainPurps)) return '창고시설';
                     if (mainPurps === '공장') return '공장';
                     if (mainPurps === '교육연구시설') return '교육연구시설';
@@ -14560,7 +14564,7 @@
                 if (/의료시설|병원|치과병원|한방병원/.test(mergedPurps)) return '의료시설';
                 if (/노유자시설/.test(mergedPurps)) return '노유자시설';
                 if (/숙박시설|호텔|모텔|콘도|여관/.test(mergedPurps)) return '숙박시설';
-                if (/문화및집회|집회시설|공연장|영화관/.test(mergedPurps)) return '문화및집회시설';
+                if (/문화\s*및\s*집회|집회시설|공연장|영화관/.test(mergedPurps)) return '문화및집회시설';
                 if (/판매시설|백화점|대형마트|쇼핑몰/.test(mergedPurps)) return '판매시설';
                 if (/운수시설|터미널/.test(mergedPurps)) return '운수시설';
                 if (/운동시설|체육관/.test(mergedPurps)) return '운동시설';
