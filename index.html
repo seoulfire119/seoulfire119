@@ -13702,7 +13702,9 @@
         function evaluateSprinklerByLawAndUsage(mainPurpsCdNm, etcPurps, useAprDayRaw, grndFlrRaw, totAreaRaw, combinedContext = '', bldNameHint = '', ledgerType = '', archAreaRaw = 0) {
             const cleanContext = String(combinedContext || '')
                 .replace(/고층건물\s*\([^)]*\)/gi, '')
-                .replace(/재난분류[^\n\r]*/gi, '');
+                .replace(/재난분류[^\n\r]*/gi, '')
+                .replace(/임시\s*의료소[^\]/\n\r]*/gi, '')
+                .replace(/취약지역[\s\S]*?(?=신고자연락처|관할서|내용|출동정보|$)/gi, '');
 
             const digits = String(useAprDayRaw || '').replace(/\D/g, '');
             let ymd = 0;
@@ -13762,7 +13764,7 @@
                 /의료시설|의료/.test(mainPurpsCdNm || '') ||
                 /의료|병원|한의원|치과의원|조산원|산후조리원/.test(bldNameHint) ||
                 /의료|병원|한의원|치과의원|조산원|산후조리원/.test(etcPurps) ||
-                /의료|병원|한의원|치과의원|조산원|산후조리원/.test(cleanContext)
+                (/의료|병원|한의원|치과의원|조산원|산후조리원/.test(cleanContext) && !/아파트|공동주택|단독주택|다세대|연립|도시형생활주택|오피스텔|근생시설/.test(effType))
             );
 
             // 4. 노유자시설
@@ -14582,7 +14584,7 @@
             if (/다가구/.test(combinedContext)) return '다가구주택';
             if (/종교|교회|성당|사찰|기도원/.test(combinedContext)) return '종교시설';
             if (/요양병원/.test(combinedContext)) return '요양병원';
-            if (/의료|병원/.test(combinedContext)) return '의료시설';
+            if (/의료시설|병원|치과병원|한방병원|한의원|의원/.test(combinedContext.replace(/임시\s*의료소/g, ''))) return '의료시설';
             if (/숙박|호텔|모텔/.test(combinedContext)) return '숙박시설';
             if (/근린생활|근생|상가|음식점|식당|점포/.test(combinedContext)) return '근생시설';
             if (/복합건축물|주상복합/.test(combinedContext)) return '복합건축물';
