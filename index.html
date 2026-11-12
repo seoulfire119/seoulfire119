@@ -501,14 +501,17 @@
             gap: 12px;
         }
         .sp-sub-title {
-            font-size: 13.5px;
-            font-weight: 800;
-            color: #0369a1;
+            font-size: 17px;
+            font-weight: 900;
+            color: #0f172a;
+            background: #f1f5f9;
+            padding: 6px 10px;
+            border-radius: 6px;
+            border-left: 4px solid #0f172a;
             display: flex;
             align-items: center;
-            gap: 4px;
-            border-bottom: 1px dashed #cbd5e1;
-            padding-bottom: 4px;
+            gap: 6px;
+            border-bottom: 1px solid #cbd5e1;
         }
         .sp-info-block {
             display: flex;
@@ -3768,6 +3771,13 @@
                 ]
             },
             {
+                name: '임시의료소 지원차량',
+                typeBadge: '임시의료소 지원',
+                station: '중부, 성북, 영등포, 강남',
+                spec: '• 대응장비: 에어텐트(대형), 다수사상자 대응키트, 사체낭, 현장가림막 등 31종 649점',
+                imgUrl: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSzLsO8Fe3s-i4ehy4382cpWSNS2qKxvj29hnMwcwqiNU7I9rfbecMWQP36&s=10'
+            },
+            {
                 name: '무인파괴 방수차',
                 typeBadge: '특수진압차',
                 station: '중부',
@@ -3775,18 +3785,21 @@
                 imgUrl: 'https://newsx.ecn.cdn.infralab.net/www.fpn119.co.kr/imgdata/fpn119_co_kr/202502/2025020358118977.jpg'
             },
             {
-                name: '화생방 분석차',
+                name: '화생방 분석차 / 제독차',
                 typeBadge: '화생방 대응',
-                station: '특수',
-                spec: '• 기상측정장비, 양압설치, 원거리 가스타지기, 원거리방사선 탐지기, 글로브 박스, 대원제독시설\n• 탱크용량 : 350ℓ',
-                imgUrl: 'https://cdn.sisafocus.co.kr/news/photo/202308/302448_368625_3616.jpg'
-            },
-            {
-                name: '화생방 제독차',
-                typeBadge: '화생방 대응',
-                station: '특수, 관악',
-                spec: '• 제독용 송풍장치, 제독텐트, 발전기\n• 물 2,000ℓ / 제독약제 200ℓ / 분말 100kg',
-                imgUrl: 'https://cdn.sisafocus.co.kr/news/photo/202308/302448_368625_3616.jpg'
+                imgUrl: 'https://cdn.sisafocus.co.kr/news/photo/202308/302448_368625_3616.jpg',
+                subItems: [
+                    {
+                        subTitle: '화생방 분석차',
+                        station: '특수',
+                        spec: '• 기상측정장비, 양압설치, 원거리 가스타지기, 원거리방사선 탐지기, 글로브 박스, 대원제독시설\n• 탱크용량 : 350ℓ'
+                    },
+                    {
+                        subTitle: '화생방 제독차',
+                        station: '특수, 관악',
+                        spec: '• 제독용 송풍장치, 제독텐트, 발전기\n• 물 2,000ℓ / 제독약제 200ℓ / 분말 100kg'
+                    }
+                ]
             },
             {
                 name: '발전배수차',
@@ -3873,10 +3886,10 @@
                                 <span class="sp-tag-label sp-tag-station">🏢 배치관서</span>
                                 <div class="sp-info-text sp-station-text">${veh.station}</div>
                             </div>
-                            <div class="sp-info-block">
+                            ${veh.spec ? `<div class="sp-info-block">
                                 <span class="sp-tag-label sp-tag-spec">⚡ 성 능</span>
                                 <div class="sp-info-text">${veh.spec.replace(/\n/g, '<br>')}</div>
-                            </div>
+                            </div>` : ''}
                             ${imgHtml}
                         </div>
                     `;
