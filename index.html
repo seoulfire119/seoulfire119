@@ -2068,7 +2068,6 @@
             margin-bottom: 8px;
         }
 
-input, textarea { ime-mode: active !important; }
     </style>
 </head>
 <body>
@@ -12750,20 +12749,47 @@ input, textarea { ime-mode: active !important; }
         function cleanSpaces(t) { return t ? t.replace(/[ \t]+/g, ' ') : ''; }
 
         let isComposingInput = false;
-        document.addEventListener('compositionstart', () => {
+        let composingTargetEl = null;
+        document.addEventListener('compositionstart', (e) => {
             isComposingInput = true;
+            composingTargetEl = e.target || null;
         }, true);
-        document.addEventListener('compositionend', () => {
+        document.addEventListener('compositionend', (e) => {
+            const endedTarget = e.target;
             isComposingInput = false;
-            triggerUpdateDebounced();
+            composingTargetEl = null;
+            // 브라우저가 조합 완료된 마지막 글자를 .value에 커밋한 직후 즉시 동기화 및 보고서 반영
+            setTimeout(() => {
+                if (typeof unitSeonchak !== 'undefined' && endedTarget === unitSeonchak && typeof syncSeonchakToSec2 === 'function') {
+                    isSyncing = true;
+                    syncSeonchakToSec2((unitSeonchak.value || '').trim(), true);
+                    isSyncing = false;
+                }
+                if (typeof pSection2 !== 'undefined' && endedTarget === pSection2 && typeof unitSeonchak !== 'undefined' && typeof sanitizeSeonchakUnitValue === 'function') {
+                    if (document.activeElement !== unitSeonchak) {
+                        const match = pSection2.value.match(/선착대(?:\((.*?)\))?\s*도착\s*시/);
+                        if (match && match[1] !== undefined) {
+                            const sanitized = sanitizeSeonchakUnitValue(match[1].trim());
+                            if (unitSeonchak.value !== sanitized) {
+                                isSyncing = true;
+                                unitSeonchak.value = sanitized;
+                                isSyncing = false;
+                            }
+                        }
+                    }
+                }
+                flushReportUpdate();
+            }, 0);
         }, true);
         document.addEventListener('compositioncancel', () => {
             isComposingInput = false;
+            composingTargetEl = null;
         }, true);
         document.addEventListener('blur', () => {
             setTimeout(() => {
                 isComposingInput = false;
-            }, 50);
+                composingTargetEl = null;
+            }, 120);
         }, true);
 
         let debounceTimer = null;
@@ -12790,8 +12816,12 @@ input, textarea { ime-mode: active !important; }
         // blur 시점에는 브라우저의 한글 IME 조합(compositionend)이 완전히 확정된 뒤 후처리를 수행하도록 지연
         function scheduleAfterImeCommit(callback) {
             setTimeout(() => {
-                callback();
-            }, 30);
+                if (isComposingInput) {
+                    setTimeout(callback, 60);
+                } else {
+                    callback();
+                }
+            }, 80);
         }
 
         let saveStorageTimer = null;
@@ -15617,10 +15647,15 @@ input, textarea { ime-mode: active !important; }
         });
 
         let isSyncing = false;
-        function syncSeonchakToSec2(validName) {
-            if (document.activeElement === pSection2) {
+        function syncSeonchakToSec2(validName, forceOnBlur = false) {
+            if (document.activeElement === pSection2 && !forceOnBlur) {
                 // 사용자가 6번 소방대응상황을 직접 타이핑 중일 때는 스크립트가 덮어써서 마지막 글자가 잘리는 현상 완전 차단
                 return;
+            }
+            let selStart = null, selEnd = null;
+            if (document.activeElement === pSection2) {
+                selStart = pSection2.selectionStart;
+                selEnd = pSection2.selectionEnd;
             }
             let text = pSection2.value;
             const pat = /^\s*\*?\s*선착대(?:\([^)]*\))?\s*도착\s*시/m;
@@ -15643,6 +15678,12 @@ input, textarea { ime-mode: active !important; }
                 if (pat.test(text)) {
                     pSection2.value = text.replace(pat, '선착대 도착 시');
                 }
+            }
+            if (document.activeElement === pSection2 && selStart !== null) {
+                try {
+                    const diff = pSection2.value.length - text.length;
+                    pSection2.setSelectionRange(Math.max(0, selStart + diff), Math.max(0, selEnd + diff));
+                } catch (e) {}
             }
         }
 
@@ -15687,7 +15728,7 @@ input, textarea { ime-mode: active !important; }
                     if (curVal !== raw) {
                         unitSeonchak.value = raw;
                     }
-                    syncSeonchakToSec2(unitSeonchak.value.trim());
+                    syncSeonchakToSec2(unitSeonchak.value.trim(), true);
                     flushReportUpdate();
                 } else {
                     syncSeonchakToSec2('');
