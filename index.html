@@ -12879,11 +12879,6 @@
         pSection1.addEventListener('blur', () => {
             scheduleAfterImeCommit(() => {
                 if (document.activeElement === pSection1) return;
-                const curVal = pSection1.value;
-                const trimmed = curVal.replace(/^[\s\n\r\t]+/, '');
-                if (curVal !== trimmed) {
-                    pSection1.value = trimmed;
-                }
                 flushReportUpdate();
             });
         });
@@ -12897,11 +12892,6 @@
         eventAddrInput.addEventListener('blur', () => {
             scheduleAfterImeCommit(() => {
                 if (document.activeElement === eventAddrInput) return;
-                const curVal = eventAddrInput.value;
-                const cleaned = cleanSpaces(curVal).trim();
-                if (curVal !== cleaned) {
-                    eventAddrInput.value = cleaned;
-                }
                 flushReportUpdate();
             });
         });
@@ -13831,7 +13821,7 @@
                 effType === '창고시설' || /창고시설/.test(mainPurpsCdNm || '') || /물류창고|물류센터/.test(bldNameHint)
             );
             const isFactory = !isOffice && !isReligion && !isNursingHospital && !isMedical && !isWelfare && !isHotel && !isComm && (
-                effType === '공장' || /공장/.test(mainPurpsCdNm || '')
+                effType === '공장' || effType === '지식산업센터' || /공장|지식산업센터/.test(mainPurpsCdNm || '')
             );
 
             // 9. 문화및집회시설 / 운동시설
@@ -14493,6 +14483,12 @@
                 const bldNm = (bestItem.bldNm || '').trim();
                 const mergedPurps = `${etcPurps} ${mainPurps} ${bldNm} ${dongNm} ${regstrKindNm} ${regstrGbNm}`;
 
+                // -2) 지식산업센터 우선 판별:
+                // 건축물대장 기타용도, 건물명, 주용도가 '공장'이더라도 '지식산업센터'(구 아파트형공장)인 경우 1번 구/동 명칭에 '지식산업센터'로 표기
+                if (/지식\s*산업\s*센터|아파트형\s*공장|지산\b/.test(mergedPurps) || /지식\s*산업\s*센터|아파트형\s*공장/.test(combinedContext) || (mainPurps === '공장' && /비즈센터|테크노밸리|IT타워|아이티타워|디지털타워|비즈타워|밸리/.test(`${bldNm} ${etcPurps}`))) {
+                    return '지식산업센터';
+                }
+
                 // -1) 도시형생활주택 우선 판별:
                 // 건축물대장 기타용도, 건물명, 주용도 또는 입력 컨텍스트에 '도시형생활주택'이 있는 경우 아파트가 아닌 '도시형생활주택'으로 명시
                 if (/도시형\s*생활\s*주택/.test(mergedPurps) || /도시형\s*생활\s*주택/.test(combinedContext)) {
@@ -14599,6 +14595,7 @@
             }
 
             // 컨텍스트 보조 판별 (bestItem이 없을 때)
+            if (/지식\s*산업\s*센터|아파트형\s*공장/.test(combinedContext)) return '지식산업센터';
             if (/도시형\s*생활\s*주택/.test(combinedContext)) return '도시형생활주택';
             if (/근린생활|근생|상가/.test(combinedContext) && /주택|단독|다가구/.test(combinedContext) && !/아파트|공동주택|도시형/.test(combinedContext)) return '일반건축물';
             if (/단독\s*주택|일반화재\s*\(주택\)|주택/.test(combinedContext) && !/아파트|공동주택|오피스텔/.test(combinedContext)) return '단독주택';
@@ -15771,11 +15768,6 @@
         unitMedical.addEventListener('blur', () => {
             scheduleAfterImeCommit(() => {
                 if (document.activeElement === unitMedical) return;
-                const curVal = unitMedical.value;
-                const cleaned = cleanSpaces(curVal).trim();
-                if (curVal !== cleaned) {
-                    unitMedical.value = cleaned;
-                }
                 flushReportUpdate();
             });
         });
@@ -17570,6 +17562,7 @@
             const tab = tabs.find(t => t.id === tabId);
             if (!tab) return;
             activeTabId = tabId;
+            if (typeof resetToKoreanDefaultMode === 'function') resetToKoreanDefaultMode();
             const d = tab.data || {};
 
             if (safetyMapRawInput) {
@@ -18067,6 +18060,269 @@
         window.addEventListener('unhandledrejection', (e) => {
             console.error("비동기 처리 미처리 거부 감지:", e.reason);
         });
+
+        // ==========================================
+        // 1. 포커스 이동(다른 곳 클릭) 시 한글 마지막 글자 보존 및 즉시 보고서 반영
+        // ==========================================
+        [titleLocInput, titleStepInput, eventAddrInput, pSection1, pSection2, pSection3,
+         stationNameInput, jinapCntInput, gujoCntInput, gugeupCntInput,
+         bldStructureInput, bldFloorsInput, bldAreaInput, bldAprDateInput,
+         etcInput, timeJiryeong, timeChuldong, unitSeonchak, timeSeonchak, unitMedical, timeMedical,
+         timeChojin, timeWanjin].forEach(el => {
+            if (!el) return;
+            el.addEventListener('blur', () => {
+                scheduleAfterImeCommit(() => {
+                    if (document.activeElement === el) return;
+                    flushReportUpdate();
+                });
+            });
+        });
+
+        // ==========================================
+        // 2. 전역 한글 우선 입력 및 한/영 전환 엔진 (Shift 쌍자음/이중모음 및 붙여넣기 완벽 지원)
+        // ==========================================
+        const CHO_LIST = ['ㄱ', 'ㄲ', 'ㄴ', 'ㄷ', 'ㄸ', 'ㄹ', 'ㅁ', 'ㅂ', 'ㅃ', 'ㅅ', 'ㅆ', 'ㅇ', 'ㅈ', 'ㅉ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ'];
+        const JUNG_LIST = ['ㅏ', 'ㅐ', 'ㅑ', 'ㅒ', 'ㅓ', 'ㅔ', 'ㅕ', 'ㅖ', 'ㅗ', 'ㅘ', 'ㅙ', 'ㅚ', 'ㅛ', 'ㅜ', 'ㅝ', 'ㅞ', 'ㅟ', 'ㅠ', 'ㅡ', 'ㅢ', 'ㅣ'];
+        const JONG_LIST = ['', 'ㄱ', 'ㄲ', 'ㄳ', 'ㄴ', 'ㄵ', 'ㄶ', 'ㄷ', 'ㄹ', 'ㄺ', 'ㄻ', 'ㄼ', 'ㄽ', 'ㄾ', 'ㄿ', 'ㅀ', 'ㅁ', 'ㅂ', 'ㅄ', 'ㅅ', 'ㅆ', 'ㅇ', 'ㅈ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ'];
+
+        const ENG_TO_KOR_MAP = {
+            'r': 'ㄱ', 'R': 'ㄲ', 's': 'ㄴ', 'e': 'ㄷ', 'E': 'ㄸ', 'f': 'ㄹ', 'a': 'ㅁ', 'q': 'ㅂ', 'Q': 'ㅃ', 't': 'ㅅ', 'T': 'ㅆ',
+            'd': 'ㅇ', 'w': 'ㅈ', 'W': 'ㅉ', 'c': 'ㅊ', 'z': 'ㅋ', 'x': 'ㅌ', 'v': 'ㅍ', 'g': 'ㅎ',
+            'k': 'ㅏ', 'K': 'ㅏ', 'o': 'ㅐ', 'O': 'ㅒ', 'i': 'ㅑ', 'I': 'ㅑ', 'j': 'ㅓ', 'J': 'ㅓ', 'p': 'ㅔ', 'P': 'ㅖ',
+            'u': 'ㅕ', 'U': 'ㅕ', 'h': 'ㅗ', 'H': 'ㅗ', 'y': 'ㅛ', 'Y': 'ㅛ', 'n': 'ㅜ', 'N': 'ㅜ', 'b': 'ㅠ', 'B': 'ㅠ',
+            'm': 'ㅡ', 'M': 'ㅡ', 'l': 'ㅣ', 'L': 'ㅣ'
+        };
+
+        const DOUBLE_JUNG_MAP = {
+            'ㅗㅏ': 'ㅘ', 'ㅗㅐ': 'ㅙ', 'ㅗㅣ': 'ㅚ', 'ㅜㅓ': 'ㅝ', 'ㅜㅔ': 'ㅞ', 'ㅜㅣ': 'ㅟ', 'ㅡㅣ': 'ㅢ'
+        };
+
+        const DOUBLE_JONG_MAP = {
+            'ㄱㅅ': 'ㄳ', 'ㄴㅈ': 'ㄵ', 'ㄴㅎ': 'ㄶ', 'ㄹㄱ': 'ㄺ', 'ㄹㅁ': 'ㄻ', 'ㄹㅂ': 'ㄼ', 'ㄹㅅ': 'ㄽ', 'ㄹㅌ': 'ㄾ', 'ㄹㅍ': 'ㄿ', 'ㄹㅎ': 'ㅀ', 'ㅂㅅ': 'ㅄ'
+        };
+
+        function convertEngToHangul(str) {
+            let result = '';
+            let cho = -1, jung = -1, jong = -1;
+            let jungChar = '', jongChar = '';
+
+            const flush = () => {
+                if (cho !== -1) {
+                    if (jung !== -1) {
+                        result += String.fromCharCode(0xAC00 + (cho * 21 + jung) * 28 + (jong === -1 ? 0 : jong));
+                    } else {
+                        result += CHO_LIST[cho];
+                    }
+                } else if (jung !== -1) {
+                    result += jungChar;
+                } else if (jong !== -1) {
+                    result += JONG_LIST[jong];
+                }
+                cho = -1; jung = -1; jong = -1;
+                jungChar = ''; jongChar = '';
+            };
+
+            for (let i = 0; i < str.length; i++) {
+                const c = str[i];
+                const k = ENG_TO_KOR_MAP[c];
+                if (!k) {
+                    flush();
+                    result += c;
+                    continue;
+                }
+
+                const isVowel = JUNG_LIST.includes(k);
+
+                if (isVowel) {
+                    if (cho === -1) {
+                        if (jung !== -1) {
+                            const combined = DOUBLE_JUNG_MAP[jungChar + k];
+                            if (combined) {
+                                jungChar = combined;
+                                jung = JUNG_LIST.indexOf(combined);
+                            } else {
+                                flush();
+                                jungChar = k;
+                                jung = JUNG_LIST.indexOf(k);
+                            }
+                        } else {
+                            jungChar = k;
+                            jung = JUNG_LIST.indexOf(k);
+                        }
+                    } else {
+                        if (jung === -1) {
+                            jungChar = k;
+                            jung = JUNG_LIST.indexOf(k);
+                        } else if (jong === -1) {
+                            const combined = DOUBLE_JUNG_MAP[jungChar + k];
+                            if (combined) {
+                                jungChar = combined;
+                                jung = JUNG_LIST.indexOf(combined);
+                            } else {
+                                flush();
+                                jungChar = k;
+                                jung = JUNG_LIST.indexOf(k);
+                            }
+                        } else {
+                            let prevJong = -1;
+                            let nextCho = -1;
+                            const reverseDouble = Object.entries(DOUBLE_JONG_MAP).find(([k2, v2]) => v2 === JONG_LIST[jong]);
+                            if (reverseDouble) {
+                                const [j1, j2] = reverseDouble[0];
+                                prevJong = JONG_LIST.indexOf(j1);
+                                nextCho = CHO_LIST.indexOf(j2);
+                            } else {
+                                nextCho = CHO_LIST.indexOf(JONG_LIST[jong]);
+                                prevJong = -1;
+                            }
+
+                            result += String.fromCharCode(0xAC00 + (cho * 21 + jung) * 28 + (prevJong === -1 ? 0 : prevJong));
+                            cho = nextCho;
+                            jung = JUNG_LIST.indexOf(k);
+                            jungChar = k;
+                            jong = -1;
+                            jongChar = '';
+                        }
+                    }
+                } else {
+                    if (cho === -1) {
+                        if (jung !== -1) {
+                            flush();
+                        }
+                        cho = CHO_LIST.indexOf(k);
+                    } else if (jung === -1) {
+                        flush();
+                        cho = CHO_LIST.indexOf(k);
+                    } else if (jong === -1) {
+                        const jIdx = JONG_LIST.indexOf(k);
+                        if (jIdx !== -1) {
+                            jong = jIdx;
+                            jongChar = k;
+                        } else {
+                            flush();
+                            cho = CHO_LIST.indexOf(k);
+                        }
+                    } else {
+                        const combined = DOUBLE_JONG_MAP[jongChar + k];
+                        if (combined) {
+                            jong = JONG_LIST.indexOf(combined);
+                            jongChar = combined;
+                        } else {
+                            flush();
+                            cho = CHO_LIST.indexOf(k);
+                        }
+                    }
+                }
+            }
+            flush();
+            return result;
+        }
+
+        let isEnglishInputMode = false;
+        let hangulEngBuffer = '';
+        let lastInsertedHangul = '';
+        let activeImeTarget = null;
+
+        function resetHangulBuffer() {
+            hangulEngBuffer = '';
+            lastInsertedHangul = '';
+            activeImeTarget = null;
+        }
+
+        // 모든 상황탭 전환/생성 시 기본 한글 입력 모드로 초기화
+        function resetToKoreanDefaultMode() {
+            isEnglishInputMode = false;
+            resetHangulBuffer();
+        }
+
+        document.addEventListener('keydown', (e) => {
+            // 1. Shift/CapsLock 등 단독 수정자 키는 한글 조합 버퍼를 절대 끊지 않고 그대로 유지 ('계단', '불이났다' 등 Shift 조합 완벽 보존)
+            if (e.key === 'Shift' || e.key === 'CapsLock' || e.key === 'Control' || e.key === 'Alt' || e.key === 'Meta') {
+                return;
+            }
+
+            // 2. 키보드 한/영키 감지 시 한글 ↔ 영어 모드 전환
+            if (e.key === 'HangulMode' || e.code === 'Lang1' || e.keyCode === 21 || e.key === 'KanjiMode') {
+                isEnglishInputMode = !isEnglishInputMode;
+                resetHangulBuffer();
+                showToast(isEnglishInputMode ? '영문 입력 모드로 전환되었습니다.' : '한글 입력 모드로 전환되었습니다.');
+                e.preventDefault();
+                return;
+            }
+
+            const target = e.target;
+            const isTextControl = (target instanceof HTMLInputElement && ['text', 'search', ''].includes(target.type)) || (target instanceof HTMLTextAreaElement);
+            if (!isTextControl || target.readOnly || target.disabled) {
+                resetHangulBuffer();
+                return;
+            }
+
+            // 3. 단축키 (Ctrl+C, Ctrl+V, Ctrl+A 등)는 그대로 통과하여 복사/붙여넣기 원본 100% 보존
+            if (e.ctrlKey || e.metaKey || e.altKey) {
+                resetHangulBuffer();
+                return;
+            }
+
+            // 4. OS 자체 한글 IME가 조합 중인 경우 개입하지 않고 OS IME에 위임
+            if (e.isComposing || isComposingInput || e.key === 'Process' || e.keyCode === 229) {
+                resetHangulBuffer();
+                return;
+            }
+
+            // 5. 한/영키로 영문 입력 모드로 바꾼 경우 영문 그대로 입력
+            if (isEnglishInputMode) {
+                resetHangulBuffer();
+                return;
+            }
+
+            // 6. 백스페이스 처리 (조합 중인 글자의 자모 단위 삭제 지원)
+            if (e.key === 'Backspace') {
+                if (activeImeTarget === target && hangulEngBuffer.length > 0) {
+                    e.preventDefault();
+                    hangulEngBuffer = hangulEngBuffer.slice(0, -1);
+                    const newKor = hangulEngBuffer ? convertEngToHangul(hangulEngBuffer) : '';
+                    const startPos = Math.max(0, target.selectionStart - lastInsertedHangul.length);
+                    const endPos = target.selectionStart;
+                    target.setRangeText(newKor, startPos, endPos, 'end');
+                    lastInsertedHangul = newKor;
+                    target.dispatchEvent(new Event('input', { bubbles: true }));
+                    if (!hangulEngBuffer) resetHangulBuffer();
+                    return;
+                }
+                resetHangulBuffer();
+                return;
+            }
+
+            // 7. 영문 알파벳 타이핑 시 기본 한글(두벌식)로 즉시 조합 변환
+            if (/^[a-zA-Z]$/.test(e.key)) {
+                e.preventDefault();
+                if (activeImeTarget !== target) {
+                    resetHangulBuffer();
+                    activeImeTarget = target;
+                }
+
+                hangulEngBuffer += e.key;
+                const newKor = convertEngToHangul(hangulEngBuffer);
+                const startPos = Math.max(0, target.selectionStart - lastInsertedHangul.length);
+                const endPos = target.selectionStart;
+                target.setRangeText(newKor, startPos, endPos, 'end');
+                lastInsertedHangul = newKor;
+                target.dispatchEvent(new Event('input', { bubbles: true }));
+                return;
+            }
+
+            // 8. 그 외 키(스페이스, 엔터, 숫자, 기호, 방향키 등)는 현재 조합 글자를 완료(확정)하고 통과
+            resetHangulBuffer();
+        }, true);
+
+        // 붙여넣기 및 포커스 이동, 다른 곳 마우스 클릭 시에는 이미 입력된 마지막 글자를 그대로 남기고 조합 버퍼만 깔끔히 확정
+        window.addEventListener('paste', () => { resetHangulBuffer(); }, true);
+        window.addEventListener('blur', () => { resetHangulBuffer(); }, true);
+        window.addEventListener('pointerdown', (e) => {
+            if (e.target !== activeImeTarget) {
+                resetHangulBuffer();
+            }
+        }, true);
 
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', startApp);
