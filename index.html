@@ -18218,10 +18218,53 @@
             return result;
         }
 
+        const CODE_TO_ENG_MAP = {
+            'KeyA': ['a', 'A'], 'KeyB': ['b', 'B'], 'KeyC': ['c', 'C'], 'KeyD': ['d', 'D'],
+            'KeyE': ['e', 'E'], 'KeyF': ['f', 'F'], 'KeyG': ['g', 'G'], 'KeyH': ['h', 'H'],
+            'KeyI': ['i', 'I'], 'KeyJ': ['j', 'J'], 'KeyK': ['k', 'K'], 'KeyL': ['l', 'L'],
+            'KeyM': ['m', 'M'], 'KeyN': ['n', 'N'], 'KeyO': ['o', 'O'], 'KeyP': ['p', 'P'],
+            'KeyQ': ['q', 'Q'], 'KeyR': ['r', 'R'], 'KeyS': ['s', 'S'], 'KeyT': ['t', 'T'],
+            'KeyU': ['u', 'U'], 'KeyV': ['v', 'V'], 'KeyW': ['w', 'W'], 'KeyX': ['x', 'X'],
+            'KeyY': ['y', 'Y'], 'KeyZ': ['z', 'Z']
+        };
+
+        const KOR_TO_ENG_MAP = {
+            'ㄱ': 'r', 'ㄲ': 'R', 'ㄴ': 's', 'ㄷ': 'e', 'ㄸ': 'E', 'ㄹ': 'f', 'ㅁ': 'a', 'ㅂ': 'q', 'ㅃ': 'Q', 'ㅅ': 't', 'ㅆ': 'T',
+            'ㅇ': 'd', 'ㅈ': 'w', 'ㅉ': 'W', 'ㅊ': 'c', 'ㅋ': 'z', 'ㅌ': 'x', 'ㅍ': 'v', 'ㅎ': 'g',
+            'ㅏ': 'k', 'ㅐ': 'o', 'ㅑ': 'i', 'ㅒ': 'O', 'ㅓ': 'j', 'ㅔ': 'p', 'ㅕ': 'u', 'ㅖ': 'P', 'ㅗ': 'h', 'ㅛ': 'y',
+            'ㅜ': 'n', 'ㅠ': 'b', 'ㅡ': 'm', 'ㅣ': 'l',
+            'ㅘ': 'hk', 'ㅙ': 'ho', 'ㅚ': 'hl', 'ㅝ': 'nj', 'ㅞ': 'np', 'ㅟ': 'nl', 'ㅢ': 'ml',
+            'ㄳ': 'rt', 'ㄵ': 'sw', 'ㄶ': 'sg', 'ㄺ': 'fr', 'ㄻ': 'fa', 'ㄼ': 'fq', 'ㄽ': 'ft', 'ㄾ': 'fx', 'ㄿ': 'fv', 'ㅀ': 'fg', 'ㅄ': 'qt'
+        };
+
+        function convertHangulToEng(str) {
+            let out = '';
+            for (let i = 0; i < str.length; i++) {
+                const ch = str[i];
+                const code = ch.charCodeAt(0);
+                if (code >= 0xAC00 && code <= 0xD7A3) {
+                    const offset = code - 0xAC00;
+                    const jong = offset % 28;
+                    const jung = ((offset - jong) / 28) % 21;
+                    const cho = Math.floor((offset - jong) / 28 / 21);
+                    out += (KOR_TO_ENG_MAP[CHO_LIST[cho]] || '') +
+                           (KOR_TO_ENG_MAP[JUNG_LIST[jung]] || '') +
+                           (jong > 0 ? (KOR_TO_ENG_MAP[JONG_LIST[jong]] || '') : '');
+                } else if (KOR_TO_ENG_MAP[ch]) {
+                    out += KOR_TO_ENG_MAP[ch];
+                } else {
+                    out += ch;
+                }
+            }
+            return out;
+        }
+
         let isEnglishInputMode = false;
         let hangulEngBuffer = '';
         let lastInsertedHangul = '';
         let activeImeTarget = null;
+        let lastHangulToggleTime = 0;
+        let isPastingBypass = false;
 
         function resetHangulBuffer() {
             hangulEngBuffer = '';
@@ -18235,18 +18278,42 @@
             resetHangulBuffer();
         }
 
+        function isHangulToggleEvent(e) {
+            if (e.key === 'HangulMode' || e.key === 'Romaji' || e.key === 'KanaMode' ||
+                e.code === 'Lang1' || e.keyCode === 21) {
+                return true;
+            }
+            // 일부 Windows 브라우저에서 오른쪽 Alt(한/영키)가 AltGraph 또는 오른쪽 Alt(keyCode 18, location 2)로 전달되는 경우
+            if (e.key === 'AltGraph' || (e.key === 'Alt' && e.location === 2)) {
+                return true;
+            }
+            return false;
+        }
+
+        function toggleKorEngMode(e) {
+            const now = Date.now();
+            if (now - lastHangulToggleTime < 150) return; // keydown/keyup 중복 토글 방지
+            lastHangulToggleTime = now;
+            isEnglishInputMode = !isEnglishInputMode;
+            resetHangulBuffer();
+            showToast(isEnglishInputMode ? '영문(ENG) 입력 모드' : '한글(한) 입력 모드');
+        }
+
+        document.addEventListener('keyup', (e) => {
+            if (isHangulToggleEvent(e)) {
+                toggleKorEngMode(e);
+            }
+        }, true);
+
         document.addEventListener('keydown', (e) => {
-            // 1. Shift/CapsLock 등 단독 수정자 키는 한글 조합 버퍼를 절대 끊지 않고 그대로 유지 ('계단', '불이났다' 등 Shift 조합 완벽 보존)
-            if (e.key === 'Shift' || e.key === 'CapsLock' || e.key === 'Control' || e.key === 'Alt' || e.key === 'Meta') {
+            // 1. 키보드 한/영키 감지 시 한글 ↔ 영어 모드 전환 (OS 한/영 전환도 정상 이루어지도록 preventDefault 호출 안 함)
+            if (isHangulToggleEvent(e)) {
+                toggleKorEngMode(e);
                 return;
             }
 
-            // 2. 키보드 한/영키 감지 시 한글 ↔ 영어 모드 전환
-            if (e.key === 'HangulMode' || e.code === 'Lang1' || e.keyCode === 21 || e.key === 'KanjiMode') {
-                isEnglishInputMode = !isEnglishInputMode;
-                resetHangulBuffer();
-                showToast(isEnglishInputMode ? '영문 입력 모드로 전환되었습니다.' : '한글 입력 모드로 전환되었습니다.');
-                e.preventDefault();
+            // 2. Shift/CapsLock 등 단독 수정자 키는 한글 조합 버퍼를 끊지 않고 유지
+            if (e.key === 'Shift' || e.key === 'CapsLock' || e.key === 'Control' || e.key === 'Alt' || e.key === 'Meta') {
                 return;
             }
 
@@ -18263,19 +18330,30 @@
                 return;
             }
 
-            // 4. OS 자체 한글 IME가 조합 중인 경우 개입하지 않고 OS IME에 위임
+            // 4. 한/영키를 눌러 '영문 입력 모드'인 경우:
+            //    OS IME가 영문 상태면 그대로 통과하고, 만약 OS IME가 한글 상태(e.key === 'Process' / keyCode 229)여서 한글로 쳐지려 하면 물리 키코드(e.code)로 즉시 영문 알파벳을 입력!
+            if (isEnglishInputMode) {
+                resetHangulBuffer();
+                if (CODE_TO_ENG_MAP[e.code] && (e.isComposing || isComposingInput || e.key === 'Process' || e.keyCode === 229 || /^[가-힣ㄱ-ㅎㅏ-ㅣ]$/.test(e.key))) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const isUpper = Boolean(e.shiftKey) !== Boolean(e.getModifierState && e.getModifierState('CapsLock'));
+                    const engChar = CODE_TO_ENG_MAP[e.code][isUpper ? 1 : 0];
+                    const startPos = target.selectionStart ?? target.value.length;
+                    const endPos = target.selectionEnd ?? target.value.length;
+                    target.setRangeText(engChar, startPos, endPos, 'end');
+                    target.dispatchEvent(new Event('input', { bubbles: true }));
+                }
+                return;
+            }
+
+            // 5. 한글 입력 모드일 때 OS 자체 한글 IME가 이미 조합 중인 경우 개입하지 않고 OS IME에 위임
             if (e.isComposing || isComposingInput || e.key === 'Process' || e.keyCode === 229) {
                 resetHangulBuffer();
                 return;
             }
 
-            // 5. 한/영키로 영문 입력 모드로 바꾼 경우 영문 그대로 입력
-            if (isEnglishInputMode) {
-                resetHangulBuffer();
-                return;
-            }
-
-            // 6. 백스페이스 처리 (조합 중인 글자의 자모 단위 삭제 지원)
+            // 6. 백스페이스 처리 (오토마타 조합 중인 글자의 자모 단위 삭제 지원)
             if (e.key === 'Backspace') {
                 if (activeImeTarget === target && hangulEngBuffer.length > 0) {
                     e.preventDefault();
@@ -18293,7 +18371,7 @@
                 return;
             }
 
-            // 7. 영문 알파벳 타이핑 시 기본 한글(두벌식)로 즉시 조합 변환
+            // 7. 한글 입력 모드에서 OS가 영문 상태여서 영문 알파벳이 들어올 때 -> 한글(두벌식)로 즉시 조합 변환
             if (/^[a-zA-Z]$/.test(e.key)) {
                 e.preventDefault();
                 if (activeImeTarget !== target) {
@@ -18315,8 +18393,29 @@
             resetHangulBuffer();
         }, true);
 
+        // 영문 입력 모드에서 브라우저 IME가 직접 한글 조합을 시도할 경우(beforeinput)에도 영문으로 즉시 변환 (붙여넣기는 100% 예외)
+        document.addEventListener('beforeinput', (e) => {
+            if (!isEnglishInputMode || isPastingBypass) return;
+            if (e.inputType === 'insertFromPaste' || e.inputType === 'insertFromDrop') return;
+            if (e.data && /[가-힣ㄱ-ㅎㅏ-ㅣ]/.test(e.data)) {
+                const target = e.target;
+                const isTextControl = (target instanceof HTMLInputElement && ['text', 'search', ''].includes(target.type)) || (target instanceof HTMLTextAreaElement);
+                if (!isTextControl || target.readOnly || target.disabled) return;
+                e.preventDefault();
+                const engStr = convertHangulToEng(e.data);
+                const startPos = target.selectionStart ?? target.value.length;
+                const endPos = target.selectionEnd ?? target.value.length;
+                target.setRangeText(engStr, startPos, endPos, 'end');
+                target.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+        }, true);
+
         // 붙여넣기 및 포커스 이동, 다른 곳 마우스 클릭 시에는 이미 입력된 마지막 글자를 그대로 남기고 조합 버퍼만 깔끔히 확정
-        window.addEventListener('paste', () => { resetHangulBuffer(); }, true);
+        window.addEventListener('paste', () => {
+            isPastingBypass = true;
+            resetHangulBuffer();
+            setTimeout(() => { isPastingBypass = false; }, 100);
+        }, true);
         window.addEventListener('blur', () => { resetHangulBuffer(); }, true);
         window.addEventListener('pointerdown', (e) => {
             if (e.target !== activeImeTarget) {
