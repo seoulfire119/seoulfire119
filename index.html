@@ -17815,7 +17815,10 @@
                     renderHazmatState(currentTabHazmatState);
                     cur.archiveId = null;
                     cur.archivedAt = null;
-                    cur.name = cur.defaultName;
+                    if (tabs.length === 1) {
+                        cur.defaultName = '상황 1';
+                    }
+                    cur.name = cur.defaultName || '상황 1';
                     loadTabData(cur.id);
                     setSafetyMapInputHidden(false);
                     resetWorkspaceScrollToTop();
@@ -17835,6 +17838,12 @@
                 const target = tabs.find(t => t.id === tabPendingDeleteId);
                 if (target) pushToArchive(target);
                 tabs = tabs.filter(t => t.id !== tabPendingDeleteId);
+                if (tabs.length === 1) {
+                    tabs[0].defaultName = '상황 1';
+                    if (!tabs[0].data || !tabs[0].data.titleLoc || !tabs[0].data.titleLoc.trim()) {
+                        tabs[0].name = '상황 1';
+                    }
+                }
                 if (activeTabId === tabPendingDeleteId) activeTabId = tabs[tabs.length - 1].id;
                 saveToLocalStorageHistory();
                 loadTabData(activeTabId);
