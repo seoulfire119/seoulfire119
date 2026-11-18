@@ -12763,16 +12763,117 @@
 
         let isComposingInput = false;
         let composingTargetEl = null;
+        const imeSnapshotMap = new WeakMap();
+        let lastGlobalKeyPressed = '';
+
+        function isTextInputControl(el) {
+            return Boolean(el && ((el instanceof HTMLInputElement && ['text', 'search', ''].includes(el.type)) || (el instanceof HTMLTextAreaElement)));
+        }
+
+        function updateImeSnapshot(target, composingData) {
+            if (!isTextInputControl(target)) return;
+            const prev = imeSnapshotMap.get(target) || { lastValWithComp: '', lastComposingChar: '', updatedAt: 0 };
+            const curVal = target.value || '';
+            const compChar = (composingData !== undefined && composingData !== null) ? String(composingData) : prev.lastComposingChar;
+
+            if (compChar && /[가-힣ㄱ-ㅎㅏ-ㅣ]/.test(compChar)) {
+                prev.lastComposingChar = compChar;
+            }
+            if (curVal.length >= (prev.lastValWithComp || '').length || (compChar && curVal.includes(compChar))) {
+                prev.lastValWithComp = curVal;
+            }
+            prev.updatedAt = Date.now();
+            imeSnapshotMap.set(target, prev);
+        }
+
+        // 포커스 이동(blur)이나 조합 종료(compositionend/cancel) 시 브라우저가 조합 중이던 마지막 한글 1글자를 증발시킨 경우 즉시 복원
+        function restoreDroppedLastHangulSyllable(target) {
+            if (!isTextInputControl(target) || target.readOnly || target.disabled) return false;
+            if (lastGlobalKeyPressed === 'Backspace' || lastGlobalKeyPressed === 'Delete' || lastGlobalKeyPressed === 'Escape') {
+                return false;
+            }
+            const snap = imeSnapshotMap.get(target);
+            if (!snap || !snap.lastValWithComp || !snap.lastComposingChar) return false;
+            if (Date.now() - snap.updatedAt > 5000) return false;
+
+            const curVal = target.value || '';
+            const snapVal = snap.lastValWithComp;
+            const compChar = snap.lastComposingChar;
+
+            if (snapVal.length === curVal.length + compChar.length) {
+                if (snapVal.startsWith(curVal) && snapVal.endsWith(compChar)) {
+                    target.value = snapVal;
+                    return true;
+                }
+                const idx = snapVal.lastIndexOf(compChar);
+                if (idx !== -1) {
+                    const withoutComp = snapVal.slice(0, idx) + snapVal.slice(idx + compChar.length);
+                    if (withoutComp === curVal) {
+                        target.value = snapVal;
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key && e.key !== 'Process' && e.keyCode !== 229) {
+                lastGlobalKeyPressed = e.key;
+            } else if (e.code === 'Backspace' || e.keyCode === 8) {
+                lastGlobalKeyPressed = 'Backspace';
+            } else if (e.code === 'Delete' || e.keyCode === 46) {
+                lastGlobalKeyPressed = 'Delete';
+            } else if (e.code === 'Escape' || e.keyCode === 27) {
+                lastGlobalKeyPressed = 'Escape';
+            } else {
+                lastGlobalKeyPressed = 'IME';
+            }
+        }, true);
+
         document.addEventListener('compositionstart', (e) => {
             isComposingInput = true;
             composingTargetEl = e.target || null;
+            if (isTextInputControl(e.target)) {
+                imeSnapshotMap.set(e.target, {
+                    lastValWithComp: e.target.value || '',
+                    lastComposingChar: e.data || '',
+                    updatedAt: Date.now()
+                });
+            }
         }, true);
+
+        document.addEventListener('compositionupdate', (e) => {
+            isComposingInput = true;
+            composingTargetEl = e.target || null;
+            if (isTextInputControl(e.target)) {
+                updateImeSnapshot(e.target, e.data);
+                setTimeout(() => updateImeSnapshot(e.target, e.data), 0);
+            }
+        }, true);
+
+        document.addEventListener('input', (e) => {
+            if (!isTextInputControl(e.target)) return;
+            if (e.isComposing || isComposingInput) {
+                updateImeSnapshot(e.target, e.data);
+            } else if (lastGlobalKeyPressed === 'Backspace' || lastGlobalKeyPressed === 'Delete') {
+                imeSnapshotMap.delete(e.target);
+            }
+        }, true);
+
         document.addEventListener('compositionend', (e) => {
             const endedTarget = e.target;
+            if (e.data && isTextInputControl(endedTarget)) {
+                updateImeSnapshot(endedTarget, e.data);
+            }
             isComposingInput = false;
             composingTargetEl = null;
-            // 브라우저가 조합 완료된 마지막 글자를 .value에 커밋한 직후 즉시 동기화 및 보고서 반영
+            // 브라우저가 조합 완료된 마지막 글자를 .value에 커밋한 직후(또는 누락 시 복원 후) 즉시 동기화 및 보고서 반영
             setTimeout(() => {
+                if (isTextInputControl(endedTarget)) {
+                    restoreDroppedLastHangulSyllable(endedTarget);
+                    imeSnapshotMap.delete(endedTarget);
+                }
                 if (typeof unitSeonchak !== 'undefined' && endedTarget === unitSeonchak && typeof syncSeonchakToSec2 === 'function') {
                     isSyncing = true;
                     syncSeonchakToSec2((unitSeonchak.value || '').trim(), true);
@@ -12792,29 +12893,48 @@
                     }
                 }
                 flushReportUpdate();
-            }, 0);
+            }, 10);
         }, true);
-        document.addEventListener('compositioncancel', () => {
+
+        document.addEventListener('compositioncancel', (e) => {
+            const canceledTarget = e.target;
             isComposingInput = false;
             composingTargetEl = null;
+            setTimeout(() => {
+                if (isTextInputControl(canceledTarget)) {
+                    restoreDroppedLastHangulSyllable(canceledTarget);
+                    imeSnapshotMap.delete(canceledTarget);
+                    flushReportUpdate();
+                }
+            }, 10);
         }, true);
-        document.addEventListener('blur', () => {
+
+        document.addEventListener('blur', (e) => {
+            const blurredTarget = e.target;
             setTimeout(() => {
                 isComposingInput = false;
                 composingTargetEl = null;
-            }, 120);
+                if (isTextInputControl(blurredTarget)) {
+                    if (restoreDroppedLastHangulSyllable(blurredTarget)) {
+                        if (typeof unitSeonchak !== 'undefined' && blurredTarget === unitSeonchak && typeof syncSeonchakToSec2 === 'function') {
+                            isSyncing = true;
+                            syncSeonchakToSec2((unitSeonchak.value || '').trim(), true);
+                            isSyncing = false;
+                        }
+                    }
+                    imeSnapshotMap.delete(blurredTarget);
+                    flushReportUpdate();
+                }
+            }, 40);
         }, true);
 
         let debounceTimer = null;
         function triggerUpdateDebounced() {
             if (debounceTimer) clearTimeout(debounceTimer);
             debounceTimer = setTimeout(() => {
-                if (isComposingInput) {
-                    // 한글 조합(IME) 중에는 보고서 조립 및 탭 저장을 지연시켜 마지막 글자가 잘리는 현상 방지
-                    return;
-                }
+                // 한글 조합 중이라도 우측 보고서 미리보기는 현재 입력칸 값 그대로 실시간 반영 (입력칸의 .value나 포커스는 절대 건드리지 않음)
                 assembleReportText();
-            }, 250);
+            }, 150);
         }
 
         function flushReportUpdate() {
@@ -15781,17 +15901,18 @@
         });
 
         pSection2.addEventListener('input', (e) => {
-            if (isSyncing || (e && e.isComposing)) return;
-            if (document.activeElement === unitSeonchak) return; // 3번 선착대 입력 중 덮어쓰기 방지
-            isSyncing = true;
-            const match = pSection2.value.match(/선착대(?:\((.*?)\))?\s*도착\s*시/);
-            if (match && match[1] !== undefined) {
-                const sanitized = sanitizeSeonchakUnitValue(match[1].trim());
-                if (unitSeonchak.value !== sanitized) {
-                    unitSeonchak.value = sanitized;
+            if (isSyncing) return;
+            if (!(e && e.isComposing) && document.activeElement !== unitSeonchak) {
+                isSyncing = true;
+                const match = pSection2.value.match(/선착대(?:\((.*?)\))?\s*도착\s*시/);
+                if (match && match[1] !== undefined) {
+                    const sanitized = sanitizeSeonchakUnitValue(match[1].trim());
+                    if (unitSeonchak.value !== sanitized) {
+                        unitSeonchak.value = sanitized;
+                    }
                 }
+                isSyncing = false;
             }
-            isSyncing = false;
             triggerUpdateDebounced();
         });
 
