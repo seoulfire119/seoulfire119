@@ -14498,6 +14498,7 @@
                 const hasCommInBld = /근린생활|근생|상가/.test(mergedPurps) || /근린생활|근생/.test(mainPurps) || /근린생활|근생/.test(etcPurps);
                 const hasJointHouseInBld = /공동주택|다세대|연립|아파트/.test(mainPurps) || /공동주택|다세대|연립/.test(etcPurps);
                 const hasSingleHouseInBld = /단독주택|다가구/.test(mainPurps) || /단독주택|다가구/.test(etcPurps) || (/주택/.test(mergedPurps) && !hasJointHouseInBld);
+                const hasHouseInBld = hasJointHouseInBld || hasSingleHouseInBld || /주택|주거/.test(mergedPurps);
 
                 // 0-1) 공동주택 + 근린생활시설 복합 용도 (예: J&J빌리지 등 공동주택과 근생시설이 함께 있는 건물) -> '복합건축물' 표기
                 if (hasCommInBld && hasJointHouseInBld && !/도시형\s*생활\s*주택/.test(mergedPurps)) {
