@@ -2195,6 +2195,23 @@
             top: 0;
             z-index: 2;
         }
+        .bld-ledger-flr-table tbody tr {
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .bld-ledger-flr-table tbody tr.is-flr-highlighted td {
+            background: #fee2e2 !important;
+            color: #991b1b;
+            font-weight: 800;
+            border-top: 2px solid #dc2626 !important;
+            border-bottom: 2px solid #dc2626 !important;
+        }
+        .bld-ledger-flr-table tbody tr.is-flr-highlighted td:first-child {
+            border-left: 2px solid #dc2626 !important;
+        }
+        .bld-ledger-flr-table tbody tr.is-flr-highlighted td:last-child {
+            border-right: 2px solid #dc2626 !important;
+        }
         .bld-fire-fac-btn {
             width: 100%;
             padding: 10px 14px;
@@ -13005,6 +13022,17 @@
                 panel.style.display = isOpen ? 'none' : 'flex';
                 bldFireFacilitiesToggleBtn.classList.toggle('is-open', !isOpen);
                 if (chevron) chevron.textContent = isOpen ? '▼ 펼치기' : '▲ 접기';
+            });
+        }
+
+        const bldLedgerFloorBodyEl = document.getElementById('bldLedgerFloorBody');
+        if (bldLedgerFloorBodyEl) {
+            bldLedgerFloorBodyEl.addEventListener('click', (e) => {
+                const tr = e.target.closest('tr');
+                if (!tr || !bldLedgerFloorBodyEl.contains(tr)) return;
+                // 로딩/안내 문구 행(colspan)은 선택 제외
+                if (tr.querySelector('td[colspan]')) return;
+                tr.classList.toggle('is-flr-highlighted');
             });
         }
         let facilityModalMode = 'facility'; // 'facility' (터널·대교·지하철역 전용) | 'building' (도로명주소 건축물·소방시설 전용)
