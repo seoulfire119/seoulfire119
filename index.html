@@ -19577,30 +19577,46 @@
             if (!fl) return;
             if (!fl.rooms) fl.rooms = [];
 
+            const restoreUsageOrBlank = (baseRoom) => {
+                const usageMap = floorState.syncAllRooms ? getAvailableBldFloorUsageMap() : null;
+                if (floorState.syncAllRooms && usageMap) {
+                    delete fl.manualRoomsOverride;
+                    return {
+                        id: (baseRoom && baseRoom.id) || `bld-usage-${fl.floor}-${Date.now()}`,
+                        name: usageMap[String(fl.floor)] || '',
+                        text: baseRoom ? (baseRoom.text || '') : '',
+                        isFire: baseRoom ? !!baseRoom.isFire : false,
+                        isBldUsage: true
+                    };
+                }
+                return {
+                    id: (baseRoom && baseRoom.id) || `empty-${fl.floor}-${Date.now()}`,
+                    name: '',
+                    text: baseRoom ? (baseRoom.text || '') : '',
+                    isFire: baseRoom ? !!baseRoom.isFire : false,
+                    isBldUsage: false
+                };
+            };
+
+            // 이미 건축물 조회 용도 표시 상태이고 체크박스가 켜져 있으면 용도를 지우지 않고 유지
+            if (fl.rooms.length === 1 && fl.rooms[0].isBldUsage && floorState.syncAllRooms) {
+                return;
+            }
+
             const isPartialRoomActive = floorState.partialSetting?.enabled && (floorState.partialSetting.roomStart || floorState.partialSetting.roomEnd);
             if (isPartialRoomActive) {
-                const visibleRooms = fl.rooms.filter((rm, idx) => isRoomInRange(rm.name, idx));
+                const visibleRooms = fl.rooms.filter((rm, idx) => rm.isBldUsage ? true : isRoomInRange(rm.name, idx));
                 if (visibleRooms.length > 1) {
                     const lastVisible = visibleRooms[visibleRooms.length - 1];
                     const targetIdx = fl.rooms.indexOf(lastVisible);
                     if (targetIdx !== -1) fl.rooms.splice(targetIdx, 1);
                 } else if (visibleRooms.length === 1) {
                     const targetRoom = visibleRooms[0];
-                    if (targetRoom.name !== '') {
-                        fl.rooms = [{
-                            id: targetRoom.id,
-                            name: '',
-                            text: targetRoom.text || '',
-                            isFire: targetRoom.isFire || false
-                        }];
+                    if (targetRoom.name !== '' || floorState.syncAllRooms) {
+                        fl.rooms = [restoreUsageOrBlank(targetRoom)];
                     }
                 } else {
-                    fl.rooms = [{
-                        id: `empty-${fl.floor}-${Date.now()}`,
-                        name: '',
-                        text: '',
-                        isFire: false
-                    }];
+                    fl.rooms = [restoreUsageOrBlank(null)];
                 }
                 return;
             }
@@ -19608,8 +19624,8 @@
             if (fl.rooms.length > 1) {
                 fl.rooms.pop();
             } else if (fl.rooms.length === 1) {
-                if (fl.rooms[0].name !== '') {
-                    fl.rooms[0].name = '';
+                if (fl.rooms[0].name !== '' || floorState.syncAllRooms) {
+                    fl.rooms = [restoreUsageOrBlank(fl.rooms[0])];
                 }
             }
         }
@@ -19922,9 +19938,9 @@
             let maxTierCols = 1;
             const visibleFloors = floorState.floors.filter(fl => isFloorInRange(fl.floor));
 
-            // 건축물 조회 용도 불러오기 활성화 시 전층 회색칸 너비를 전체 좌우 크기의 약 1/3(33%)로 통일
+            // 건축물 조회 용도 불러오기 활성화 시 전층 회색칸 너비를 3호실 분할 시 1개 칸과 정확히 동일한 1/3(calc(100% / 3))로 통일
             const hasAnyBldUsage = visibleFloors.some(fl => fl.rooms && fl.rooms.some(r => r.isBldUsage));
-            const uniformUsageWidthPx = (floorState.syncAllRooms || hasAnyBldUsage) ? '33%' : null;
+            const uniformUsageWidthPx = (floorState.syncAllRooms || hasAnyBldUsage) ? 'calc(100% / 3)' : null;
 
             visibleFloors.forEach(fl => {
                 const rooms = fl.rooms ? fl.rooms.filter((rm, rIdx) => rm.isBldUsage ? true : isRoomInRange(rm.name, rIdx)) : [];
