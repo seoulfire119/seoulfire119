@@ -2455,11 +2455,11 @@
                     <div class="grid-2">
                         <div style="display: flex; align-items: center; gap: 4px; min-width: 0;">
                             <span style="font-size: 10px; font-weight: 800; width: 28px; text-align: center; flex-shrink: 0; color: #1e293b; line-height: 1.15; letter-spacing: -0.05em;">신고<br>접수</span>
-                            <input type="text" id="timeJiryeong" maxlength="4" inputmode="numeric" placeholder="1111" style="flex: 1; min-width: 0; height: 30px; font-size: 12px; font-weight: 700; text-align: center;">
+                            <input type="text" id="timeJiryeong" maxlength="4" placeholder="1111" style="flex: 1; min-width: 0; height: 30px; font-size: 12px; font-weight: 700; text-align: center;">
                         </div>
                         <div style="display: flex; align-items: center; gap: 4px; min-width: 0;">
                             <span style="font-size: 11px; font-weight: 800; width: 28px; text-align: center; flex-shrink: 0; color: #1e293b; letter-spacing: -0.04em;">출동</span>
-                            <input type="text" id="timeChuldong" maxlength="4" inputmode="numeric" placeholder="1028" style="flex: 1; min-width: 0; height: 30px; font-size: 12px; font-weight: 700; text-align: center;">
+                            <input type="text" id="timeChuldong" maxlength="4" placeholder="1028" style="flex: 1; min-width: 0; height: 30px; font-size: 12px; font-weight: 700; text-align: center;">
                         </div>
                     </div>
 
@@ -2467,25 +2467,25 @@
                     <div style="display: flex; align-items: center; gap: 4px;">
                         <span style="font-size: 11px; font-weight: 800; width: 36px; text-align: center; flex-shrink: 0; color: #1e293b; letter-spacing: -0.04em;">선착대</span>
                         <input type="text" id="unitSeonchak" placeholder="연희대" style="flex: 1; min-width: 0; height: 30px; font-size: 12px; font-weight: 700;">
-                        <input type="text" id="timeSeonchak" maxlength="4" inputmode="numeric" placeholder="1033" style="flex: 1; min-width: 0; height: 30px; font-size: 12px; font-weight: 700; text-align: center; padding: 5px 2px;">
+                        <input type="text" id="timeSeonchak" maxlength="4" placeholder="1033" style="flex: 1; min-width: 0; height: 30px; font-size: 12px; font-weight: 700; text-align: center; padding: 5px 2px;">
                     </div>
 
                     <!-- 3) 임시의료소 단독 줄 -->
                     <div style="display: flex; align-items: center; gap: 4px;">
                         <span style="font-size: 10px; font-weight: 800; width: 36px; text-align: center; flex-shrink: 0; color: #1e293b; line-height: 1.15; letter-spacing: -0.05em;">임시<br>의료소</span>
                         <input type="text" id="unitMedical" placeholder="연희6" style="flex: 1; min-width: 0; height: 30px; font-size: 12px; font-weight: 700;">
-                        <input type="text" id="timeMedical" maxlength="4" inputmode="numeric" placeholder="1231" style="flex: 1; min-width: 0; height: 30px; font-size: 12px; font-weight: 700; text-align: center; padding: 5px 2px;">
+                        <input type="text" id="timeMedical" maxlength="4" placeholder="1231" style="flex: 1; min-width: 0; height: 30px; font-size: 12px; font-weight: 700; text-align: center; padding: 5px 2px;">
                     </div>
 
                     <!-- 4) 초진 / 완진 (2열 균등 배치) -->
                     <div class="grid-2">
                         <div style="display: flex; align-items: center; gap: 4px; min-width: 0;">
                             <span style="font-size: 11px; font-weight: 800; width: 28px; text-align: center; flex-shrink: 0; color: #1e293b; letter-spacing: -0.04em;">초진</span>
-                            <input type="text" id="timeChojin" maxlength="4" inputmode="numeric" placeholder="1049" style="flex: 1; min-width: 0; height: 30px; font-size: 12px; font-weight: 700; text-align: center;">
+                            <input type="text" id="timeChojin" maxlength="4" placeholder="1049" style="flex: 1; min-width: 0; height: 30px; font-size: 12px; font-weight: 700; text-align: center;">
                         </div>
                         <div style="display: flex; align-items: center; gap: 4px; min-width: 0;">
                             <span style="font-size: 11px; font-weight: 800; width: 28px; text-align: center; flex-shrink: 0; color: #1e293b; letter-spacing: -0.04em;">완진</span>
-                            <input type="text" id="timeWanjin" maxlength="4" inputmode="numeric" placeholder="1204" style="flex: 1; min-width: 0; height: 30px; font-size: 12px; font-weight: 700; text-align: center;">
+                            <input type="text" id="timeWanjin" maxlength="4" placeholder="1204" style="flex: 1; min-width: 0; height: 30px; font-size: 12px; font-weight: 700; text-align: center;">
                         </div>
                     </div>
 
@@ -18592,7 +18592,7 @@
             div.style.cssText = "display: flex; align-items: center; gap: 4px;";
             div.innerHTML = `
                 <input type="text" placeholder="항목명" value="${label}" class="dyn-label" style="flex: 6; min-width: 0; height: 30px; font-size: 12px; font-weight: 700;">
-                <input type="text" placeholder="시각" value="${String(time || '').replace(/\D/g, '').slice(0, 4)}" maxlength="4" inputmode="numeric" class="dyn-time" style="flex: 4; min-width: 0; height: 30px; font-size: 12px; font-weight: 700; text-align: center; padding: 5px 2px;">
+                <input type="text" placeholder="시각" value="${String(time || '').replace(/\D/g, '').slice(0, 4)}" maxlength="4" class="dyn-time" style="flex: 4; min-width: 0; height: 30px; font-size: 12px; font-weight: 700; text-align: center; padding: 5px 2px;">
                 <button type="button" class="dyn-del" style="background: none; border: none; color: #e25858; font-weight: bold; cursor: pointer; padding: 0 4px; font-size: 14px;">✕</button>
             `;
             dynamicTimelineContainer.appendChild(div);
