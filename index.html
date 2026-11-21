@@ -2286,7 +2286,7 @@
         }
         .bld-fire-fac-reason {
             flex: 1;
-            font-size: 13.5px;
+            font-size: 12px;
             color: #334155;
             font-weight: 600;
             word-break: keep-all;
@@ -20000,17 +20000,69 @@
             }
         });
 
-        function getShiftKey(date = new Date()) {
+        function getShiftWindowBounds(date = new Date()) {
             const d = new Date(date);
             if (d.getHours() < 9) d.setDate(d.getDate() - 1);
-            const y = d.getFullYear();
-            const m = String(d.getMonth() + 1).padStart(2, '0');
-            const day = String(d.getDate()).padStart(2, '0');
-            return `disaster_report_v25_${y}${m}${day}`;
+            const start = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 9, 0, 0, 0);
+            const end = new Date(start.getTime() + 24 * 60 * 60 * 1000);
+            const y = start.getFullYear();
+            const m = String(start.getMonth() + 1).padStart(2, '0');
+            const day = String(start.getDate()).padStart(2, '0');
+            return {
+                shiftKey: `disaster_report_v26_${y}${m}${day}`,
+                startMs: start.getTime(),
+                endMs: end.getTime()
+            };
+        }
+
+        function getShiftKey(date = new Date()) {
+            return getShiftWindowBounds(date).shiftKey;
+        }
+
+        function cleanupExpiredShiftKeys(currentKey) {
+            try {
+                for (let i = localStorage.length - 1; i >= 0; i--) {
+                    const k = localStorage.key(i);
+                    if (k && k.startsWith('disaster_report_') && k !== currentKey) {
+                        localStorage.removeItem(k);
+                    }
+                }
+            } catch (e) {}
+        }
+
+        function hasRealTabData(t) {
+            if (!t || !t.data) return false;
+            const d = t.data;
+            const meaningfulKeys = [
+                'titleLoc', 'eventAddr', 'safetyMapRaw', 'pSection1', 'pSection2', 'pSection3', 'pMemo',
+                'timeJiryeong', 'timeChuldong', 'unitSeonchak', 'timeSeonchak',
+                'unitMedical', 'timeMedical', 'timeChojin', 'timeWanjin', 'stationName'
+            ];
+            return meaningfulKeys.some(k => typeof d[k] === 'string' && d[k].trim().length > 0);
+        }
+
+        function pruneHistoryArchiveToCurrentShift() {
+            const { shiftKey, startMs, endMs } = getShiftWindowBounds();
+            cleanupExpiredShiftKeys(shiftKey);
+            if (!Array.isArray(historyArchive)) {
+                historyArchive = [];
+                return;
+            }
+            historyArchive = historyArchive.filter(item => {
+                if (!item || typeof item !== 'object') return false;
+                if (item.shiftKey && item.shiftKey !== shiftKey) return false;
+                if (typeof item.archivedTimestamp === 'number') {
+                    return item.archivedTimestamp >= startMs && item.archivedTimestamp < endMs;
+                }
+                // 이전 버전(타임스탬프/shiftKey 없음)의 만료된 옛날 기록은 자동 정리
+                return item.shiftKey === shiftKey;
+            });
         }
 
         function saveToLocalStorageHistory() {
             try {
+                const { shiftKey } = getShiftWindowBounds();
+                pruneHistoryArchiveToCurrentShift();
                 if (tabs.length === 1) {
                     tabs[0].defaultName = '상황 1';
                     const hasLoc = tabs[0].data && tabs[0].data.titleLoc && tabs[0].data.titleLoc.trim();
@@ -20018,17 +20070,13 @@
                         tabs[0].name = '상황 1';
                     }
                 }
-                const key = getShiftKey();
-                const data = { updatedAt: Date.now(), activeTabs: tabs, archive: historyArchive };
-                const jsonStr = JSON.stringify(data);
-                localStorage.setItem(key, jsonStr);
-                // 이전 날짜의 구버전 키에 남아있던 '상황 2'가 로드되지 않도록 정리
-                for (let i = localStorage.length - 1; i >= 0; i--) {
-                    const k = localStorage.key(i);
-                    if (k && k.startsWith('disaster_report_') && k !== key) {
-                        localStorage.removeItem(k);
-                    }
-                }
+                // 현재 열려있는 탭 중 실제 작성된 내용이 있으면 당일(09시~익일09시) 이전기록에도 최신 상태로 보관
+                tabs.forEach(t => {
+                    if (hasRealTabData(t)) pushToArchive(t);
+                });
+                const data = { shiftKey, updatedAt: Date.now(), archive: historyArchive };
+                localStorage.setItem(shiftKey, JSON.stringify(data));
+                cleanupExpiredShiftKeys(shiftKey);
             } catch (e) {
                 console.error("Storage save error", e);
             }
@@ -20036,74 +20084,63 @@
 
         function loadFromLocalStorageHistory() {
             try {
-                const key = getShiftKey();
-                let raw = localStorage.getItem(key);
+                const { shiftKey, startMs, endMs } = getShiftWindowBounds();
+                // 당일 09시~익일 09시 키 외의 모든 이전 근무일 기록 즉시 삭제 (옛날 기록 재로딩 완전 차단)
+                cleanupExpiredShiftKeys(shiftKey);
+                const raw = localStorage.getItem(shiftKey);
                 if (!raw) {
-                    let latestTime = -1;
-                    for (let i = 0; i < localStorage.length; i++) {
-                        const k = localStorage.key(i);
-                        if (k && k.startsWith('disaster_report_')) {
-                            const candidateRaw = localStorage.getItem(k);
-                            if (candidateRaw) {
-                                try {
-                                    const parsed = JSON.parse(candidateRaw);
-                                    const t = parsed?.updatedAt || 0;
-                                    if (t >= latestTime) {
-                                        latestTime = t;
-                                        raw = candidateRaw;
-                                    }
-                                } catch (e2) {}
-                            }
-                        }
-                    }
+                    historyArchive = [];
+                    return null;
                 }
-                if (raw) {
-                    const p = JSON.parse(raw);
-                    if (p) {
-                        if (Array.isArray(p.archive)) historyArchive = p.archive;
-                        if (Array.isArray(p.activeTabs) && p.activeTabs.length > 0) {
-                            if (p.activeTabs.length === 1) {
-                                p.activeTabs[0].defaultName = '상황 1';
-                                const hasLoc = p.activeTabs[0].data && p.activeTabs[0].data.titleLoc && p.activeTabs[0].data.titleLoc.trim();
-                                if (!hasLoc || /^상황\s*\d+$/.test(p.activeTabs[0].name || '')) {
-                                    p.activeTabs[0].name = '상황 1';
-                                }
-                            }
-                            return p.activeTabs;
-                        }
-                    }
+                const p = JSON.parse(raw);
+                if (p && typeof p.updatedAt === 'number' && (p.updatedAt < startMs || p.updatedAt >= endMs)) {
+                    localStorage.removeItem(shiftKey);
+                    historyArchive = [];
+                    return null;
+                }
+                if (p && Array.isArray(p.archive)) {
+                    historyArchive = p.archive;
+                    pruneHistoryArchiveToCurrentShift();
+                } else {
+                    historyArchive = [];
                 }
             } catch (e) {
                 console.error("Storage load error", e);
+                historyArchive = [];
             }
             return null;
         }
 
         function pushToArchive(t) {
-            if (!t || !t.data) return;
-            const hasData = Object.values(t.data).some(v => typeof v === 'string' && v.trim().length > 0);
-            if (!hasData) return;
+            if (!hasRealTabData(t)) return;
+            const { shiftKey } = getShiftWindowBounds();
+            const nowMs = Date.now();
 
-            // 이미 아카이브에 연결된 탭인 경우: 새 시간을 생성하지 않고 기존 항목의 원래 시간(archivedAt) 유지하며 내용만 업데이트!
+            // 이미 아카이브에 연결된 탭인 경우: 원래 시간(archivedAt) 유지하며 내용만 업데이트
             const targetAid = t.archiveId;
             if (targetAid) {
                 const existingIdx = historyArchive.findIndex(a => a.id === targetAid || a.archiveId === targetAid);
                 if (existingIdx !== -1) {
                     const originalTime = historyArchive[existingIdx].archivedAt || t.archivedAt;
+                    const originalTs = historyArchive[existingIdx].archivedTimestamp || nowMs;
                     const updated = JSON.parse(JSON.stringify(t));
                     updated.id = targetAid;
                     updated.archiveId = targetAid;
                     updated.archivedAt = originalTime;
+                    updated.archivedTimestamp = originalTs;
+                    updated.shiftKey = shiftKey;
                     historyArchive[existingIdx] = updated;
                     return;
                 }
             }
 
             // 새로운 탭이 처음으로 아카이브되는 경우
-            const newArcId = t.id || ('arc-' + Date.now() + '-' + Math.floor(Math.random() * 1000));
+            const newArcId = t.id || ('arc-' + nowMs + '-' + Math.floor(Math.random() * 1000));
             const clone = JSON.parse(JSON.stringify(t));
             clone.id = newArcId;
             clone.archiveId = newArcId;
+            clone.shiftKey = shiftKey;
+            clone.archivedTimestamp = nowMs;
 
             let timeStr = '';
             if (t.data && t.data.timeJiryeong && isValidHHMM(t.data.timeJiryeong)) {
@@ -20532,6 +20569,7 @@
         function renderHistoryModal() {
             const list = document.getElementById('historyList');
             list.innerHTML = '';
+            pruneHistoryArchiveToCurrentShift();
 
             // 동일 기록 중복 방지 (id 또는 archiveId 기준 1개만 유지)
             const uniqueArchive = [];
@@ -20570,6 +20608,7 @@
                     </div>
                     <div style="display: flex; align-items: center; gap: 6px; flex-shrink: 0;">
                         <button type="button" class="restore-btn">${isOpenInTab ? '탭으로 이동' : '불러오기'}</button>
+                        <button type="button" class="delete-hist-btn" style="background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; border-radius: 5px; padding: 4px 8px; font-size: 11.5px; font-weight: 800; cursor: pointer;">삭제</button>
                     </div>
                 `;
 
@@ -20596,6 +20635,22 @@
                     closeModal(document.getElementById('historyModal'));
                     showToast(`${clone.name} (${item.archivedAt}) 기록을 불러왔습니다.`);
                 });
+
+                const delBtn = el.querySelector('.delete-hist-btn');
+                if (delBtn) {
+                    delBtn.addEventListener('click', () => {
+                        historyArchive = historyArchive.filter(a => (a.archiveId || a.id) !== targetAid);
+                        tabs.forEach(t => {
+                            if (t.archiveId === targetAid) delete t.archiveId;
+                        });
+                        const { shiftKey } = getShiftWindowBounds();
+                        try {
+                            localStorage.setItem(shiftKey, JSON.stringify({ shiftKey, updatedAt: Date.now(), archive: historyArchive }));
+                        } catch (e) {}
+                        renderHistoryModal();
+                        showToast('선택한 이전 기록을 삭제했습니다.');
+                    });
+                }
 
                 list.appendChild(el);
             });
@@ -20657,24 +20712,33 @@
         function startApp() {
             try {
                 setupCasualtyEvents();
-                const saved = loadFromLocalStorageHistory();
-                if (saved && Array.isArray(saved) && saved.length > 0) {
-                    tabs = saved;
-                    activeTabId = tabs[0].id;
-                } else {
-                    const init = createNewTabState();
-                    tabs.push(init);
-                    activeTabId = init.id;
-                }
+                // 당일 09시~익일 09시 이전기록만 불러오고 만료된 기록은 즉시 정리
+                loadFromLocalStorageHistory();
+                // 홈페이지 새로 진입/재접속 시 항상 깨끗한 '상황 1' 초기화면으로 시작
+                tabs = [];
+                const init = createNewTabState();
+                init.defaultName = '상황 1';
+                init.name = '상황 1';
+                tabs.push(init);
+                activeTabId = init.id;
                 loadTabData(activeTabId);
             } catch (err) {
                 console.error("App start error:", err);
                 const init = createNewTabState();
+                init.defaultName = '상황 1';
+                init.name = '상황 1';
                 tabs = [init];
                 activeTabId = init.id;
                 loadTabData(activeTabId);
             }
         }
+
+        window.addEventListener('pagehide', () => {
+            try {
+                saveCurrentTabData();
+                saveToLocalStorageHistory();
+            } catch (e) {}
+        });
 
                 // PC 키보드 단축키 처리 (Enter: 삭제/초기화 실행, ESC: 취소)
         window.addEventListener('keydown', (e) => {
