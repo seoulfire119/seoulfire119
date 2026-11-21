@@ -11084,7 +11084,7 @@
             // 2) 법정동 + 산 여부 + 본번(bun) + 부번(ji) 정밀 추출
             // 예: "서울특별시 마포구 성산동 200-1", "강남구 압구정동 산 12-3", "용산동2가 1-23", "명륜3가 53"
             const jibunCandidates = [explicitJibunLine, roadOrJibunAddr || '', combined];
-            const dongBunJiRegex = /([가-힣]+(?:\d+가)?동|[가-힣]+\d+가|세종로|충무로\d+가|을지로\d+가|남대문로\d+가|태평로\d+가|원효로\d+가|한강로\d+가|동소문동\d+가|삼선동\d+가|동선동\d+가|안암동\d+가|보문동\d+가|영등포동\d+가|당산동\d+가|문래동\d+가|양평동\d+가)\s+(산\s+)?(\d{1,4})(?:-(\d{1,4}))?(?!\d)(?!\s*(?:동|호|층|가|로|길)\b)/g;
+            const dongBunJiRegex = /([가-힣]+(?:\d+가)?\d*동|[가-힣]+\d+가|세종로|충무로\d+가|을지로\d+가|남대문로\d+가|태평로\d+가|원효로\d+가|한강로\d+가|동소문동\d+가|삼선동\d+가|동선동\d+가|안암동\d+가|보문동\d+가|영등포동\d+가|당산동\d+가|문래동\d+가|양평동\d+가)\s+(산\s+)?(\d{1,4})(?:-(\d{1,4}))?(?!\d)(?!\s*(?:동|호|층|가|로|길)\b)/g;
 
             for (const src of jibunCandidates) {
                 if (!src) continue;
@@ -11108,7 +11108,7 @@
 
             // 3) 괄호 안에 법정동이 표기된 도로명주소 (예: "마포구 월드컵로 207 (성산동)" 또는 "(성산동, 성산시영아파트)")에서 법정동코드 추출
             if (!bjdongCd) {
-                const parenDongRegex = /\(\s*([가-힣]+(?:\d+가)?동|[가-힣]+\d+가)(?:\s*[,\)]|\s+(\d{1,4})(?:-(\d{1,4}))?)/;
+                const parenDongRegex = /\(\s*([가-힣]+(?:\d+가)?\d*동|[가-힣]+\d+가)(?:\s*[,\)]|\s+(\d{1,4})(?:-(\d{1,4}))?)/;
                 const pm = combined.match(parenDongRegex);
                 if (pm && pm[1]) {
                     const resSgBj = lookupSigunguAndBjdong(sigunguCd, pm[1].trim());
@@ -12143,7 +12143,7 @@
             ];
             for (const qUrl of urls) {
                 try {
-                    const direct = await fetchSingle(qUrl, Math.min(timeoutMs, 3500));
+                    const direct = await fetchSingle(qUrl, Math.max(timeoutMs, 5500));
                     if (direct.items.length > 0) return direct.items;
                     // 직접 API 호출이 정상 응답(0건)한 경우 동일 URL을 프록시로 재시도하지 않고 다음 URL로 즉시 이동
                     continue;
@@ -12641,7 +12641,7 @@
                     }
                 };
                 try {
-                    return await tryOne(qUrl, 3500);
+                    return await tryOne(qUrl, 5500);
                 } catch (e) {}
                 try {
                     const proxyCalls = fetchWrappers.slice(1).map(wrap => tryOne(wrap(qUrl), 3500));
@@ -12776,8 +12776,52 @@
             if (!cleanQ) return [];
 
             const hasSeoulPrefix = /^서울/.test(cleanQ);
-            const primaryQuery = hasSeoulPrefix ? cleanQ : ('서울 ' + cleanQ);
-            const queryList = hasSeoulPrefix ? [cleanQ] : [primaryQuery, cleanQ];
+            const spacedRoadVariant = cleanQ.replace(/([가-힣]+(?:대로|로))(\d+길)/g, '$1 $2');
+            const rawQueries = [
+                hasSeoulPrefix ? cleanQ : ('서울 ' + cleanQ),
+                cleanQ
+            ];
+            if (spacedRoadVariant !== cleanQ) {
+                rawQueries.push(hasSeoulPrefix ? spacedRoadVariant : ('서울 ' + spacedRoadVariant));
+                rawQueries.push(spacedRoadVariant);
+            }
+            const queryList = Array.from(new Set(rawQueries));
+
+            const fetchPostRowsJsonp = (qStr, ms = 4200) => new Promise((resolve, reject) => {
+                const cbName = '__pcJsonpCb_' + Date.now() + '_' + Math.floor(Math.random() * 100000);
+                const script = document.createElement('script');
+                let settled = false;
+                const cleanup = () => {
+                    try { delete window[cbName]; } catch (e) { window[cbName] = undefined; }
+                    if (script.parentNode) script.parentNode.removeChild(script);
+                };
+                const timer = setTimeout(() => {
+                    if (settled) return;
+                    settled = true;
+                    cleanup();
+                    reject(new Error('JSONP timeout'));
+                }, ms);
+                window[cbName] = (j) => {
+                    if (settled) return;
+                    settled = true;
+                    clearTimeout(timer);
+                    cleanup();
+                    if (Array.isArray(j?.results) && j.results.length > 0) {
+                        const sRows = j.results.filter(r => JSON.stringify(r).includes('서울'));
+                        if (sRows.length > 0) return resolve(sRows);
+                    }
+                    reject(new Error('No Seoul JSONP results'));
+                };
+                script.onerror = () => {
+                    if (settled) return;
+                    settled = true;
+                    clearTimeout(timer);
+                    cleanup();
+                    reject(new Error('JSONP script error'));
+                };
+                script.src = `https://api.poesis.kr/post/search.php?q=${encodeURIComponent(qStr)}&v=3.0&callback=${cbName}`;
+                document.head.appendChild(script);
+            });
 
             const fetchPostRows = async (targetUrl, ms) => {
                 const ctrl = new AbortController();
@@ -12799,29 +12843,29 @@
 
             let rows = [];
             for (const qItem of queryList) {
-                const directUrls = [
-                    `https://api.poesis.kr/post/search.php?q=${encodeURIComponent(qItem)}&v=3.0`,
-                    `https://api.poesis.co.kr/post/search.php?q=${encodeURIComponent(qItem)}&v=3.0`
-                ];
-                // 1) 직접 호출 2곳 병렬 경쟁 (최대 2.8초)
+                const directUrl = `https://api.poesis.kr/post/search.php?q=${encodeURIComponent(qItem)}&v=3.0`;
+                // 1) 직접 fetch + CORS 우회 JSONP 병렬 경쟁 (최대 4.2초)
                 try {
-                    rows = await Promise.any(directUrls.map(u => fetchPostRows(u, 2800)));
+                    rows = await Promise.any([
+                        fetchPostRows(directUrl, 4000),
+                        fetchPostRowsJsonp(qItem, 4200)
+                    ]);
                     if (rows.length > 0) break;
                 } catch (e) {}
-                // 2) 직접 호출이 막혔을 때만 프록시 병렬 경쟁 (최대 3.0초)
+                // 2) 직접/JSONP 모두 실패 시 프록시 병렬 경쟁 (최대 3.5초)
                 try {
                     const proxyUrls = [
-                        `https://api.allorigins.win/raw?url=${encodeURIComponent(directUrls[0])}`,
-                        `https://corsproxy.io/?${encodeURIComponent(directUrls[0])}`
+                        `https://api.allorigins.win/raw?url=${encodeURIComponent(directUrl)}`,
+                        `https://corsproxy.io/?${encodeURIComponent(directUrl)}`
                     ];
-                    rows = await Promise.any(proxyUrls.map(u => fetchPostRows(u, 3000)));
+                    rows = await Promise.any(proxyUrls.map(u => fetchPostRows(u, 3500)));
                     if (rows.length > 0) break;
                 } catch (e) {}
             }
 
             if (rows.length === 0) return [];
 
-            const dongBunJiRegex = /([가-힣]+(?:\d+가)?동|[가-힣]+\d+가|세종로|충무로\d+가|을지로\d+가|남대문로\d+가|태평로\d+가|원효로\d+가|한강로\d+가|동소문동\d+가|삼선동\d+가|동선동\d+가|안암동\d+가|보문동\d+가|영등포동\d+가|당산동\d+가|문래동\d+가|양평동\d+가)\s+(산\s+)?(\d{1,4})(?:-(\d{1,4}))?(?!\d)(?!\s*(?:동|호|층|가|로|길)\b)/g;
+            const dongBunJiRegex = /([가-힣]+(?:\d+가)?\d*동|[가-힣]+\d+가|세종로|충무로\d+가|을지로\d+가|남대문로\d+가|태평로\d+가|원효로\d+가|한강로\d+가|동소문동\d+가|삼선동\d+가|동선동\d+가|안암동\d+가|보문동\d+가|영등포동\d+가|당산동\d+가|문래동\d+가|양평동\d+가)\s+(산\s+)?(\d{1,4})(?:-(\d{1,4}))?(?!\d)(?!\s*(?:동|호|층|가|로|길)\b)/g;
             const inputRoad = extractRoadAddressParts(query);
             const candidates = [];
             const seen = new Set();
@@ -16371,7 +16415,7 @@
                         .trim();
                     // 쉼표나 괄호 뒤의 부가 명칭 제거
                     jibunClean = jibunClean.replace(/[,(].*$/, '').trim();
-                    const jibunMatchPattern = jibunClean.match(/([가-힣]+(?:\d+가)?동|[가-힣]+\d+가)\s+(산\s+)?(\d{1,4}(?:-\d{1,4})?)/);
+                    const jibunMatchPattern = jibunClean.match(/([가-힣]+(?:\d+가)?\d*동|[가-힣]+\d+가)\s+(산\s+)?(\d{1,4}(?:-\d{1,4})?)/);
                     if (jibunMatchPattern) {
                         const dong = jibunMatchPattern[1];
                         const san = jibunMatchPattern[2] || '';
@@ -17657,7 +17701,7 @@
             // 2) 법정동 + 산 여부 + 본번(bun) + 부번(ji) 정밀 추출
             // 예: "서울특별시 마포구 성산동 200-1", "강남구 압구정동 산 12-3", "용산동2가 1-23", "명륜3가 53"
             const jibunCandidates = [explicitJibunLine, roadOrJibunAddr || '', combined];
-            const dongBunJiRegex = /([가-힣]+(?:\d+가)?동|[가-힣]+\d+가|세종로|충무로\d+가|을지로\d+가|남대문로\d+가|태평로\d+가|원효로\d+가|한강로\d+가|동소문동\d+가|삼선동\d+가|동선동\d+가|안암동\d+가|보문동\d+가|영등포동\d+가|당산동\d+가|문래동\d+가|양평동\d+가)\s+(산\s+)?(\d{1,4})(?:-(\d{1,4}))?(?!\d)(?!\s*(?:동|호|층|가|로|길)\b)/g;
+            const dongBunJiRegex = /([가-힣]+(?:\d+가)?\d*동|[가-힣]+\d+가|세종로|충무로\d+가|을지로\d+가|남대문로\d+가|태평로\d+가|원효로\d+가|한강로\d+가|동소문동\d+가|삼선동\d+가|동선동\d+가|안암동\d+가|보문동\d+가|영등포동\d+가|당산동\d+가|문래동\d+가|양평동\d+가)\s+(산\s+)?(\d{1,4})(?:-(\d{1,4}))?(?!\d)(?!\s*(?:동|호|층|가|로|길)\b)/g;
 
             for (const src of jibunCandidates) {
                 if (!src) continue;
@@ -17679,7 +17723,7 @@
 
             // 3) 괄호 안에 법정동이 표기된 도로명주소 (예: "마포구 월드컵로 207 (성산동)" 또는 "(성산동, 성산시영아파트)")에서 법정동코드 추출
             if (!bjdongCd) {
-                const parenDongRegex = /\(\s*([가-힣]+(?:\d+가)?동|[가-힣]+\d+가)(?:\s*[,\)]|\s+(\d{1,4})(?:-(\d{1,4}))?)/;
+                const parenDongRegex = /\(\s*([가-힣]+(?:\d+가)?\d*동|[가-힣]+\d+가)(?:\s*[,\)]|\s+(\d{1,4})(?:-(\d{1,4}))?)/;
                 const pm = combined.match(parenDongRegex);
                 if (pm && pm[1]) {
                     const code = lookupBjdongCode(sigunguCd, pm[1].trim());
