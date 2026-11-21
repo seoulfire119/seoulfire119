@@ -2364,10 +2364,60 @@
                     </div>
                 </div>
 
-                <!-- 2. 도로명 주소 -->
+                <!-- 2. 도로명 주소 및 건축물 현황 -->
                 <div class="card">
-                    <div class="card-title">2. 도로명 주소</div>
+                    <div class="card-title">
+                        <span>2. 도로명 주소</span>
+                        <button id="addrBldFireSearchBtn" type="button" style="background: #059669; color: #ffffff; border: none; padding: 4px 10px; border-radius: 6px; font-size: 11.5px; font-weight: 800; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 1px 2px rgba(5, 150, 105, 0.25);">
+                            <span>🏢 건축물/소방시설 조회</span>
+                        </button>
+                    </div>
                     <input type="text" id="eventAddrInput" placeholder="마포구 월드컵로 207, 31동 502호">
+                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 6px; padding-top: 5px; margin-top: 2px; border-top: 1px dashed #e2e8f0;">
+                        <label class="chk-label" style="border: none; padding: 0; background: none; font-size: 12px; font-weight: 800; color: #0f172a;">
+                            <input type="checkbox" id="bldIncludeCheck"> 건축물 현황 포함
+                        </label>
+                    </div>
+                    <div id="bldFetchStatusText" style="display: none; font-size: 11px; font-weight: 800; color: #0284c7; padding: 1px 2px;"></div>
+                    <div id="bldInputContainer" style="display: none; flex-direction: column; gap: 4px; padding-top: 4px; border-top: 1px solid #e2e8f0;">
+                        <div class="grid-2">
+                            <div>
+                                <span class="label-text">구조</span>
+                                <div class="combo-box">
+                                    <input type="text" id="bldStructureInput" placeholder="철근콘크리트구조">
+                                    <select id="bldStructureDropdown">
+                                        <option value=""></option>
+                                        <option value="철근콘크리트구조">철근콘크리트구조</option>
+                                        <option value="벽돌구조">벽돌구조</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div>
+                                <span class="label-text">층수 (지상/지하)</span>
+                                <input type="text" id="bldFloorsInput" placeholder="5/1">
+                            </div>
+                        </div>
+                        <div class="grid-2">
+                            <div>
+                                <span class="label-text">연면적</span>
+                                <input type="text" id="bldAreaInput" placeholder="44827.95">
+                            </div>
+                            <div>
+                                <span class="label-text">사용승인</span>
+                                <input type="text" id="bldAprDateInput" placeholder="20200101">
+                            </div>
+                        </div>
+                        <div id="bldSprinklerBadge" style="display: none; background: #ecfdf5; border: 1.5px solid #10b981; color: #047857; padding: 6px 10px; border-radius: 6px; font-size: 11.5px; font-weight: 900; align-items: flex-start; justify-content: space-between; gap: 6px;">
+                            <div style="display: flex; flex-direction: column; gap: 2px;">
+                                <div style="display: flex; align-items: center; gap: 5px;">
+                                    <span>💦</span>
+                                    <span id="bldSprinklerText" style="font-size: 12px; font-weight: 900;">스프링클러 전층 설치</span>
+                                </div>
+                                <div id="bldSprinklerDetail" style="font-size: 12px; font-weight: 600; color: #047857; padding-left: 20px;">[적용기준: 업무시설 (`18.1.28) 층수가 6층 이상인 경우 모든 층]</div>
+                            </div>
+                            <button type="button" id="removeSprinklerBadgeBtn" title="스프링클러 표시 삭제" style="background: none; border: none; color: #047857; font-size: 15px; font-weight: 900; cursor: pointer; padding: 0 2px; line-height: 1;">&times;</button>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- 3. 출동 타임라인 -->
@@ -2456,68 +2506,16 @@
                     </div>
                 </div>
 
-                <!-- 5. 건축물 현황 -->
+                <!-- 5. 소방 대응상황 -->
                 <div class="card">
-                    <div class="card-title">
-                        <label class="chk-label" style="border: none; padding: 0; background: none; font-size: 12.5px; font-weight: 900; color: #0f172a;">
-                            <input type="checkbox" id="bldIncludeCheck"> 5. 건축물 현황 포함
-                        </label>
-                        <button id="bldAutoFetchBtn" type="button" style="background: #059669; color: #ffffff; border: none; padding: 4px 10px; border-radius: 6px; font-size: 11.5px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 4px; box-shadow: 0 1px 2px rgba(5, 150, 105, 0.25);">
-                            <span>🏛️ 건축물 조회</span>
-                        </button>
-                    </div>
-                    <div id="bldFetchStatusText" style="display: none; font-size: 11px; font-weight: 800; color: #0284c7; padding: 1px 2px;"></div>
-                    <div id="bldInputContainer" style="display: none; flex-direction: column; gap: 4px; padding-top: 3px; border-top: 1px solid #e2e8f0;">
-                        <div class="grid-2">
-                            <div>
-                                <span class="label-text">구조</span>
-                                <div class="combo-box">
-                                    <input type="text" id="bldStructureInput" placeholder="철근콘크리트구조">
-                                    <select id="bldStructureDropdown">
-                                        <option value=""></option>
-                                        <option value="철근콘크리트구조">철근콘크리트구조</option>
-                                        <option value="벽돌구조">벽돌구조</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div>
-                                <span class="label-text">층수 (지상/지하)</span>
-                                <input type="text" id="bldFloorsInput" placeholder="5/1">
-                            </div>
-                        </div>
-                        <div class="grid-2">
-                            <div>
-                                <span class="label-text">연면적</span>
-                                <input type="text" id="bldAreaInput" placeholder="44827.95">
-                            </div>
-                            <div>
-                                <span class="label-text">사용승인</span>
-                                <input type="text" id="bldAprDateInput" placeholder="20200101">
-                            </div>
-                        </div>
-                        <div id="bldSprinklerBadge" style="display: none; background: #ecfdf5; border: 1.5px solid #10b981; color: #047857; padding: 6px 10px; border-radius: 6px; font-size: 11.5px; font-weight: 900; align-items: flex-start; justify-content: space-between; gap: 6px;">
-                            <div style="display: flex; flex-direction: column; gap: 2px;">
-                                <div style="display: flex; align-items: center; gap: 5px;">
-                                    <span>💦</span>
-                                    <span id="bldSprinklerText" style="font-size: 12px; font-weight: 900;">스프링클러 전층 설치</span>
-                                </div>
-                                <div id="bldSprinklerDetail" style="font-size: 12px; font-weight: 600; color: #047857; padding-left: 20px;">[적용기준: 업무시설 (`18.1.28) 층수가 6층 이상인 경우 모든 층]</div>
-                            </div>
-                            <button type="button" id="removeSprinklerBadgeBtn" title="스프링클러 표시 삭제" style="background: none; border: none; color: #047857; font-size: 15px; font-weight: 900; cursor: pointer; padding: 0 2px; line-height: 1;">&times;</button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 6. 소방 대응상황 -->
-                <div class="card">
-                    <div class="card-title">6. 소방 대응상황</div>
+                    <div class="card-title">5. 소방 대응상황</div>
                     <textarea id="pSection2" rows="3" placeholder="진압 내용 작성" style="min-height: 52px; font-size: 12.5px; font-weight: 700;"></textarea>
                 </div>
 
-                <!-- 7. 인명피해 및 대피현황 -->
+                <!-- 6. 인명피해 및 대피현황 -->
                 <div class="card">
                     <div class="card-title">
-                        <span>7. 인명피해 및 대피현황</span>
+                        <span>6. 인명피해 및 대피현황</span>
                         <div style="display: flex; flex-direction: column; gap: 3px; align-items: flex-end; flex-shrink: 0;">
                             <button id="floorStatusModalOpenBtn" type="button" class="sec7-btn sec7-btn-floor">
                                 <span>🏢</span>
@@ -2532,9 +2530,9 @@
                     <textarea id="pSection3" rows="3" placeholder="상세 내용 작성" style="min-height: 52px; font-size: 12.5px; font-weight: 700;"></textarea>
                 </div>
 
-                <!-- 8. 유관기관 -->
+                <!-- 7. 유관기관 -->
                 <div class="card">
-                    <div class="card-title">8. 유관기관</div>
+                    <div class="card-title">7. 유관기관</div>
                     <div class="chk-group">
                         <label class="chk-label"><input type="checkbox" id="orgPolice" class="org-check" value="경찰">경찰</label>
                         <label class="chk-label"><input type="checkbox" id="orgOffice" class="org-check" value="구청">구청</label>
@@ -2547,11 +2545,11 @@
                     </div>
                 </div>
 
-                <!-- 9. 추가 내용 메모 -->
+                <!-- 8. 추가 내용 메모 -->
                 <div class="card">
                     <div class="card-title">
                         <div style="display: flex; flex-direction: column; gap: 1px; min-width: 0;">
-                            <span>9. 추가 내용 메모</span>
+                            <span>8. 추가 내용 메모</span>
                             <span style="font-size: 9.5px; color: #64748b; font-weight: 700; line-height: 1.2;">(보고서 미포함)</span>
                         </div>
                         <div style="display: flex; flex-direction: column; gap: 3px; align-items: flex-end; flex-shrink: 0;">
@@ -3238,9 +3236,12 @@
                     </footer>
                 </div>
 
-                <!-- 하단 닫기 버튼 바 -->
-                <div style="background: #ffffff; padding: 10px 16px; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end; flex-shrink: 0;">
-                    <button id="facilityCloseBtn" type="button" style="background: #0d9488; color: #ffffff; border: none; border-radius: 7px; padding: 7px 18px; font-size: 13px; font-weight: 800; cursor: pointer;">닫기</button>
+                <!-- 하단 버튼 바 -->
+                <div style="background: #ffffff; padding: 10px 16px; border-top: 1px solid #e2e8f0; display: flex; align-items: center; gap: 8px; flex-wrap: nowrap; flex-shrink: 0;">
+                    <button id="applyFacilityBldToReportBtn" type="button" style="flex: 1; min-width: 0; background: #2563eb; color: #ffffff; border: none; border-radius: 7px; padding: 8px 14px; font-size: 13px; font-weight: 800; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 5px; box-shadow: 0 1px 3px rgba(37, 99, 235, 0.28);">
+                        <span>📥 요약하여 보고서 입력</span>
+                    </button>
+                    <button id="facilityCloseBtn" type="button" style="flex-shrink: 0; background: #0d9488; color: #ffffff; border: none; border-radius: 7px; padding: 8px 18px; font-size: 13px; font-weight: 800; cursor: pointer;">닫기</button>
                 </div>
             </div>
         </div>
@@ -4742,7 +4743,7 @@
 
             if (noResultEl) noResultEl.style.display = 'none';
 
-            if (facState.selectedItem && facState.selectedItem.isBuilding) {
+            if (facState.selectedItem && (facState.selectedItem.kind === 'building' || facState.selectedItem.isBuilding)) {
                 if (multiMatchContainer) multiMatchContainer.style.display = 'none';
                 displayUnifiedFacilityMatch(
                     facState.selectedItem,
@@ -12053,6 +12054,7 @@
         };
 
         let currentLotBuildingMatches = [];
+        let currentFacilitySelectedBld = null;
 
         async function renderBuildingDetailInFacility(matchObj, siblingMatches = null, userSelectedDong = false) {
             if (Array.isArray(siblingMatches) && siblingMatches.length > 0) {
@@ -12294,6 +12296,13 @@
             };
 
             applySprinklerCardStyle(lawEval.text, lawEval.detail);
+            currentFacilitySelectedBld = {
+                item: it,
+                ledgerType: ledgerType || '',
+                sprinklerText: lawEval.text || '',
+                sprinklerDetail: lawEval.detail || '',
+                statusLabel: [it.bldNm, it.dongNm].filter(Boolean).join(' ').trim() || '건축물대장 반영'
+            };
             renderFireFacilitiesPanel(evaluateAllFireFacilities(it, ledgerType, combinedContext, bldNameHint || bldNm, null, lawEval));
 
             // 4. 비동기 병렬 조회: (A) 층별개요 API, (B) 지역지구구역 API, (C) 소방안전시스템 API
@@ -12419,6 +12428,10 @@
                 const finalSpText = refinedLawEval.text || apiText || lawEval.text;
                 const finalSpDetail = (refinedLawEval.text ? refinedLawEval.detail : (apiDetail || refinedLawEval.detail || lawEval.detail));
                 applySprinklerCardStyle(finalSpText, finalSpDetail);
+                if (currentFacilitySelectedBld && currentFacilitySelectedBld.item === it) {
+                    currentFacilitySelectedBld.sprinklerText = finalSpText || '';
+                    currentFacilitySelectedBld.sprinklerDetail = finalSpDetail || '';
+                }
                 renderFireFacilitiesPanel(evaluateAllFireFacilities(it, ledgerType, combinedContext, bldNameHint || bldNm, filteredFlr, { text: finalSpText, detail: finalSpDetail }));
             });
         }
@@ -12760,6 +12773,7 @@
             if (m.kind === 'building') {
                 renderBuildingDetailInFacility(m, siblingMatches, userSelectedDong);
             } else if (m.kind === 'subway' || m.isSubway) {
+                currentFacilitySelectedBld = null;
                 if (resultEl) resultEl.style.display = 'none';
                 if (bldResultEl) bldResultEl.style.display = 'none';
                 if (subwayResultEl) subwayResultEl.style.display = 'flex';
@@ -12994,6 +13008,79 @@
         if (facilityModalOpenBtn) facilityModalOpenBtn.addEventListener('click', () => openModal(facilityModal));
         if (facilityCloseBtn) facilityCloseBtn.addEventListener('click', () => closeModal(facilityModal));
         if (facilityCloseXBtn) facilityCloseXBtn.addEventListener('click', () => closeModal(facilityModal));
+
+        const addrBldFireSearchBtn = document.getElementById('addrBldFireSearchBtn');
+        if (addrBldFireSearchBtn) {
+            addrBldFireSearchBtn.addEventListener('click', () => {
+                openModal(facilityModal);
+                const addrVal = eventAddrInput ? eventAddrInput.value.trim() : '';
+                if (addrVal && facilitySearchInput) {
+                    facilitySearchInput.value = addrVal;
+                    searchFacility(addrVal);
+                } else if (facilitySearchInput) {
+                    setTimeout(() => facilitySearchInput.focus(), 60);
+                }
+            });
+        }
+
+        const applyFacilityBldToReportBtn = document.getElementById('applyFacilityBldToReportBtn');
+        if (applyFacilityBldToReportBtn) {
+            applyFacilityBldToReportBtn.addEventListener('click', () => {
+                const bldContainer = document.getElementById('facilityBuildingResultContainer');
+                const isBldVisible = bldContainer && bldContainer.style.display !== 'none';
+                if (!isBldVisible || !currentFacilitySelectedBld || !currentFacilitySelectedBld.item) {
+                    showToast('먼저 도로명주소 또는 지번주소를 검색해 건축물을 선택해 주세요.');
+                    return;
+                }
+                const it = currentFacilitySelectedBld.item;
+                const roadAddr = (it.newPlatPlc || '').trim();
+                const jibunAddr = (it.platPlc || '').trim();
+
+                // 2번 도로명 주소가 비어 있으면 조회된 도로명주소(없으면 지번주소) 자동 입력
+                if (eventAddrInput && !eventAddrInput.value.trim()) {
+                    const cleanRoad = roadAddr.replace(/^서울특별시\s+/, '').trim();
+                    const cleanJibun = jibunAddr.replace(/^서울특별시\s+/, '').trim();
+                    eventAddrInput.value = cleanRoad || cleanJibun;
+                }
+
+                // 1번 구/동 명칭에 구 정보가 아직 없으면 대지위치/도로명주소에서 보완
+                if (titleLocInput) {
+                    const curLoc = titleLocInput.value.trim();
+                    const guCheck = extractDistrictOnly(curLoc);
+                    if (!guCheck || (!guCheck.endsWith('구') && !guCheck.endsWith('시') && !guCheck.endsWith('군'))) {
+                        const guMatch = `${jibunAddr} ${roadAddr}`.match(/(종로구|중구|용산구|성동구|광진구|동대문구|중랑구|성북구|강북구|도봉구|노원구|은평구|서대문구|마포구|양천구|강서구|구로구|금천구|영등포구|동작구|관악구|서초구|강남구|송파구|강동구|[가-힣]{1,5}구)/);
+                        if (guMatch) {
+                            titleLocInput.value = guMatch[1];
+                        }
+                    }
+                }
+
+                const strctNm = (it.strctCdNm || it.etcStrct || '').trim() || '철근콘크리트구조';
+                const grndFlr = it.grndFlrCnt || '1';
+                const ugrndFlr = it.ugrndFlrCnt || '0';
+                const totArea = it.totArea || '';
+                const useAprDay = it.useAprDay || '';
+                const ledgerType = currentFacilitySelectedBld.ledgerType || resolveBuildingLedgerType(it, `${roadAddr} ${jibunAddr}`);
+
+                applyFetchedBuildingDataToTab(
+                    activeTabId,
+                    strctNm,
+                    grndFlr,
+                    ugrndFlr,
+                    totArea,
+                    useAprDay,
+                    currentFacilitySelectedBld.statusLabel || '건축물대장 반영',
+                    currentFacilitySelectedBld.sprinklerText || '',
+                    ledgerType,
+                    currentFacilitySelectedBld.sprinklerDetail || '',
+                    it.mainPurpsCdNm || '',
+                    it.etcPurps || ''
+                );
+
+                closeModal(facilityModal);
+                showToast('건축물 및 스프링클러 정보가 보고서에 입력되었습니다.');
+            });
+        }
 
         if (saveFacilityImageBtn) {
             saveFacilityImageBtn.addEventListener('click', async () => {
