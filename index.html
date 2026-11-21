@@ -13203,19 +13203,31 @@
                 const roadAddr = (it.newPlatPlc || '').trim();
                 const jibunAddr = (it.platPlc || '').trim();
 
-                // 2번 도로명 주소가 비어 있으면 조회된 도로명주소(없으면 지번주소) 자동 입력
-                if (eventAddrInput && !eventAddrInput.value.trim()) {
-                    const cleanRoad = roadAddr.replace(/^서울특별시\s+/, '').trim();
-                    const cleanJibun = jibunAddr.replace(/^서울특별시\s+/, '').trim();
-                    eventAddrInput.value = cleanRoad || cleanJibun;
+                // 2번 도로명 주소 반영: 창에서 주소를 새로 검색해 바꾼 경우 바뀐 도로명주소로 갱신 (같은 주소면 기존 동·호수 등 상세 유지)
+                const cleanRoad = roadAddr.replace(/^서울특별시\s+/, '').trim();
+                const cleanJibun = jibunAddr.replace(/^서울특별시\s+/, '').trim();
+                const searchInputVal = (facilitySearchInput ? facilitySearchInput.value.trim() : '').replace(/^서울특별시\s+/, '').trim();
+                const nextAddr = cleanRoad || cleanJibun || searchInputVal;
+                let addrChanged = false;
+                if (eventAddrInput && nextAddr) {
+                    const prevAddr = eventAddrInput.value.trim();
+                    const prevNorm = prevAddr.replace(/^서울특별시\s+/, '').replace(/\s+/g, '');
+                    const nextNorm = nextAddr.replace(/\s+/g, '');
+                    const isSameBaseAddr = prevNorm && nextNorm && (prevNorm.startsWith(nextNorm) || nextNorm.startsWith(prevNorm));
+                    if (!prevAddr || !isSameBaseAddr) {
+                        eventAddrInput.value = nextAddr;
+                        addrChanged = true;
+                        lastRenderedBldQuery = nextAddr;
+                    }
                 }
 
-                // 1번 구/동 명칭에 구 정보가 아직 없으면 대지위치/도로명주소에서 보완
+                // 1번 구/동 명칭에 구 정보가 없거나 주소가 변경된 경우 새 건축물의 구 정보로 갱신
                 if (titleLocInput) {
                     const curLoc = titleLocInput.value.trim();
                     const guCheck = extractDistrictOnly(curLoc);
-                    if (!guCheck || (!guCheck.endsWith('구') && !guCheck.endsWith('시') && !guCheck.endsWith('군'))) {
-                        const guMatch = `${jibunAddr} ${roadAddr}`.match(/(종로구|중구|용산구|성동구|광진구|동대문구|중랑구|성북구|강북구|도봉구|노원구|은평구|서대문구|마포구|양천구|강서구|구로구|금천구|영등포구|동작구|관악구|서초구|강남구|송파구|강동구|[가-힣]{1,5}구)/);
+                    const needNewGu = addrChanged || !guCheck || (!guCheck.endsWith('구') && !guCheck.endsWith('시') && !guCheck.endsWith('군'));
+                    if (needNewGu) {
+                        const guMatch = `${jibunAddr} ${roadAddr} ${nextAddr}`.match(/(종로구|중구|용산구|성동구|광진구|동대문구|중랑구|성북구|강북구|도봉구|노원구|은평구|서대문구|마포구|양천구|강서구|구로구|금천구|영등포구|동작구|관악구|서초구|강남구|송파구|강동구|[가-힣]{1,5}구)/);
                         if (guMatch) {
                             titleLocInput.value = guMatch[1];
                         }
