@@ -2374,8 +2374,8 @@
                     </div>
                     <input type="text" id="eventAddrInput" placeholder="마포구 월드컵로 207, 31동 502호">
                     <div style="display: flex; align-items: center; justify-content: space-between; gap: 6px; padding-top: 5px; margin-top: 2px; border-top: 1px dashed #e2e8f0;">
-                        <label class="chk-label" style="border: none; padding: 0; background: none; font-size: 12px; font-weight: 800; color: #0f172a;">
-                            <input type="checkbox" id="bldIncludeCheck"> 건축물 현황 포함
+                        <label class="chk-label" style="border: none; padding: 0; background: none; font-size: 12px; font-weight: 800; color: #4f46e5;">
+                            <input type="checkbox" id="bldIncludeCheck"> 건축물 현황 입력
                         </label>
                     </div>
                     <div id="bldFetchStatusText" style="display: none; font-size: 11px; font-weight: 800; color: #0284c7; padding: 1px 2px;"></div>
@@ -2574,7 +2574,7 @@
 
                 <!-- 시설물(터널, 대교 등) 정보 버튼 -->
                 <button id="facilityModalOpenBtn" type="button" class="facility-top-btn">
-                    <span>🌉 건축물(터널, 대교 등) 정보</span>
+                    <span>🌉 시설물(터널, 대교 등) 정보</span>
                 </button>
 
                 <!-- 위험물 통합검색 버튼 -->
@@ -2885,8 +2885,8 @@
                 <!-- 상단 헤더 바 -->
                 <div style="background: #0f172a; color: #ffffff; padding: 11px 16px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #1e293b; flex-shrink: 0;">
                     <div style="display: flex; align-items: center; gap: 8px;">
-                        <span style="font-size: 18px;">🌉</span>
-                        <span style="font-size: 16px; font-weight: 900; letter-spacing: -0.02em;">건축물(터널, 대교 등) 정보</span>
+                        <span id="facilityModalHeaderIcon" style="font-size: 18px;">🌉</span>
+                        <span id="facilityModalHeaderTitle" style="font-size: 16px; font-weight: 900; letter-spacing: -0.02em;">시설물(터널, 대교 등) 정보</span>
                     </div>
                     <div style="display: flex; align-items: center; gap: 7px;">
                         <button id="saveFacilityImageBtn" type="button" style="background: #059669; color: #ffffff; border: 1px solid #047857; padding: 6px 12px; border-radius: 7px; font-size: 12.5px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.15);">
@@ -2902,10 +2902,10 @@
                         <!-- 타이틀 & 검색창 -->
                         <div style="text-align: center; display: flex; flex-direction: column; align-items: center; gap: 13px;">
                             <div style="width: 54px; height: 54px; border-radius: 16px; background: linear-gradient(135deg, #0d9488 0%, #0284c7 100%); display: inline-flex; align-items: center; justify-content: center; box-shadow: 0 8px 15px -3px rgba(13, 148, 136, 0.35);">
-                                <span style="font-size: 26px; line-height: 1;">🌉</span>
+                                <span id="facilityModalHeroIcon" style="font-size: 26px; line-height: 1;">🌉</span>
                             </div>
-                            <h1 style="font-size: clamp(20px, 4.3vw, 26px); font-weight: 900; color: #0f172a; letter-spacing: -0.03em; margin: 0;">건축물 / 시설물 제원 및 현황정보 검색</h1>
-                            <div style="font-size: 13.5px; font-weight: 700; color: #475569; letter-spacing: -0.02em; margin-top: -4px;">(건축물·스프링클러 / 터널, 대교, 지하차도, 지하철역 등)</div>
+                            <h1 id="facilityModalHeroTitle" style="font-size: clamp(20px, 4.3vw, 26px); font-weight: 900; color: #0f172a; letter-spacing: -0.03em; margin: 0;">시설물 제원 및 현황정보 검색</h1>
+                            <div id="facilityModalHeroSub" style="font-size: 13.5px; font-weight: 700; color: #475569; letter-spacing: -0.02em; margin-top: -4px;">(터널, 대교, 지하차도, 지하철역 등)</div>
 
                             <form id="facilitySearchForm" style="position: relative; width: 100%; max-width: 560px; margin: 0 auto;">
                                 <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: #64748b; font-size: 17px; pointer-events: none;"></i>
@@ -2941,7 +2941,7 @@
                         <div id="facilityNoResultBox" class="facility-glass-card" style="display: none; padding: 28px 20px; text-align: center; flex-direction: column; gap: 8px;">
                             <i class="fa-solid fa-circle-exclamation" style="color: #f59e0b; font-size: 26px;"></i>
                             <p style="font-size: 16px; font-weight: 800; color: #0f172a;">검색 결과가 없습니다.</p>
-                            <p style="font-size: 12.5px; color: #64748b; line-height: 1.5; font-weight: 600;">예: 가양대교, 구기터널, 강남역 또는 도로명·지번주소(예: 테헤란로 152, 역삼동 737)를 입력해 보세요.</p>
+                            <p id="facilityNoResultHint" style="font-size: 12.5px; color: #64748b; line-height: 1.5; font-weight: 600;">예: 가양대교, 구기터널, 마포대교, 남산1호터널, 양재지하차도, 서울역, 강남역 등을 입력해 보세요.</p>
                         </div>
 
                         <!-- 시설물 검색 결과 컨테이너 (4대 핵심 섹션 - 캡처 대상 영역) -->
@@ -3231,8 +3231,8 @@
 
                     </div>
 
-                    <footer style="padding-top: 12px; text-align: center; font-size: 11.5px; color: #64748b; font-weight: 600;">
-                        건설CALS 시설물 오픈API · 서울교통공사 역사정보 · 국토교통부 건축물대장 &amp; 소방청 스프링클러 정보 연동
+                    <footer id="facilityModalFooterText" style="padding-top: 12px; text-align: center; font-size: 11.5px; color: #64748b; font-weight: 600;">
+                        국토교통부 건설사업정보시스템(건설CALS) 시설물 기본제원 오픈API 및 서울교통공사 역사정보 연동
                     </footer>
                 </div>
 
@@ -3241,7 +3241,7 @@
                     <button id="applyFacilityBldToReportBtn" type="button" style="flex: 1; min-width: 0; background: #2563eb; color: #ffffff; border: none; border-radius: 7px; padding: 8px 14px; font-size: 13px; font-weight: 800; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 5px; box-shadow: 0 1px 3px rgba(37, 99, 235, 0.28);">
                         <span>📥 요약하여 보고서 입력</span>
                     </button>
-                    <button id="facilityCloseBtn" type="button" style="flex-shrink: 0; background: #0d9488; color: #ffffff; border: none; border-radius: 7px; padding: 8px 18px; font-size: 13px; font-weight: 800; cursor: pointer;">닫기</button>
+                    <button id="facilityCloseBtn" type="button" style="flex-shrink: 0; margin-left: auto; background: #0d9488; color: #ffffff; border: none; border-radius: 7px; padding: 8px 18px; font-size: 13px; font-weight: 800; cursor: pointer;">닫기</button>
                 </div>
             </div>
         </div>
@@ -12816,8 +12816,8 @@
 
             const combinedMatches = [];
 
-            // 1. 도로 시설물 검색 (주소 검색이 아닐 때 우선)
-            if (!isAddressLike) {
+            // 1. 도로 시설물 및 지하철역 검색 (시설물 정보 전용 모드에서만 수행)
+            if (facilityModalMode !== 'building') {
                 const isHanRiverBroadSearch = (qClean === "한강" || qClean === "대교" || qClean === "한강교량" || qClean === "한강대교" || qClean === "한강다리");
                 let facExact = [];
                 let facPartial = [];
@@ -12847,8 +12847,8 @@
                 subMatches.forEach(s => combinedMatches.push({ kind: 'subway', item: s }));
             }
 
-            // 3. 도로명/지번 주소 오픈API 기반 건축물대장 & 층별현황 & 스프링클러 조회
-            if (isAddressLike || combinedMatches.length === 0) {
+            // 3. 도로명/지번 주소 오픈API 기반 건축물대장 & 층별현황 & 스프링클러 조회 (2번 건축물/소방시설 조회 전용 모드에서만 수행)
+            if (facilityModalMode === 'building') {
                 const addrCandidates = await searchAddressCandidatesFromPostcodify(q);
                 const exactCandidates = addrCandidates.filter(c => c.exactMatch);
 
@@ -13005,13 +13005,86 @@
                 if (chevron) chevron.textContent = isOpen ? '▼ 펼치기' : '▲ 접기';
             });
         }
-        if (facilityModalOpenBtn) facilityModalOpenBtn.addEventListener('click', () => openModal(facilityModal));
+        let facilityModalMode = 'facility'; // 'facility' (터널·대교·지하철역 전용) | 'building' (도로명주소 건축물·소방시설 전용)
+        let lastFacilityModeQuery = '';
+        let lastBuildingModeQuery = '';
+
+        function configureFacilityModalMode(mode) {
+            const prevMode = facilityModalMode;
+            if (facilitySearchInput) {
+                if (prevMode === 'building') lastBuildingModeQuery = facilitySearchInput.value.trim();
+                else lastFacilityModeQuery = facilitySearchInput.value.trim();
+            }
+            facilityModalMode = (mode === 'building') ? 'building' : 'facility';
+
+            const hdrIcon = document.getElementById('facilityModalHeaderIcon');
+            const hdrTitle = document.getElementById('facilityModalHeaderTitle');
+            const heroIcon = document.getElementById('facilityModalHeroIcon');
+            const heroTitle = document.getElementById('facilityModalHeroTitle');
+            const heroSub = document.getElementById('facilityModalHeroSub');
+            const noResHint = document.getElementById('facilityNoResultHint');
+            const footerTxt = document.getElementById('facilityModalFooterText');
+            const applyBtn = document.getElementById('applyFacilityBldToReportBtn');
+            const loadingEl = document.getElementById('facilityLoadingIndicator');
+            const resultEl = document.getElementById('facilityResultContainer');
+            const subwayResultEl = document.getElementById('facilitySubwayResultContainer');
+            const bldResultEl = document.getElementById('facilityBuildingResultContainer');
+            const multiMatchContainer = document.getElementById('facilityMultiMatchContainer');
+            const noResultEl = document.getElementById('facilityNoResultBox');
+
+            if (prevMode !== facilityModalMode) {
+                if (loadingEl) loadingEl.style.display = 'none';
+                if (resultEl) resultEl.style.display = 'none';
+                if (subwayResultEl) subwayResultEl.style.display = 'none';
+                if (bldResultEl) bldResultEl.style.display = 'none';
+                if (multiMatchContainer) multiMatchContainer.style.display = 'none';
+                if (noResultEl) noResultEl.style.display = 'none';
+            }
+
+            if (facilityModalMode === 'building') {
+                if (hdrIcon) hdrIcon.textContent = '🏢';
+                if (hdrTitle) hdrTitle.textContent = '건축물 / 소방시설 조회';
+                if (heroIcon) heroIcon.textContent = '🏢';
+                if (heroTitle) heroTitle.textContent = '도로명주소 건축물 · 소방시설 조회';
+                if (heroSub) heroSub.textContent = '(도로명·지번주소 기반 건축물대장 · 스프링클러 · 소방시설)';
+                if (facilitySearchInput) facilitySearchInput.placeholder = '도로명주소 또는 지번주소를 입력하세요 (예: 테헤란로 152, 역삼동 737)';
+                if (noResHint) noResHint.textContent = '예: 테헤란로 152, 월드컵로 207, 역삼동 737 등 도로명 또는 지번주소를 입력해 보세요.';
+                if (footerTxt) footerTxt.textContent = '국토교통부 건축물대장(표제부·층별현황·지역지구) & 소방청 스프링클러 정보 연동';
+                if (applyBtn) applyBtn.style.display = 'inline-flex';
+                if (resultEl) resultEl.style.display = 'none';
+                if (subwayResultEl) subwayResultEl.style.display = 'none';
+                if (facilitySearchInput && prevMode !== 'building') facilitySearchInput.value = lastBuildingModeQuery;
+            } else {
+                if (hdrIcon) hdrIcon.textContent = '🌉';
+                if (hdrTitle) hdrTitle.textContent = '시설물(터널, 대교 등) 정보';
+                if (heroIcon) heroIcon.textContent = '🌉';
+                if (heroTitle) heroTitle.textContent = '시설물 제원 및 현황정보 검색';
+                if (heroSub) heroSub.textContent = '(터널, 대교, 지하차도, 지하철역 등)';
+                if (facilitySearchInput) facilitySearchInput.placeholder = '시설물(터널, 대교, 지하차도) 또는 지하철역을 입력하세요 (예: 가양대교, 구기터널, 강남역 등)';
+                if (noResHint) noResHint.textContent = '예: 가양대교, 구기터널, 마포대교, 남산1호터널, 양재지하차도, 서울역, 강남역 등을 입력해 보세요.';
+                if (footerTxt) footerTxt.textContent = '국토교통부 건설사업정보시스템(건설CALS) 시설물 기본제원 오픈API 및 서울교통공사 역사정보 연동';
+                if (applyBtn) applyBtn.style.display = 'none';
+                if (bldResultEl) bldResultEl.style.display = 'none';
+                if (facilitySearchInput && prevMode !== 'facility') facilitySearchInput.value = lastFacilityModeQuery;
+            }
+        }
+
+        if (facilityModalOpenBtn) {
+            facilityModalOpenBtn.addEventListener('click', () => {
+                configureFacilityModalMode('facility');
+                openModal(facilityModal);
+                if (facilitySearchInput && !facilitySearchInput.value.trim()) {
+                    setTimeout(() => facilitySearchInput.focus(), 60);
+                }
+            });
+        }
         if (facilityCloseBtn) facilityCloseBtn.addEventListener('click', () => closeModal(facilityModal));
         if (facilityCloseXBtn) facilityCloseXBtn.addEventListener('click', () => closeModal(facilityModal));
 
         const addrBldFireSearchBtn = document.getElementById('addrBldFireSearchBtn');
         if (addrBldFireSearchBtn) {
             addrBldFireSearchBtn.addEventListener('click', () => {
+                configureFacilityModalMode('building');
                 openModal(facilityModal);
                 const addrVal = eventAddrInput ? eventAddrInput.value.trim() : '';
                 if (addrVal && facilitySearchInput) {
