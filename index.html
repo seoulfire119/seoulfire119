@@ -2071,6 +2071,225 @@
             margin-bottom: 8px;
         }
 
+
+        /* === 건축물/소방시설 검색 전용 스타일 (툴킷 이식) === */
+        .addr-cand-card {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            width: 100%;
+            padding: 10px 12px;
+            background: #ffffff;
+            border: 1.5px solid #cbd5e1;
+            border-radius: 10px;
+            text-align: left;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .addr-cand-card:hover {
+            border-color: #2563eb;
+            background: #f8fafc;
+        }
+        .addr-cand-card.is-active {
+            border-color: #2563eb;
+            background: #eff6ff;
+            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+        }
+        .addr-cand-info {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            font-size: 12px;
+            line-height: 1.4;
+        }
+        .addr-cand-row {
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+        }
+        .addr-cand-lbl {
+            flex-shrink: 0;
+            width: 44px;
+            font-size: 11px;
+            font-weight: 800;
+            color: #64748b;
+        }
+        .addr-cand-val {
+            color: #0f172a;
+            font-weight: 700;
+            word-break: keep-all;
+        }
+        .addr-cand-action {
+            flex-shrink: 0;
+            padding: 7px 12px;
+            border-radius: 8px;
+            background: #475569;
+            color: #ffffff;
+            font-size: 11.5px;
+            font-weight: 800;
+            white-space: nowrap;
+        }
+        .addr-cand-card.is-active .addr-cand-action {
+            background: #2563eb;
+        }
+        
+        .bld-ledger-top-table, .bld-ledger-grid-table, .bld-ledger-flr-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+            color: #1e293b;
+        }
+        .bld-ledger-top-table th, .bld-ledger-flr-table th {
+            background: #e2e8f0;
+            color: #1e293b;
+            font-weight: 800;
+            padding: 8px 6px;
+            border: 1px solid #cbd5e1;
+            text-align: center;
+            white-space: nowrap;
+        }
+        .bld-ledger-top-table td, .bld-ledger-flr-table td {
+            padding: 8px 8px;
+            border: 1px solid #cbd5e1;
+            text-align: center;
+            font-weight: 600;
+            background: #ffffff;
+        }
+        .bld-ledger-top-table tbody tr {
+            cursor: pointer;
+            transition: background 0.12s;
+        }
+        .bld-ledger-top-table tbody tr:hover td {
+            background: #f1f5f9;
+        }
+        .bld-ledger-top-table tbody tr.is-selected td {
+            background: #dbeafe;
+            color: #1e3a8a;
+            font-weight: 800;
+        }
+        .bld-ledger-grid-table th {
+            background: #e2e8f0;
+            color: #1e293b;
+            font-weight: 800;
+            padding: 8px 6px;
+            border: 1px solid #cbd5e1;
+            text-align: center;
+            width: 13%;
+            white-space: nowrap;
+        }
+        .bld-ledger-grid-table td {
+            background: #ffffff;
+            color: #0f172a;
+            font-weight: 600;
+            padding: 8px 10px;
+            border: 1px solid #cbd5e1;
+            text-align: center;
+            width: 20%;
+            word-break: keep-all;
+        }
+        .bld-ledger-flr-table thead th {
+            position: sticky;
+            top: 0;
+            z-index: 2;
+        }
+        .bld-fire-fac-btn {
+            width: 100%;
+            padding: 10px 14px;
+            border-radius: 10px;
+            border: 1.5px solid #2563eb;
+            background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+            color: #1e3a8a;
+            font-size: 13px;
+            font-weight: 900;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        .bld-fire-fac-btn:hover {
+            background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+        }
+        .bld-fire-fac-btn.is-open {
+            background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+            color: #ffffff;
+            border-color: #1e40af;
+        }
+        .bld-fire-fac-panel {
+            display: none;
+            flex-direction: column;
+            gap: 10px;
+            padding: 12px 14px;
+            background: #f8fafc;
+            border: 1.5px solid #cbd5e1;
+            border-radius: 10px;
+        }
+        .bld-fire-fac-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .bld-fire-fac-group-title {
+            font-size: 12px;
+            font-weight: 900;
+            color: #0f172a;
+            padding: 3px 8px;
+            border-radius: 6px;
+            background: #e2e8f0;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            align-self: flex-start;
+        }
+        .bld-fire-fac-list {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .bld-fire-fac-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            padding: 7px 10px;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 12px;
+            line-height: 1.45;
+        }
+        .bld-fire-fac-badge {
+            flex-shrink: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2px 7px;
+            border-radius: 5px;
+            background: #16a34a;
+            color: #ffffff;
+            font-size: 11px;
+            font-weight: 900;
+            line-height: 1.3;
+            white-space: nowrap;
+            letter-spacing: -0.02em;
+            margin-top: 1px;
+        }
+        .bld-fire-fac-name {
+            flex-shrink: 0;
+            min-width: 108px;
+            font-weight: 900;
+            color: #1d4ed8;
+        }
+        .bld-fire-fac-reason {
+            flex: 1;
+            color: #334155;
+            font-weight: 600;
+            word-break: keep-all;
+        }
+
     </style>
 </head>
 <body>
@@ -2167,11 +2386,11 @@
                     <div class="grid-2">
                         <div style="display: flex; align-items: center; gap: 4px; min-width: 0;">
                             <span style="font-size: 10px; font-weight: 800; width: 28px; text-align: center; flex-shrink: 0; color: #1e293b; line-height: 1.15; letter-spacing: -0.05em;">신고<br>접수</span>
-                            <input type="text" id="timeJiryeong" placeholder="1111" style="flex: 1; min-width: 0; height: 30px; font-size: 12px; font-weight: 700; text-align: center;">
+                            <input type="text" id="timeJiryeong" maxlength="4" inputmode="numeric" placeholder="1111" style="flex: 1; min-width: 0; height: 30px; font-size: 12px; font-weight: 700; text-align: center;">
                         </div>
                         <div style="display: flex; align-items: center; gap: 4px; min-width: 0;">
                             <span style="font-size: 11px; font-weight: 800; width: 28px; text-align: center; flex-shrink: 0; color: #1e293b; letter-spacing: -0.04em;">출동</span>
-                            <input type="text" id="timeChuldong" placeholder="1028" style="flex: 1; min-width: 0; height: 30px; font-size: 12px; font-weight: 700; text-align: center;">
+                            <input type="text" id="timeChuldong" maxlength="4" inputmode="numeric" placeholder="1028" style="flex: 1; min-width: 0; height: 30px; font-size: 12px; font-weight: 700; text-align: center;">
                         </div>
                     </div>
 
@@ -2179,25 +2398,25 @@
                     <div style="display: flex; align-items: center; gap: 4px;">
                         <span style="font-size: 11px; font-weight: 800; width: 36px; text-align: center; flex-shrink: 0; color: #1e293b; letter-spacing: -0.04em;">선착대</span>
                         <input type="text" id="unitSeonchak" placeholder="연희대" style="flex: 1; min-width: 0; height: 30px; font-size: 12px; font-weight: 700;">
-                        <input type="text" id="timeSeonchak" placeholder="1033" style="flex: 1; min-width: 0; height: 30px; font-size: 12px; font-weight: 700; text-align: center; padding: 5px 2px;">
+                        <input type="text" id="timeSeonchak" maxlength="4" inputmode="numeric" placeholder="1033" style="flex: 1; min-width: 0; height: 30px; font-size: 12px; font-weight: 700; text-align: center; padding: 5px 2px;">
                     </div>
 
                     <!-- 3) 임시의료소 단독 줄 -->
                     <div style="display: flex; align-items: center; gap: 4px;">
                         <span style="font-size: 10px; font-weight: 800; width: 36px; text-align: center; flex-shrink: 0; color: #1e293b; line-height: 1.15; letter-spacing: -0.05em;">임시<br>의료소</span>
                         <input type="text" id="unitMedical" placeholder="연희6" style="flex: 1; min-width: 0; height: 30px; font-size: 12px; font-weight: 700;">
-                        <input type="text" id="timeMedical" placeholder="1231" style="flex: 1; min-width: 0; height: 30px; font-size: 12px; font-weight: 700; text-align: center; padding: 5px 2px;">
+                        <input type="text" id="timeMedical" maxlength="4" inputmode="numeric" placeholder="1231" style="flex: 1; min-width: 0; height: 30px; font-size: 12px; font-weight: 700; text-align: center; padding: 5px 2px;">
                     </div>
 
                     <!-- 4) 초진 / 완진 (2열 균등 배치) -->
                     <div class="grid-2">
                         <div style="display: flex; align-items: center; gap: 4px; min-width: 0;">
                             <span style="font-size: 11px; font-weight: 800; width: 28px; text-align: center; flex-shrink: 0; color: #1e293b; letter-spacing: -0.04em;">초진</span>
-                            <input type="text" id="timeChojin" placeholder="1049" style="flex: 1; min-width: 0; height: 30px; font-size: 12px; font-weight: 700; text-align: center;">
+                            <input type="text" id="timeChojin" maxlength="4" inputmode="numeric" placeholder="1049" style="flex: 1; min-width: 0; height: 30px; font-size: 12px; font-weight: 700; text-align: center;">
                         </div>
                         <div style="display: flex; align-items: center; gap: 4px; min-width: 0;">
                             <span style="font-size: 11px; font-weight: 800; width: 28px; text-align: center; flex-shrink: 0; color: #1e293b; letter-spacing: -0.04em;">완진</span>
-                            <input type="text" id="timeWanjin" placeholder="1204" style="flex: 1; min-width: 0; height: 30px; font-size: 12px; font-weight: 700; text-align: center;">
+                            <input type="text" id="timeWanjin" maxlength="4" inputmode="numeric" placeholder="1204" style="flex: 1; min-width: 0; height: 30px; font-size: 12px; font-weight: 700; text-align: center;">
                         </div>
                     </div>
 
@@ -2357,7 +2576,7 @@
 
                 <!-- 시설물(터널, 대교 등) 정보 버튼 -->
                 <button id="facilityModalOpenBtn" type="button" class="facility-top-btn">
-                    <span>🌉 시설물(터널, 대교 등) 정보</span>
+                    <span>🌉 건축물(터널, 대교 등) 정보</span>
                 </button>
 
                 <!-- 위험물 통합검색 버튼 -->
@@ -2669,7 +2888,7 @@
                 <div style="background: #0f172a; color: #ffffff; padding: 11px 16px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #1e293b; flex-shrink: 0;">
                     <div style="display: flex; align-items: center; gap: 8px;">
                         <span style="font-size: 18px;">🌉</span>
-                        <span style="font-size: 16px; font-weight: 900; letter-spacing: -0.02em;">시설물 현황정보 시스템</span>
+                        <span style="font-size: 16px; font-weight: 900; letter-spacing: -0.02em;">건축물(터널, 대교 등) 정보</span>
                     </div>
                     <div style="display: flex; align-items: center; gap: 7px;">
                         <button id="saveFacilityImageBtn" type="button" style="background: #059669; color: #ffffff; border: 1px solid #047857; padding: 6px 12px; border-radius: 7px; font-size: 12.5px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.15);">
@@ -2687,8 +2906,8 @@
                             <div style="width: 54px; height: 54px; border-radius: 16px; background: linear-gradient(135deg, #0d9488 0%, #0284c7 100%); display: inline-flex; align-items: center; justify-content: center; box-shadow: 0 8px 15px -3px rgba(13, 148, 136, 0.35);">
                                 <span style="font-size: 26px; line-height: 1;">🌉</span>
                             </div>
-                            <h1 style="font-size: clamp(21px, 4.5vw, 27px); font-weight: 900; color: #0f172a; letter-spacing: -0.03em; margin: 0;">시설물 제원 및 현황정보 검색</h1>
-                            <div style="font-size: 13.5px; font-weight: 700; color: #475569; letter-spacing: -0.02em; margin-top: -4px;">(터널, 대교, 지하차도 등)</div>
+                            <h1 style="font-size: clamp(20px, 4.3vw, 26px); font-weight: 900; color: #0f172a; letter-spacing: -0.03em; margin: 0;">건축물 / 시설물 제원 및 현황정보 검색</h1>
+                            <div style="font-size: 13.5px; font-weight: 700; color: #475569; letter-spacing: -0.02em; margin-top: -4px;">(건축물·스프링클러 / 터널, 대교, 지하차도, 지하철역 등)</div>
 
                             <form id="facilitySearchForm" style="position: relative; width: 100%; max-width: 560px; margin: 0 auto;">
                                 <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: #64748b; font-size: 17px; pointer-events: none;"></i>
@@ -2696,7 +2915,7 @@
                                     type="text"
                                     id="facilitySearchInput"
                                     class="facility-search-input"
-                                    placeholder="시설물(터널, 대교, 지하차도) 또는 지하철역을 입력하세요 (예: 가양대교, 구기터널, 서울역, 강남역 등)"
+                                    placeholder="건축물 주소(도로명·지번) 또는 시설물(터널·대교·지하철역) 입력"
                                 >
                                 <button type="submit" class="facility-search-btn">
                                     <span>검색</span>
@@ -2724,7 +2943,7 @@
                         <div id="facilityNoResultBox" class="facility-glass-card" style="display: none; padding: 28px 20px; text-align: center; flex-direction: column; gap: 8px;">
                             <i class="fa-solid fa-circle-exclamation" style="color: #f59e0b; font-size: 26px;"></i>
                             <p style="font-size: 16px; font-weight: 800; color: #0f172a;">검색 결과가 없습니다.</p>
-                            <p style="font-size: 12.5px; color: #64748b; line-height: 1.5; font-weight: 600;">예: 가양대교, 구기터널, 마포대교, 남산1호터널, 양재지하차도, 서울역, 시청, 강남역, 잠실 등을 입력해 보세요.</p>
+                            <p style="font-size: 12.5px; color: #64748b; line-height: 1.5; font-weight: 600;">예: 가양대교, 구기터널, 강남역 또는 도로명·지번주소(예: 테헤란로 152, 역삼동 737)를 입력해 보세요.</p>
                         </div>
 
                         <!-- 시설물 검색 결과 컨테이너 (4대 핵심 섹션 - 캡처 대상 영역) -->
@@ -2860,10 +3079,162 @@
                                 </div>
                             </div>
                         </div>
+
+                        <!-- 건축물대장 및 스프링클러 검색 결과 컨테이너 -->
+                        <div id="facilityBuildingResultContainer" style="display: none; flex-direction: column; gap: 14px; background: #ffffff; padding: 14px; border-radius: 14px; border: 1px solid #cbd5e1;">
+                            <!-- 0. 스프링클러 설치 현황 배너 -->
+                            <div id="bldResSprinklerCard" style="padding: 14px 16px; border-radius: 10px; border: 1.5px solid #10b981; border-left: 5px solid #10b981; display: flex; flex-direction: column; gap: 6px; background: #ecfdf5;">
+                                <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+                                    <div style="display: flex; align-items: center; gap: 6px; font-weight: 900; font-size: 14.5px; color: #047857;">
+                                        <span id="bldResSprinklerIcon">💦</span>
+                                        <span id="bldResSprinklerTitle">스프링클러 설치 현황</span>
+                                    </div>
+                                    <span id="bldResSprinklerStatusPill" style="padding: 2px 8px; border-radius: 6px; background: #10b981; color: #ffffff; font-size: 11px; font-weight: 800;">설치대상</span>
+                                </div>
+                                <div id="bldResSprinklerText" style="font-size: 14.5px; font-weight: 900; color: #065f46;">스프링클러 전층 설치</div>
+                                <div id="bldResSprinklerDetail" style="font-size: 12px; font-weight: 700; color: #047857; line-height: 1.45;">[적용기준: ...]</div>
+                            </div>
+
+                            <!-- 0-1. 소방시설 상세보기 버튼 및 적용 소방시설 패널 -->
+                            <div id="bldFireFacilitiesToggleWrap" style="display: none; flex-direction: column; gap: 8px;">
+                                <button type="button" id="bldFireFacilitiesToggleBtn" class="bld-fire-fac-btn">
+                                    <span>🚒 소방시설 상세보기 <span id="bldFireFacCountBadge" style="font-size: 11.5px; font-weight: 800; opacity: 0.9;"></span></span>
+                                    <span id="bldFireFacChevron" style="font-size: 12px; font-weight: 900;">▼ 펼치기</span>
+                                </button>
+                                <div id="bldFireFacilitiesDetailPanel" class="bld-fire-fac-panel"></div>
+                            </div>
+
+                            <!-- 1. 고유번호 및 건축물 목록 표 (대장종류, 대지위치 삭제 / 동명칭 순서 정렬) -->
+                            <div id="bldLedgerTopListSection" style="display: flex; flex-direction: column; gap: 6px;">
+                                <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 8px; flex-wrap: wrap;">
+                                    <div style="font-size: 15px; font-weight: 900; color: #1e3a8a; letter-spacing: -0.02em;">
+                                        · 고유번호 : <span id="bldLedgerPnuCode">-</span>
+                                    </div>
+                                    <span style="font-size: 11.5px; color: #64748b; font-weight: 700;">단위 : ㎡</span>
+                                </div>
+                                <div style="overflow-x: auto; border-top: 2px solid #94a3b8; border-bottom: 1px solid #cbd5e1;">
+                                    <table class="bld-ledger-top-table">
+                                        <thead>
+                                            <tr>
+                                                <th>건축물명칭</th>
+                                                <th>동명칭및번호</th>
+                                                <th>주용도</th>
+                                                <th>연면적</th>
+                                                <th>층수</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="bldLedgerTopListBody">
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div id="bldLedgerSelectGuideText" style="font-size: 12px; color: #e11d48; font-weight: 800; padding: 2px 0;">※ 위의 목록에서 건축물(동)을 선택하시면 상세정보와 층별현황을 열람하실 수 있습니다.</div>
+                            </div>
+
+                            <!-- 2. 건축물 표제부 상세 표 -->
+                            <div id="bldLedgerDetailSection" style="display: flex; flex-direction: column; gap: 6px; margin-top: 4px;">
+                                <div style="display: flex; align-items: center; justify-content: space-between;">
+                                    <div id="bldLedgerDetailSectionTitle" style="font-size: 15px; font-weight: 900; color: #1e3a8a;">· 일반건축물</div>
+                                    <span id="bldLedgerFlrBadge" style="font-size: 13.5px; font-weight: 900; color: #1d4ed8; background: #eff6ff; border: 1.5px solid #60a5fa; padding: 4px 11px; border-radius: 8px; box-shadow: 0 1px 2px rgba(37, 99, 235, 0.12);">지상 -층 / 지하 -층</span>
+                                </div>
+                                <div style="overflow-x: auto; border-top: 2px solid #94a3b8; border-bottom: 1px solid #cbd5e1;">
+                                    <table class="bld-ledger-grid-table">
+                                        <tbody>
+                                            <tr>
+                                                <th>대지위치</th>
+                                                <td colspan="3" id="bldCellPlatPlc">-</td>
+                                                <th>지번</th>
+                                                <td id="bldCellJibun">-</td>
+                                            </tr>
+                                            <tr>
+                                                <th>도로명주소</th>
+                                                <td colspan="5" id="bldCellNewPlatPlc" style="font-weight: 800; color: #1e40af;">-</td>
+                                            </tr>
+                                            <tr>
+                                                <th>용도지역</th>
+                                                <td id="bldCellJijigu1">-</td>
+                                                <th>용도지구</th>
+                                                <td id="bldCellJijigu2">-</td>
+                                                <th>구역</th>
+                                                <td id="bldCellJijigu3">-</td>
+                                            </tr>
+                                            <tr>
+                                                <th>대지면적</th>
+                                                <td id="bldCellPlatArea">-</td>
+                                                <th>연면적</th>
+                                                <td id="bldCellTotArea">-</td>
+                                                <th>명칭및번호</th>
+                                                <td id="bldCellBldDongNm">-</td>
+                                            </tr>
+                                            <tr>
+                                                <th>건축면적</th>
+                                                <td id="bldCellArchArea">-</td>
+                                                <th>용적률산정용<br>연면적</th>
+                                                <td id="bldCellVlRatArea">-</td>
+                                                <th>건축물수</th>
+                                                <td id="bldCellMainBldCnt">-</td>
+                                            </tr>
+                                            <tr>
+                                                <th>건폐율</th>
+                                                <td id="bldCellBcRat">-</td>
+                                                <th>용적률</th>
+                                                <td id="bldCellVlRat">-</td>
+                                                <th>총호수</th>
+                                                <td id="bldCellTotHoCnt">-</td>
+                                            </tr>
+                                            <tr>
+                                                <th>주용도</th>
+                                                <td id="bldCellMainPurps">-</td>
+                                                <th>주구조<br>지붕구조</th>
+                                                <td id="bldCellStrctRoof">-</td>
+                                                <th>부속건축물</th>
+                                                <td id="bldCellAtchBld">-</td>
+                                            </tr>
+                                            <tr>
+                                                <th>허가일자</th>
+                                                <td id="bldCellPmsDay">-</td>
+                                                <th>착공일자</th>
+                                                <td id="bldCellStcnsDay">-</td>
+                                                <th>사용승인<br>일자</th>
+                                                <td id="bldCellUseAprDay">-</td>
+                                            </tr>
+                                            <tr>
+                                                <th>기타기재사항</th>
+                                                <td colspan="5" id="bldCellEtcPurps">-</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <!-- 3. 층별현황 표 -->
+                            <div id="bldLedgerFloorSection" style="display: flex; flex-direction: column; gap: 6px; margin-top: 4px;">
+                                <div style="display: flex; align-items: baseline; justify-content: space-between;">
+                                    <div style="font-size: 15px; font-weight: 900; color: #1e3a8a;">· 층별현황</div>
+                                    <span style="font-size: 11.5px; color: #64748b; font-weight: 700;">단위 : ㎡</span>
+                                </div>
+                                <div style="max-height: 290px; overflow-y: auto; overflow-x: auto; border-top: 2px solid #94a3b8; border-bottom: 1px solid #cbd5e1;">
+                                    <table class="bld-ledger-flr-table">
+                                        <thead>
+                                            <tr>
+                                                <th>구분</th>
+                                                <th>층별</th>
+                                                <th>구조</th>
+                                                <th>용도</th>
+                                                <th>면적</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="bldLedgerFloorBody">
+                                            <tr><td colspan="5" style="padding: 14px; color: #64748b;">층별현황 조회 중...</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
                     </div>
 
                     <footer style="padding-top: 12px; text-align: center; font-size: 11.5px; color: #64748b; font-weight: 600;">
-                        국토교통부 건설사업정보시스템(건설CALS) 시설물 기본제원 오픈API (`selectIoFmSpcfDtl`) 및 서울교통공사 역사정보 연동
+                        건설CALS 시설물 오픈API · 서울교통공사 역사정보 · 국토교통부 건축물대장 &amp; 소방청 스프링클러 정보 연동
                     </footer>
                 </div>
 
@@ -4338,6 +4709,7 @@
             const loadingEl = document.getElementById('facilityLoadingIndicator');
             const resultEl = document.getElementById('facilityResultContainer');
             const subwayResultEl = document.getElementById('facilitySubwayResultContainer');
+            const bldResultEl = document.getElementById('facilityBuildingResultContainer');
             const noResultEl = document.getElementById('facilityNoResultBox');
             const multiMatchContainer = document.getElementById('facilityMultiMatchContainer');
             const multiMatchList = document.getElementById('facilityMultiMatchList');
@@ -4350,6 +4722,7 @@
                 if (loadingEl) loadingEl.style.display = 'none';
                 if (resultEl) resultEl.style.display = 'none';
                 if (subwayResultEl) subwayResultEl.style.display = 'none';
+                if (bldResultEl) bldResultEl.style.display = 'none';
                 if (noResultEl) noResultEl.style.display = 'none';
                 if (multiMatchContainer) multiMatchContainer.style.display = 'none';
                 return;
@@ -4361,12 +4734,23 @@
             if (facState.noResult) {
                 if (resultEl) resultEl.style.display = 'none';
                 if (subwayResultEl) subwayResultEl.style.display = 'none';
+                if (bldResultEl) bldResultEl.style.display = 'none';
                 if (multiMatchContainer) multiMatchContainer.style.display = 'none';
                 if (noResultEl) noResultEl.style.display = 'flex';
                 return;
             }
 
             if (noResultEl) noResultEl.style.display = 'none';
+
+            if (facState.selectedItem && facState.selectedItem.isBuilding) {
+                if (multiMatchContainer) multiMatchContainer.style.display = 'none';
+                displayUnifiedFacilityMatch(
+                    facState.selectedItem,
+                    (facState.matches && facState.matches.length > 0) ? facState.matches : [facState.selectedItem],
+                    !!facState.userSelectedDong
+                );
+                return;
+            }
 
             if (facState.matches && facState.matches.length > 1) {
                 if (multiMatchContainer && multiMatchList && multiMatchCount) {
@@ -4408,6 +4792,7 @@
             } else {
                 if (resultEl) resultEl.style.display = 'none';
                 if (subwayResultEl) subwayResultEl.style.display = 'none';
+                if (bldResultEl) bldResultEl.style.display = 'none';
             }
         }
 
@@ -10569,16 +10954,1820 @@
             tryNextUrl();
         }
 
-        function displayUnifiedFacilityMatch(m) {
+
+        // === 건축물·소방시설 통합 검색 모듈 (툴킷 이식) ===
+        function lookupSigunguAndBjdong(sigunguCd, dongName) {
+            if (!dongName) return { sigunguCd: sigunguCd || '', bjdongCd: '' };
+            const cleanDong = dongName.trim();
+            const candidates = [cleanDong];
+            const stripped = cleanDong.replace(/\d+동$/, '동').replace(/본동$/, '동');
+            if (stripped !== cleanDong) candidates.push(stripped);
+
+            for (const c of candidates) {
+                if (sigunguCd && GU_BJDONG_MAP[sigunguCd] && GU_BJDONG_MAP[sigunguCd][c]) {
+                    return { sigunguCd, bjdongCd: GU_BJDONG_MAP[sigunguCd][c] };
+                }
+            }
+            for (const c of candidates) {
+                for (const [sg, guMap] of Object.entries(GU_BJDONG_MAP)) {
+                    if (guMap[c]) return { sigunguCd: sg, bjdongCd: guMap[c] };
+                }
+            }
+            return { sigunguCd: sigunguCd || '', bjdongCd: '' };
+        }
+
+        async function resolveAddressCodesForFacility(roadOrJibunAddr, rawMapText = '', fullContext = '') {
+            let sigunguCd = '';
+            let bjdongCd = '';
+            let bun = '';
+            let ji = '';
+            let platGbCd = '0'; // 0: 대지, 1: 산
+            let bldNameHint = '';
+            let targetDongNum = ''; // 예: "31" (31동), "201" (201동)
+
+            const jibunLineM = (rawMapText || '').match(/법정동주소[ \t:]*([^\r\n]*)/);
+            const roadLineM = (rawMapText || '').match(/도로명주소[ \t:]*([^\r\n]*)/);
+            const explicitJibunLine = jibunLineM ? jibunLineM[1].replace(/(?:도로명주소|취약지역|관할서|재난종별).*$/, '').trim() : '';
+            const rawRoadCandidate = roadLineM ? roadLineM[1].replace(/(?:취약지역|법정동주소|관할서|재난종별).*$/, '').trim() : '';
+            const explicitRoadLine = /^(?:취약지역|취약대상|관할서|재난종별|신고접수|출동지령|현장도착|내용|-|없음)$/.test(rawRoadCandidate) ? '' : rawRoadCandidate;
+            const fullSearchContext = `${fullContext || ''} ${rawMapText || ''} ${roadOrJibunAddr || ''}`;
+            const combined = `${explicitJibunLine} ${explicitRoadLine} ${roadOrJibunAddr || ''} ${fullSearchContext}`.trim();
+
+            // 1) 시군구코드 추출 (2번 도로명주소 -> 안전지도 법정동주소 -> 1번 구/동 명칭 순으로 확인)
+            const priorityGuSources = [roadOrJibunAddr || '', explicitJibunLine, explicitRoadLine, rawMapText || ''];
+            for (const src of priorityGuSources) {
+                if (!src) continue;
+                for (const [gu, code] of Object.entries(SIGUNGU_CODE_MAP)) {
+                    const guReg = new RegExp(`(?:^|\\s|서울특별시|서울시)${gu}(?:\\s|$)`);
+                    if (guReg.test(src) || src.includes(gu)) {
+                        sigunguCd = code;
+                        break;
+                    }
+                }
+                if (sigunguCd) break;
+            }
+
+            // 2) 법정동 + 산 여부 + 본번(bun) + 부번(ji) 정밀 추출
+            // 예: "서울특별시 마포구 성산동 200-1", "강남구 압구정동 산 12-3", "용산동2가 1-23", "명륜3가 53"
+            const jibunCandidates = [explicitJibunLine, roadOrJibunAddr || '', combined];
+            const dongBunJiRegex = /([가-힣]+(?:\d+가)?동|[가-힣]+\d+가|세종로|충무로\d+가|을지로\d+가|남대문로\d+가|태평로\d+가|원효로\d+가|한강로\d+가|동소문동\d+가|삼선동\d+가|동선동\d+가|안암동\d+가|보문동\d+가|영등포동\d+가|당산동\d+가|문래동\d+가|양평동\d+가)\s+(산\s+)?(\d{1,4})(?:-(\d{1,4}))?(?!\d)(?!\s*(?:동|호|층|가|로|길)\b)/g;
+
+            for (const src of jibunCandidates) {
+                if (!src) continue;
+                dongBunJiRegex.lastIndex = 0;
+                let m;
+                while ((m = dongBunJiRegex.exec(src)) !== null) {
+                    const candDong = m[1].trim();
+                    const resSgBj = lookupSigunguAndBjdong(sigunguCd, candDong);
+                    const code = resSgBj.bjdongCd;
+                    if (code) {
+                        if (!sigunguCd && resSgBj.sigunguCd) sigunguCd = resSgBj.sigunguCd;
+                        bjdongCd = code;
+                        platGbCd = m[2] ? '1' : '0';
+                        bun = m[3];
+                        ji = m[4] || '0';
+                        break;
+                    }
+                }
+                if (bjdongCd && bun) break;
+            }
+
+            // 3) 괄호 안에 법정동이 표기된 도로명주소 (예: "마포구 월드컵로 207 (성산동)" 또는 "(성산동, 성산시영아파트)")에서 법정동코드 추출
+            if (!bjdongCd) {
+                const parenDongRegex = /\(\s*([가-힣]+(?:\d+가)?동|[가-힣]+\d+가)(?:\s*[,\)]|\s+(\d{1,4})(?:-(\d{1,4}))?)/;
+                const pm = combined.match(parenDongRegex);
+                if (pm && pm[1]) {
+                    const resSgBj = lookupSigunguAndBjdong(sigunguCd, pm[1].trim());
+                    const code = resSgBj.bjdongCd;
+                    if (code) {
+                        if (!sigunguCd && resSgBj.sigunguCd) sigunguCd = resSgBj.sigunguCd;
+                        bjdongCd = code;
+                        if (!bun && pm[2]) {
+                            bun = pm[2];
+                            ji = pm[3] || '0';
+                        }
+                    }
+                }
+            }
+
+            // 4) 여전히 법정동코드가 없으면 텍스트 내 모든 법정동 이름 매칭
+            if (!bjdongCd && sigunguCd && GU_BJDONG_MAP[sigunguCd]) {
+                for (const [dongName, code] of Object.entries(GU_BJDONG_MAP[sigunguCd])) {
+                    if (combined.includes(dongName)) {
+                        bjdongCd = code;
+                        break;
+                    }
+                }
+            }
+
+            // 5) [우선순위 동(Dong) 추출: 1순위 2번 도로명주소 -> 2순위 4번 신고내용 -> 3순위 안전지도 법정동주소/원문]
+            const sec1Val = '';
+            targetDongNum = extractTargetDong(roadOrJibunAddr);
+            if (!targetDongNum && sec1Val) {
+                targetDongNum = extractTargetDong(sec1Val);
+            }
+            if (!targetDongNum && explicitJibunLine) {
+                targetDongNum = extractTargetDong(explicitJibunLine);
+            }
+            if (!targetDongNum) {
+                targetDongNum = extractTargetDong(rawMapText);
+            }
+
+            // 6) [우선순위 건물명/단지명 힌트 추출: 1순위 2번 도로명주소 -> 2순위 4번 신고내용 -> 3순위 안전지도 법정동주소/원문]
+            bldNameHint = extractBldNameHint(roadOrJibunAddr);
+            if (!bldNameHint && sec1Val) {
+                bldNameHint = extractBldNameHint(sec1Val);
+            }
+            if (!bldNameHint && explicitJibunLine) {
+                bldNameHint = extractBldNameHint(explicitJibunLine);
+            }
+            if (!bldNameHint) {
+                bldNameHint = extractBldNameHint(rawMapText);
+            }
+
+            // 7) 도로명주소만 있고 지번(bun/ji)이나 법정동코드(bjdongCd)가 없을 때:
+            //    VWorld / 행안부 / OSM 지오코딩으로 도로명주소에 매칭되는 정확한 법정동 + 본번/부번을 획득
+            const queryRoadAddr = (roadOrJibunAddr || explicitRoadLine || explicitJibunLine).trim();
+            const candidateLots = [];
+            const pushLot = (sg, bj, pg, b, j) => {
+                if (!sg || !bj || !b) return;
+                const bPad = String(b).padStart(4, '0');
+                const jPad = String(j || '0').padStart(4, '0');
+                const pgVal = pg || '0';
+                if (!candidateLots.some(x => x.sigunguCd === sg && x.bjdongCd === bj && x.bun === bPad && x.ji === jPad)) {
+                    candidateLots.push({ sigunguCd: sg, bjdongCd: bj, platGbCd: pgVal, bun: bPad, ji: jPad });
+                }
+            };
+
+            if (queryRoadAddr && (!sigunguCd || !bjdongCd || !bun)) {
+                // 7-0) Postcodify 무료 도로명/지번 API (신주소/구주소 -> 정확한 서울 법정동+본번+부번 변환)
+                const cleanPostQ = queryRoadAddr
+                    .replace(/,.*$/, '')
+                    .replace(/\([^)]*\)/g, '')
+                    .replace(/\b\d{1,4}동\b.*$/, '')
+                    .replace(/\b\d{1,4}호\b.*$/, '')
+                    .trim();
+                const postEndpoints = [
+                    `https://api.poesis.kr/post/search.php?q=${encodeURIComponent(/^서울/.test(cleanPostQ) ? cleanPostQ : '서울 ' + cleanPostQ)}&v=3.0`,
+                    `https://api.poesis.co.kr/post/search.php?q=${encodeURIComponent(/^서울/.test(cleanPostQ) ? cleanPostQ : '서울 ' + cleanPostQ)}&v=3.0`,
+                    `https://api.poesis.kr/post/search.php?q=${encodeURIComponent(cleanPostQ)}&v=3.0`
+                ];
+                for (const pUrl of postEndpoints) {
+                    try {
+                        const ctrl = new AbortController();
+                        const tId = setTimeout(() => ctrl.abort(), 3500);
+                        const res = await fetch(pUrl, { signal: ctrl.signal });
+                        clearTimeout(tId);
+                        if (res.ok) {
+                            const pJson = await res.json();
+                            const rows = Array.isArray(pJson?.results) ? pJson.results : [];
+                            const seoulRows = rows.filter(r => JSON.stringify(r).includes('서울'));
+                            const targetRows = seoulRows.length > 0 ? seoulRows : rows;
+                            for (const r of targetRows.slice(0, 8)) {
+                                const flatStr = [r.ko_common, r.ko_jibeon, r.ko_doro, r.other_addresses].filter(Boolean).join(' ');
+                                let rowSg = sigunguCd || '';
+                                for (const [gu, code] of Object.entries(SIGUNGU_CODE_MAP)) {
+                                    if (flatStr.includes(gu)) { rowSg = code; break; }
+                                }
+                                dongBunJiRegex.lastIndex = 0;
+                                let dm;
+                                while ((dm = dongBunJiRegex.exec(flatStr)) !== null) {
+                                    const resSgBj = lookupSigunguAndBjdong(rowSg, dm[1].trim());
+                                    if (resSgBj.bjdongCd && resSgBj.sigunguCd) {
+                                        const pg = dm[2] ? '1' : '0';
+                                        const b = dm[3];
+                                        const j = dm[4] || '0';
+                                        pushLot(resSgBj.sigunguCd, resSgBj.bjdongCd, pg, b, j);
+                                        if (!sigunguCd) sigunguCd = resSgBj.sigunguCd;
+                                        if (!bjdongCd) bjdongCd = resSgBj.bjdongCd;
+                                        if (!bun) { platGbCd = pg; bun = b; ji = j; }
+                                    }
+                                }
+                            }
+                            if (candidateLots.length > 0) break;
+                        }
+                    } catch (e) {}
+                }
+                const cleanQ = queryRoadAddr
+                    .replace(/,.*$/, '')
+                    .replace(/\([^)]*\)/g, '')
+                    .replace(/\b\d{1,4}동\b.*$/, '')
+                    .replace(/\b\d{1,4}호\b.*$/, '')
+                    .trim();
+
+                try {
+                    const osmUrl = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent('서울특별시 ' + cleanQ)}&format=json&addressdetails=1&limit=3`;
+                    const controller = new AbortController();
+                    const tId = setTimeout(() => controller.abort(), 2800);
+                    const res = await fetch(osmUrl, { signal: controller.signal, headers: { 'Accept-Language': 'ko' } });
+                    clearTimeout(tId);
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (Array.isArray(data) && data.length > 0) {
+                            for (const item of data) {
+                                const disp = item.display_name || '';
+                                const addrObj = item.address || {};
+                                if (!sigunguCd) {
+                                    for (const [gu, code] of Object.entries(SIGUNGU_CODE_MAP)) {
+                                        if (disp.includes(gu) || addrObj.borough === gu || addrObj.city_district === gu) {
+                                            sigunguCd = code;
+                                            break;
+                                        }
+                                    }
+                                }
+                                if (!bjdongCd) {
+                                    const suburb = addrObj.suburb || addrObj.quarter || addrObj.neighbourhood || '';
+                                    if (suburb) {
+                                        const c = lookupBjdongCode(sigunguCd, suburb);
+                                        if (c) bjdongCd = c;
+                                    }
+                                    if (!bjdongCd && sigunguCd && GU_BJDONG_MAP[sigunguCd]) {
+                                        for (const [dong, code] of Object.entries(GU_BJDONG_MAP[sigunguCd])) {
+                                            if (disp.includes(dong)) {
+                                                bjdongCd = code;
+                                                break;
+                                            }
+                                        }
+                                    }
+                                }
+                                if (sigunguCd && bjdongCd) break;
+                            }
+                        }
+                    }
+                } catch (e) {}
+            }
+
+            const candidateBjdongs = [];
+            const pushCand = (sg, bj) => {
+                if (!sg || !bj) return;
+                if (!candidateBjdongs.some(c => c.sigunguCd === sg && c.bjdongCd === bj)) {
+                    candidateBjdongs.push({ sigunguCd: sg, bjdongCd: bj });
+                }
+            };
+            if (sigunguCd && bjdongCd) pushCand(sigunguCd, bjdongCd);
+
+            if (queryRoadAddr && !bun) {
+                const roadOnlyM = queryRoadAddr.match(/([가-힣0-9]+(?:대로|로|길)(?:\d+길)?)/);
+                const roadOnly = roadOnlyM ? roadOnlyM[1] : '';
+                const collectFromAddrText = (disp, addrObj = {}) => {
+                    let sg = sigunguCd || '';
+                    for (const [gu, code] of Object.entries(SIGUNGU_CODE_MAP)) {
+                        if (disp.includes(gu) || addrObj.borough === gu || addrObj.city_district === gu) {
+                            sg = code;
+                            if (!sigunguCd) sigunguCd = code;
+                            break;
+                        }
+                    }
+                    const dCand = [addrObj.suburb, addrObj.quarter, addrObj.neighbourhood, addrObj.village].filter(Boolean);
+                    for (const d of dCand) {
+                        const c = lookupBjdongCode(sg, d);
+                        if (c) {
+                            if (!bjdongCd) bjdongCd = c;
+                            pushCand(sg, c);
+                        }
+                    }
+                    if (sg && GU_BJDONG_MAP[sg]) {
+                        for (const [dong, code] of Object.entries(GU_BJDONG_MAP[sg])) {
+                            if (disp.includes(dong)) {
+                                if (!bjdongCd) bjdongCd = code;
+                                pushCand(sg, code);
+                            }
+                        }
+                    }
+                };
+
+                if (roadOnly && candidateBjdongs.length === 0) {
+                    try {
+                        const osmRoadUrl = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent('서울특별시 ' + roadOnly)}&format=json&addressdetails=1&limit=10`;
+                        const controller = new AbortController();
+                        const tId = setTimeout(() => controller.abort(), 3000);
+                        const res = await fetch(osmRoadUrl, { signal: controller.signal, headers: { 'Accept-Language': 'ko' } });
+                        clearTimeout(tId);
+                        if (res.ok) {
+                            const data = await res.json();
+                            if (Array.isArray(data)) {
+                                data.forEach(item => collectFromAddrText(item.display_name || '', item.address || {}));
+                            }
+                        }
+                    } catch (e) {}
+                }
+
+                if (candidateBjdongs.length === 0) {
+                    try {
+                        const photonUrl = `https://photon.komoot.io/api/?q=${encodeURIComponent('서울 ' + (roadOnly || queryRoadAddr))}&limit=6`;
+                        const controller = new AbortController();
+                        const tId = setTimeout(() => controller.abort(), 3000);
+                        const res = await fetch(photonUrl, { signal: controller.signal });
+                        clearTimeout(tId);
+                        if (res.ok) {
+                            const pData = await res.json();
+                            if (pData && Array.isArray(pData.features)) {
+                                pData.features.forEach(f => {
+                                    const p = f.properties || {};
+                                    const disp = [p.city, p.district, p.county, p.locality, p.street, p.name].filter(Boolean).join(' ');
+                                    collectFromAddrText(disp, { borough: p.district || p.county, suburb: p.locality || p.suburb });
+                                });
+                            }
+                        }
+                    } catch (e) {}
+                }
+
+                if (roadOnly) {
+                    const stem = roadOnly.replace(/(?:\d+번?길|대로|로|길).*$/, '').trim();
+                    if (stem.length >= 2) {
+                        for (const [sg, guMap] of Object.entries(GU_BJDONG_MAP)) {
+                            if (sigunguCd && sg !== sigunguCd) continue;
+                            for (const [dongName, bj] of Object.entries(guMap)) {
+                                const dongStem = dongName.replace(/(?:\d+가|동)$/, '');
+                                if (dongStem && (stem === dongStem || stem.startsWith(dongStem))) {
+                                    if (!sigunguCd) sigunguCd = sg;
+                                    if (!bjdongCd) bjdongCd = bj;
+                                    pushCand(sg, bj);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            return {
+                sigunguCd: sigunguCd || '11680',
+                bjdongCd: bjdongCd || '',
+                candidateBjdongs,
+                candidateLots,
+                platGbCd,
+                bun: bun ? bun.padStart(4, '0') : '',
+                ji: (ji || '0').padStart(4, '0'),
+                bldNameHint,
+                targetDongNum
+            };
+        }
+
+        // 안전지도 텍스트 및 주소에서 아파트/건물 타겟 동 번호(예: 112동, 제112동 -> 112) 정밀 추출 (법정동인 '대치동' 등과 엄격 분리)
+
+        function evaluateSprinklerForFacilityModal(mainPurpsCdNm, etcPurps, useAprDay, grndFlrCnt, totArea, combinedContext, bldNameHint, ledgerType, archArea = 0, flrItems = null) {
+            let ymd = parseInt(String(useAprDay || '').replace(/\D/g, '').substring(0, 8), 10) || 0;
+            const isUnknownDate = (ymd < 19000101);
+            if (isUnknownDate) ymd = 20260101;
+            const dateNote = isUnknownDate ? ' (사용승인일 미상으로 현행 기준 적용)' : '';
+
+            let grndFlr = 0;
+            let ugrndFlr = 0;
+            if (typeof grndFlrCnt === 'string' && grndFlrCnt.includes('/')) {
+                const parts = grndFlrCnt.split('/');
+                grndFlr = parseInt(parts[0], 10) || 0;
+                ugrndFlr = parseInt(parts[1], 10) || 0;
+            } else {
+                grndFlr = parseInt(grndFlrCnt, 10) || 0;
+            }
+
+            const totalAreaNum = parseFloat(totArea) || 0;
+            const archAreaNum = parseFloat(archArea) || 0;
+
+            // 층별현황(flrItems) 기반 정밀 바닥면적 및 층별 용도 분석
+            let flrUsageStrings = '';
+            let maxFlr4PlusOrSubArea = 0;
+            let maxSubArea = 0;
+            let maxSingleFlrArea = 0;
+            let commAreaSum = 0;
+
+            if (Array.isArray(flrItems) && flrItems.length > 0) {
+                flrItems.forEach(f => {
+                    const gb = String(f.flrGbCd || '').trim();
+                    const gbNm = String(f.flrGbCdNm || '').trim();
+                    const flrNo = parseFloat(f.flrNo || '0') || 0;
+                    const area = parseFloat(String(f.area || '0').replace(/[^0-9.]/g, '')) || 0;
+                    const pStr = `${f.mainPurpsCdNm || ''} ${f.etcPurps || ''}`;
+                    flrUsageStrings += ' ' + pStr;
+                    if (area > maxSingleFlrArea) maxSingleFlrArea = area;
+                    const isSub = (gb === '10' || gbNm.includes('지하'));
+                    const isGrnd4Plus = ((gb === '20' || gbNm.includes('지상') || (!isSub && !gbNm.includes('옥탑'))) && flrNo >= 4);
+                    if (isSub && area > maxSubArea) maxSubArea = area;
+                    if ((isSub || isGrnd4Plus) && area > maxFlr4PlusOrSubArea) maxFlr4PlusOrSubArea = area;
+                    if (/근린생활|의원|치과|한의원|음식점|고시원|사무소|소매점|학원|독서실|체력단련|산후조리|조산원/.test(pStr)) {
+                        commAreaSum += area;
+                    }
+                });
+            } else {
+                const estFlr = archAreaNum > 0 ? archAreaNum : (totalAreaNum > 0 && (grndFlr + ugrndFlr) > 0 ? (totalAreaNum / (grndFlr + ugrndFlr)) : 0);
+                maxSingleFlrArea = estFlr;
+                if (grndFlr >= 4 || ugrndFlr >= 1) maxFlr4PlusOrSubArea = estFlr;
+                if (ugrndFlr >= 1) maxSubArea = estFlr;
+            }
+
+            const hasFlr1000In4PlusOrSub = (maxFlr4PlusOrSubArea >= 1000);
+            const rawPurps = `${mainPurpsCdNm || ''} ${etcPurps || ''} ${bldNameHint || ''} ${ledgerType || ''} ${flrUsageStrings}`.trim();
+            const fullContext = `${rawPurps} ${combinedContext || ''}`;
+
+            // 용도 분류 (스프링클러 설비.pdf 목차 1~30번 기준)
+            const isAptOrDorm = /공동주택|아파트|연립주택|연립|다세대주택|다세대|기숙사/.test(rawPurps);
+            const isRowOrMultiHouse = /연립주택|연립|다세대주택|다세대/.test(rawPurps) && !/아파트/.test(rawPurps);
+            const isComm = /근린생활|제1종근린|제2종근린|근생/.test(rawPurps);
+            const isPostpartum = /조산원|산후조리원/.test(fullContext);
+            const isInpatientClinic = (/의원|치과의원|한의원/.test(fullContext) && /입원/.test(fullContext));
+            const isGosiwon = /고시원/.test(fullContext);
+            const isCulture = /문화 및 집회|문화집회|공연장|집회장|관람장|전시장|영화상영관|극장|예식장/.test(rawPurps);
+            const isReligion = /종교시설|종교|교회|성당|사찰/.test(rawPurps);
+            const isSales = /판매시설|판매|백화점|쇼핑센터|대형마트|시장|상점/.test(rawPurps);
+            const isTransport = /운수시설|여객자동차|철도시설|공항시설|항만시설/.test(rawPurps);
+            const isMedical = /의료시설|병원|종합병원|요양병원|치과병원|한방병원|정신의료|격리병원|재활시설/.test(rawPurps);
+            const isNursingHosp = /요양병원/.test(fullContext);
+            const isPsychOrRehab = /정신의료|의료재활/.test(fullContext);
+            const isEdu = /교육연구|학교|교육원|직업훈련소|학원|연구소|도서관/.test(rawPurps);
+            const isElderlyChild = /노유자|아동관련|노인복지|어린이집|유치원|요양원|주야간보호|장애인/.test(rawPurps);
+            const isTraining = /수련시설|생활권수련|자연권수련|유스호스텔/.test(rawPurps);
+            const isSports = /운동시설|체육관|운동장/.test(rawPurps);
+            const isOffice = /업무시설|오피스텔|청사|사무소|오피스/.test(rawPurps);
+            const isLodging = /숙박시설|호텔|여관|모텔|여인숙|호스텔|휴양콘도/.test(rawPurps);
+            const isAmusement = /위락시설|단란주점|유흥주점|무도장|무도학원|카지노/.test(rawPurps);
+            const isFactory = /공장/.test(rawPurps);
+            const isWarehouse = /창고시설|창고|하역장|물류터미널|집배송/.test(rawPurps);
+            const isLogisticsTerminal = /물류터미널/.test(fullContext);
+            const isUndergroundMall = /지하상가|지하가/.test(fullContext);
+            const isComplexBld = /복합건축물|주상복합/.test(fullContext) || ((isAptOrDorm || isLodging) && (isComm || isOffice || isSales));
+
+            // 1. 공동주택 (아파트등, 연립주택, 다세대주택, 기숙사) - PDF p.1~2
+            if (isAptOrDorm) {
+                if (ymd >= 20180128 && grndFlr >= 6) {
+                    return { isInstalled: true, type: 'full', text: '스프링클러 전층 설치', detail: `[적용기준: 공동주택 ('18.1.28) 층수가 6층 이상인 경우 모든 층]${dateNote}` };
+                }
+                if (ymd >= 20050101 && (grndFlr >= 11 || (totalAreaNum >= 5000 && (isComplexBld || /기숙사/.test(rawPurps))))) {
+                    return { isInstalled: true, type: 'full', text: '스프링클러 전층 설치', detail: `[적용기준: 공동주택 ('05.1.1) 층수가 11층 이상일 경우 전층 (복합·기숙사 연면적 5,000㎡ 이상 전층)]${dateNote}` };
+                }
+                if (ymd >= 19950810 && isComplexBld && totalAreaNum >= 5000) {
+                    return { isInstalled: true, type: 'full', text: '스프링클러 전층 설치', detail: `[적용기준: 복합건축물 ('95.8.10) 연면적 5,000㎡ 이상인 것은 전층]${dateNote}` };
+                }
+                if (ymd >= 19900701 && grndFlr >= 16) {
+                    return { isInstalled: true, type: 'partial', text: '스프링클러 16층 이상 설치', detail: `[적용기준: 공동주택 ('90.7.1) 16층 이상인 것은 16층 이상인 층]${dateNote}` };
+                }
+                if (ymd >= 19920728 && hasFlr1000In4PlusOrSub) {
+                    return { isInstalled: true, type: 'partial', text: '스프링클러 설치 (해당 층)', detail: `[적용기준: 공동주택 ('92.7.28) 지하층·무창층·4층 이상인 층이 바닥면적 1,000㎡ 이상인 경우 해당 층]${dateNote}` };
+                }
+                if (ymd >= 20241201 && isRowOrMultiHouse) {
+                    return { isInstalled: true, type: 'simple', text: '간이 스프링클러 설비 설치', detail: `[적용기준: 공동주택 ('24.12.1) 연립주택 및 다세대주택 (주택전용 간이스프링클러설비)]${dateNote}` };
+                }
+            }
+
+            // 2. 의료시설 - PDF p.10
+            if (isMedical) {
+                if (isNursingHosp) {
+                    if (totalAreaNum >= 600) {
+                        return { isInstalled: true, type: 'full', text: '스프링클러 전층 설치', detail: `[적용기준: 의료시설(요양병원) ('14.7.8 / '18.6.30 소급적용) 바닥면적 합계 600㎡ 이상 모든 층]${dateNote}` };
+                    }
+                    return { isInstalled: true, type: 'simple', text: '간이 스프링클러 전층 설치', detail: `[적용기준: 의료시설(요양병원) ('15.7.1 / '18.6.30 소급적용) 바닥면적 합계 600㎡ 미만 모든 층]${dateNote}` };
+                }
+                if (ymd >= 20180128 && grndFlr >= 6) {
+                    return { isInstalled: true, type: 'full', text: '스프링클러 전층 설치', detail: `[적용기준: 의료시설 ('18.1.28) 층수가 6층 이상인 경우 모든 층]${dateNote}` };
+                }
+                if ((ymd >= 20190806 && totalAreaNum >= 600) || (isPsychOrRehab && ymd >= 20040530 && totalAreaNum >= 600)) {
+                    return { isInstalled: true, type: 'full', text: '스프링클러 전층 설치', detail: `[적용기준: 의료시설 ('19.8.6 병원급 / '04.5.30 정신의료기관) 바닥면적 합계 600㎡ 이상 모든 층]${dateNote}` };
+                }
+                if (ymd >= 20050101 && grndFlr >= 11) {
+                    return { isInstalled: true, type: 'full', text: '스프링클러 전층 설치', detail: `[적용기준: 의료시설 ('05.1.1) 층수가 11층 이상인 경우 전층]${dateNote}` };
+                }
+                if (ymd >= 19840701 && hasFlr1000In4PlusOrSub) {
+                    return { isInstalled: true, type: 'partial', text: '스프링클러 설치 (해당 층)', detail: `[적용기준: 의료시설 ('84.7.1) 지하층·무창층·4층 이상인 층이 바닥면적 1,000㎡ 이상인 경우 해당 층]${dateNote}` };
+                }
+                if ((ymd >= 20190806 && totalAreaNum > 0 && totalAreaNum < 600) || (isPsychOrRehab && totalAreaNum >= 300 && totalAreaNum < 600)) {
+                    return { isInstalled: true, type: 'simple', text: '간이 스프링클러 전층 설치', detail: `[적용기준: 의료시설 ('19.8.6) 병원급 바닥면적 합계 600㎡ 미만 (정신의료·재활시설 300~600㎡ 미만)]${dateNote}` };
+                }
+            }
+
+            // 3. 노유자시설 - PDF p.12
+            if (isElderlyChild) {
+                if (ymd >= 20180128 && grndFlr >= 6) {
+                    return { isInstalled: true, type: 'full', text: '스프링클러 전층 설치', detail: `[적용기준: 노유자시설 ('18.1.28) 층수가 6층 이상인 경우 모든 층]${dateNote}` };
+                }
+                if (totalAreaNum >= 600) {
+                    return { isInstalled: true, type: 'full', text: '스프링클러 전층 설치', detail: `[적용기준: 노유자시설 바닥면적 합계 600㎡ 이상인 것은 모든 층]${dateNote}` };
+                }
+                if (hasFlr1000In4PlusOrSub) {
+                    return { isInstalled: true, type: 'partial', text: '스프링클러 설치 (해당 층)', detail: `[적용기준: 노유자시설 지하층·무창층·4층 이상인 층이 바닥면적 1,000㎡ 이상인 경우 해당 층]${dateNote}` };
+                }
+                if (totalAreaNum >= 300 || /노유자생활|요양원|생활시설/.test(fullContext)) {
+                    return { isInstalled: true, type: 'simple', text: '간이 스프링클러 전층 설치', detail: `[적용기준: 노유자시설 바닥면적 합계 300㎡ 이상~600㎡ 미만 및 노유자 생활시설('14.2.4 소급적용)]${dateNote}` };
+                }
+            }
+
+            // 4. 근린생활시설 - PDF p.5
+            if (isComm || isPostpartum || isInpatientClinic || isGosiwon) {
+                if (ymd >= 20180128 && grndFlr >= 6) {
+                    return { isInstalled: true, type: 'full', text: '스프링클러 전층 설치', detail: `[적용기준: 근린생활시설 ('18.1.28) 층수가 6층 이상인 경우 모든 층]${dateNote}` };
+                }
+                if (isPostpartum && totalAreaNum >= 600) {
+                    return { isInstalled: true, type: 'full', text: '스프링클러 전층 설치', detail: `[적용기준: 근린생활시설(조산원·산후조리원) 바닥면적 합계 600㎡ 이상 모든 층]${dateNote}` };
+                }
+                if (ymd >= 20050101 && grndFlr >= 11) {
+                    return { isInstalled: true, type: 'full', text: '스프링클러 전층 설치', detail: `[적용기준: 근린생활시설 ('05.1.1) 층수가 11층 이상일 경우 전층]${dateNote}` };
+                }
+                if (ymd >= 19950810 && isComplexBld && totalAreaNum >= 5000) {
+                    return { isInstalled: true, type: 'full', text: '스프링클러 전층 설치', detail: `[적용기준: 복합건축물 ('95.8.10) 연면적 5,000㎡ 이상인 것은 전층]${dateNote}` };
+                }
+                if (ymd >= 19920728 && grndFlr >= 11) {
+                    return { isInstalled: true, type: 'partial', text: '스프링클러 11층 이상 설치', detail: `[적용기준: 근린생활시설 ('92.7.28) 11층 이상인 것은 11층 이상의 층]${dateNote}` };
+                }
+                if (ymd >= 19840701 && hasFlr1000In4PlusOrSub) {
+                    return { isInstalled: true, type: 'partial', text: '스프링클러 설치 (해당 층)', detail: `[적용기준: 근린생활시설 ('84.7.1) 지하층·무창층·4층 이상인 층이 바닥면적 1,000㎡ 이상인 경우 해당 층]${dateNote}` };
+                }
+                const effectiveCommArea = commAreaSum > 0 ? Math.max(commAreaSum, totalAreaNum) : totalAreaNum;
+                if (ymd >= 20040530 && effectiveCommArea >= 1000) {
+                    return { isInstalled: true, type: 'simple', text: '간이 스프링클러 전층 설치', detail: `[적용기준: 근린생활시설 ('04.5.30) 근린생활시설 바닥면적의 합계가 1,000㎡ 이상 모든 층]${dateNote}` };
+                }
+                if (isPostpartum && ymd >= 20220225 && totalAreaNum < 600) {
+                    return { isInstalled: true, type: 'simple', text: '간이 스프링클러 설치', detail: `[적용기준: 근린생활시설 ('22.2.25) 조산원·산후조리원으로서 연면적 600㎡ 미만 시설]${dateNote}` };
+                }
+                if (isInpatientClinic && ymd >= 20190806) {
+                    return { isInstalled: true, type: 'simple', text: '간이 스프링클러 설치', detail: `[적용기준: 근린생활시설 ('19.8.6) 의원·치과의원·한의원으로서 입원실이 있는 시설]${dateNote}` };
+                }
+                if (isGosiwon) {
+                    return { isInstalled: true, type: 'simple', text: '간이 스프링클러 설치 (고시원)', detail: `[적용기준: 근린생활시설(고시원) 다중이용업소 간이스프링클러 의무 설치 대상]${dateNote}` };
+                }
+            }
+
+            // 5. 문화 및 집회시설 (p.6) / 종교시설 (p.7) / 운동시설 (p.15)
+            if (isCulture || isReligion || isSports) {
+                const facLabel = isCulture ? '문화 및 집회시설' : (isReligion ? '종교시설' : '운동시설');
+                if (ymd >= 20180128 && grndFlr >= 6) {
+                    return { isInstalled: true, type: 'full', text: '스프링클러 전층 설치', detail: `[적용기준: ${facLabel} ('18.1.28) 층수가 6층 이상인 경우 모든 층]${dateNote}` };
+                }
+                if (ymd >= 20050101 && grndFlr >= 11) {
+                    return { isInstalled: true, type: 'full', text: '스프링클러 전층 설치', detail: `[적용기준: ${facLabel} ('05.1.1) 층수가 11층 이상일 경우 전층]${dateNote}` };
+                }
+                if (isCulture && /영화|극장/.test(fullContext) && ((maxSubArea >= 500) || (maxSingleFlrArea >= 1000) || (totalAreaNum >= 1000))) {
+                    return { isInstalled: true, type: 'full', text: '스프링클러 전층 설치', detail: `[적용기준: 문화 및 집회시설(영화상영관) 지하·무창층 500㎡ 이상 또는 기타층 1,000㎡ 이상 모든 층]${dateNote}` };
+                }
+                if (totalAreaNum >= 460) {
+                    return { isInstalled: true, type: 'full', text: '스프링클러 전층 설치', detail: `[적용기준: ${facLabel} 수용인원 100명(바닥면적 460㎡) 이상 모든 층]${dateNote}` };
+                }
+                if (ymd >= 19840701 && hasFlr1000In4PlusOrSub) {
+                    return { isInstalled: true, type: 'partial', text: '스프링클러 설치 (해당 층)', detail: `[적용기준: ${facLabel} ('84.7.1) 지하층·무창층·4층 이상인 층이 바닥면적 1,000㎡ 이상인 경우 해당 층]${dateNote}` };
+                }
+            }
+
+            // 6. 판매시설 (p.8) / 운수시설 (p.9)
+            if (isSales || isTransport) {
+                const facLabel = isSales ? '판매시설' : '운수시설';
+                if (ymd >= 20180128 && grndFlr >= 6) {
+                    return { isInstalled: true, type: 'full', text: '스프링클러 전층 설치', detail: `[적용기준: ${facLabel} ('18.1.28) 층수가 6층 이상인 경우 모든 층]${dateNote}` };
+                }
+                if (totalAreaNum >= 5000 || totalAreaNum >= 1500) {
+                    return { isInstalled: true, type: 'full', text: '스프링클러 전층 설치', detail: `[적용기준: ${facLabel} 바닥면적 합계 5,000㎡ 이상 또는 수용인원 500명(1,500㎡) 이상 모든 층]${dateNote}` };
+                }
+                if (ymd >= 19840701 && hasFlr1000In4PlusOrSub) {
+                    return { isInstalled: true, type: 'partial', text: '스프링클러 설치 (해당 층)', detail: `[적용기준: ${facLabel} ('84.7.1) 지하층·무창층·4층 이상인 층이 바닥면적 1,000㎡ 이상인 경우 해당 층]${dateNote}` };
+                }
+            }
+
+            // 7. 교육연구시설 (p.11) / 수련시설 (p.14)
+            if (isEdu || isTraining) {
+                const facLabel = isEdu ? '교육연구시설' : '수련시설';
+                if (ymd >= 20180128 && grndFlr >= 6) {
+                    return { isInstalled: true, type: 'full', text: '스프링클러 전층 설치', detail: `[적용기준: ${facLabel} ('18.1.28) 층수가 6층 이상인 경우 모든 층]${dateNote}` };
+                }
+                if (ymd >= 20040530 && /기숙사/.test(fullContext) && totalAreaNum >= 5000) {
+                    return { isInstalled: true, type: 'full', text: '스프링클러 전층 설치', detail: `[적용기준: ${facLabel}(기숙사) ('04.5.30) 연면적 5,000㎡ 이상 모든 층]${dateNote}` };
+                }
+                if (isTraining && totalAreaNum >= 600) {
+                    return { isInstalled: true, type: 'full', text: '스프링클러 전층 설치', detail: `[적용기준: 수련시설(숙박 가능) 바닥면적 합계 600㎡ 이상 모든 층]${dateNote}` };
+                }
+                if (ymd >= 20050101 && grndFlr >= 11) {
+                    return { isInstalled: true, type: 'full', text: '스프링클러 전층 설치', detail: `[적용기준: ${facLabel} ('05.1.1) 층수가 11층 이상인 경우 모든 층]${dateNote}` };
+                }
+                if (ymd >= 19920728 && hasFlr1000In4PlusOrSub) {
+                    return { isInstalled: true, type: 'partial', text: '스프링클러 설치 (해당 층)', detail: `[적용기준: ${facLabel} ('92.7.28) 지하층·무창층·4층 이상인 층이 바닥면적 1,000㎡ 이상인 경우 해당 층]${dateNote}` };
+                }
+                if (/합숙소/.test(fullContext) && totalAreaNum >= 100) {
+                    return { isInstalled: true, type: 'simple', text: '간이 스프링클러 전층 설치', detail: `[적용기준: 교육연구시설 내 합숙소 연면적 100㎡ 이상 모든 층]${dateNote}` };
+                }
+            }
+
+            // 8. 숙박시설 - PDF p.17
+            if (isLodging) {
+                if (ymd >= 20180128 && grndFlr >= 6) {
+                    return { isInstalled: true, type: 'full', text: '스프링클러 전층 설치', detail: `[적용기준: 숙박시설 ('18.1.28) 층수가 6층 이상인 경우 모든 층]${dateNote}` };
+                }
+                if (ymd >= 20221201 && totalAreaNum >= 600) {
+                    return { isInstalled: true, type: 'full', text: '스프링클러 전층 설치', detail: `[적용기준: 숙박시설 ('22.12.1) 바닥면적의 합계가 600㎡ 이상 모든 층]${dateNote}` };
+                }
+                if (ymd >= 20050101 && grndFlr >= 11) {
+                    return { isInstalled: true, type: 'full', text: '스프링클러 전층 설치', detail: `[적용기준: 숙박시설 ('05.1.1) 층수가 11층 이상일 경우 전층]${dateNote}` };
+                }
+                if (ymd >= 19950810 && totalAreaNum >= 5000 && isComplexBld) {
+                    return { isInstalled: true, type: 'full', text: '스프링클러 전층 설치', detail: `[적용기준: 숙박시설/복합건축물 ('95.8.10) 연면적 5,000㎡ 이상인 것은 전층]${dateNote}` };
+                }
+                if (ymd >= 19840701 && grndFlr >= 11) {
+                    return { isInstalled: true, type: 'full', text: '스프링클러 전층 설치', detail: `[적용기준: 숙박시설 ('84.7.1) 11층 이상 여관·호텔 전층]${dateNote}` };
+                }
+                if (ymd >= 19840701 && hasFlr1000In4PlusOrSub) {
+                    return { isInstalled: true, type: 'partial', text: '스프링클러 설치 (해당 층)', detail: `[적용기준: 숙박시설 ('84.7.1) 지하층·무창층·4층 이상인 층이 바닥면적 1,000㎡ 이상인 경우 해당 층]${dateNote}` };
+                }
+                if (ymd >= 20221201 && totalAreaNum >= 300 && totalAreaNum < 600) {
+                    return { isInstalled: true, type: 'simple', text: '간이 스프링클러 전층 설치', detail: `[적용기준: 숙박시설 ('22.12.1) 바닥면적의 합계가 300㎡ 이상 600㎡ 미만인 시설]${dateNote}` };
+                }
+            }
+
+            // 9. 업무시설 - PDF p.16
+            if (isOffice) {
+                if (ymd >= 20180128 && grndFlr >= 6) {
+                    return { isInstalled: true, type: 'full', text: '스프링클러 전층 설치', detail: `[적용기준: 업무시설 ('18.1.28) 층수가 6층 이상인 경우 모든 층]${dateNote}` };
+                }
+                if (ymd >= 20050101 && (grndFlr >= 11 || (totalAreaNum >= 5000 && (isComplexBld || /오피스텔/.test(rawPurps))))) {
+                    return { isInstalled: true, type: 'full', text: '스프링클러 전층 설치', detail: `[적용기준: 업무시설 ('05.1.1) 층수가 11층 이상인 경우 전층 (복합건축물 연면적 5,000㎡ 이상 전층)]${dateNote}` };
+                }
+                if (ymd >= 19950810 && isComplexBld && totalAreaNum >= 5000) {
+                    return { isInstalled: true, type: 'full', text: '스프링클러 전층 설치', detail: `[적용기준: 복합건축물 ('95.8.10) 연면적 5,000㎡ 이상인 것은 전층]${dateNote}` };
+                }
+                if (ymd >= 19920728 && grndFlr >= 11) {
+                    return { isInstalled: true, type: 'partial', text: '스프링클러 11층 이상 설치', detail: `[적용기준: 업무시설 ('92.7.28) 11층 이상인 것은 11층 이상인 층]${dateNote}` };
+                }
+                if (hasFlr1000In4PlusOrSub) {
+                    return { isInstalled: true, type: 'partial', text: '스프링클러 설치 (해당 층)', detail: `[적용기준: 업무시설 지하층·무창층·4층 이상인 층이 바닥면적 1,000㎡ 이상인 경우 해당 층]${dateNote}` };
+                }
+            }
+
+            // 10. 창고시설 (p.20) 및 지하상가 (p.33)
+            if (isUndergroundMall && totalAreaNum >= 1000) {
+                return { isInstalled: true, type: 'full', text: '스프링클러 전층 설치', detail: `[적용기준: 지하상가 연면적 1,000㎡ 이상 모든 층]${dateNote}` };
+            }
+            if (isWarehouse) {
+                if ((isLogisticsTerminal && totalAreaNum >= 1500) || totalAreaNum >= 5000) {
+                    return { isInstalled: true, type: 'full', text: '스프링클러 전층 설치', detail: `[적용기준: 창고시설 바닥면적 합계 5,000㎡ 이상(물류터미널 1,500㎡ 이상) 모든 층]${dateNote}` };
+                }
+            }
+
+            // 11. 기타 모든 특정소방대상물 공통 기준 (위락, 공장, 창고, 위험물, 항공기, 동식물, 자원순환, 교정군사, 방송통신, 발전, 묘지, 관광휴게, 장례 등 - PDF p.18~32)
+            if (ymd >= 20180128 && grndFlr >= 6) {
+                return { isInstalled: true, type: 'full', text: '스프링클러 전층 설치', detail: `[적용기준: 특정소방대상물 ('18.1.28) 층수가 6층 이상인 경우 모든 층]${dateNote}` };
+            }
+            if (ymd >= 20050101 && grndFlr >= 11) {
+                return { isInstalled: true, type: 'full', text: '스프링클러 전층 설치', detail: `[적용기준: 특정소방대상물 ('05.1.1) 층수가 11층 이상인 경우 모든 층]${dateNote}` };
+            }
+            if (ymd >= 19950810 && isComplexBld && totalAreaNum >= 5000) {
+                return { isInstalled: true, type: 'full', text: '스프링클러 전층 설치', detail: `[적용기준: 복합건축물 ('95.8.10) 연면적 5,000㎡ 이상인 것은 전층]${dateNote}` };
+            }
+            if (ymd >= 19920728 && grndFlr >= 11) {
+                return { isInstalled: true, type: 'partial', text: '스프링클러 11층 이상 설치', detail: `[적용기준: 특정소방대상물 ('92.7.28) 11층 이상인 것은 11층 이상인 층]${dateNote}` };
+            }
+            if (hasFlr1000In4PlusOrSub) {
+                return { isInstalled: true, type: 'partial', text: '스프링클러 설치 (해당 층)', detail: `[적용기준: 특정소방대상물 지하층·무창층·4층 이상인 층이 바닥면적 1,000㎡ 이상인 경우 해당 층]${dateNote}` };
+            }
+
+            return {
+                isInstalled: false,
+                type: 'none',
+                text: '',
+                detail: `[판별참고: ${mainPurpsCdNm || ledgerType || '일반건축물'} · 지상${grndFlr}층/지하${ugrndFlr}층 · 연면적 ${Math.round(totalAreaNum).toLocaleString()}㎡ · 사용승인 ${useAprDay ? formatYmdDate(useAprDay) : '미상'} 기준 의무설치 대상 아님]`
+            };
+        }
+
+        // 첨부파일 (스프링클러 설비.pdf, 1~33쪽) 기준 건축물 적용 소방시설 전체 판별 함수
+
+        function evaluateAllFireFacilities(it, ledgerType, combinedContext, bldNameHint, flrItems, spEval) {
+            const grndFlr = parseInt(it.grndFlrCnt || '0', 10) || 0;
+            const ugrndFlr = parseInt(it.ugrndFlrCnt || '0', 10) || 0;
+            const totalFlrCnt = grndFlr + ugrndFlr;
+            const totArea = parseFloat(String(it.totArea || '0').replace(/[^0-9.]/g, '')) || 0;
+            const archArea = parseFloat(String(it.archArea || '0').replace(/[^0-9.]/g, '')) || 0;
+            const hhldCnt = (parseInt(it.hhldCnt || '0', 10) || 0) + (parseInt(it.hoCnt || '0', 10) || 0);
+            const heitNum = parseFloat(String(it.heit || '0').replace(/[^0-9.]/g, '')) || 0;
+            const useAprRaw = String(it.useAprDay || it.pmsDay || it.stcnsDay || '').replace(/\D/g, '');
+            let ymd = parseInt(useAprRaw.substring(0, 8), 10) || 0;
+            const isUnknownDate = (ymd < 19000101);
+            if (isUnknownDate) ymd = 20260101;
+
+            // 층별현황 집계
+            let flrUsageStrings = '';
+            let subAreaSum = 0;
+            let maxSubArea = 0;
+            let maxFlr4PlusOrSubArea = 0;
+            let flr12AreaSum = 0;
+            let flr11PlusAreaSum = 0;
+            let hasParkingSub = false;
+            let parkingAreaSum = 0;
+            let elecRoomAreaSum = 0;
+
+            if (Array.isArray(flrItems) && flrItems.length > 0) {
+                flrItems.forEach(f => {
+                    const gb = String(f.flrGbCd || '').trim();
+                    const gbNm = String(f.flrGbCdNm || '').trim();
+                    const flrNo = parseFloat(f.flrNo || '0') || 0;
+                    const area = parseFloat(String(f.area || '0').replace(/[^0-9.]/g, '')) || 0;
+                    const pStr = `${f.mainPurpsCdNm || ''} ${f.etcPurps || ''}`;
+                    flrUsageStrings += ' ' + pStr;
+
+                    const isSub = (gb === '10' || gbNm.includes('지하'));
+                    const isGrnd = (gb === '20' || gbNm.includes('지상') || (!isSub && !gbNm.includes('옥탑')));
+
+                    if (isSub) {
+                        subAreaSum += area;
+                        if (area > maxSubArea) maxSubArea = area;
+                        if (area > maxFlr4PlusOrSubArea) maxFlr4PlusOrSubArea = area;
+                        if (/주차|차고/.test(pStr)) hasParkingSub = true;
+                    } else if (isGrnd) {
+                        if (flrNo >= 4 && area > maxFlr4PlusOrSubArea) maxFlr4PlusOrSubArea = area;
+                        if (flrNo === 1 || flrNo === 2) flr12AreaSum += area;
+                        if (flrNo >= 11) flr11PlusAreaSum += area;
+                    }
+                    if (/주차|차고/.test(pStr)) parkingAreaSum += area;
+                    if (/전기실|발전실|변전실|축전지|통신기기|전산실/.test(pStr)) elecRoomAreaSum += area;
+                });
+            } else {
+                const estFlr = archArea > 0 ? archArea : (totArea > 0 && totalFlrCnt > 0 ? (totArea / totalFlrCnt) : 0);
+                if (ugrndFlr > 0) {
+                    subAreaSum = estFlr * ugrndFlr;
+                    maxSubArea = estFlr;
+                }
+                if (grndFlr >= 4 || ugrndFlr >= 1) maxFlr4PlusOrSubArea = estFlr;
+                if (grndFlr >= 1) flr12AreaSum = estFlr * Math.min(2, grndFlr);
+                if (grndFlr >= 11) flr11PlusAreaSum = estFlr * (grndFlr - 10);
+            }
+
+            const rawPurps = `${it.mainPurpsCdNm || ''} ${it.etcPurps || ''} ${bldNameHint || ''} ${it.bldNm || ''} ${ledgerType || ''} ${flrUsageStrings}`.trim();
+            const fullCtx = `${rawPurps} ${combinedContext || ''}`;
+
+            const isApt = /아파트/.test(rawPurps);
+            const isRowMulti = /연립주택|연립|다세대주택|다세대/.test(rawPurps) && !isApt;
+            const isDorm = /기숙사/.test(rawPurps);
+            const isJointHouse = isApt || isRowMulti || isDorm || /공동주택/.test(rawPurps);
+            const isComm = /근린생활|제1종근린|제2종근린|근생/.test(rawPurps);
+            const isCulture = /문화 및 집회|문화집회|공연장|집회장|관람장|전시장|영화상영관|극장|예식장/.test(rawPurps);
+            const isReligion = /종교시설|종교|교회|성당|사찰/.test(rawPurps);
+            const isSales = /판매시설|판매|백화점|쇼핑센터|대형마트|시장|상점/.test(rawPurps);
+            const isTransport = /운수시설|여객자동차|철도시설|공항시설|항만시설/.test(rawPurps);
+            const isMedical = /의료시설|병원|종합병원|요양병원|치과병원|한방병원|정신의료|격리병원|재활시설/.test(rawPurps);
+            const isEdu = /교육연구|학교|교육원|직업훈련소|학원|연구소|도서관/.test(rawPurps);
+            const isElderly = /노유자|아동관련|노인복지|어린이집|유치원|요양원|주야간보호|장애인/.test(rawPurps);
+            const isTraining = /수련시설|청소년수련|유스호스텔/.test(rawPurps);
+            const isSports = /운동시설|체육관|운동장/.test(rawPurps);
+            const isOffice = /업무시설|오피스텔|청사|사무소|오피스/.test(rawPurps);
+            const isOfficetel = /오피스텔/.test(fullCtx);
+            const isLodging = /숙박시설|호텔|여관|모텔|여인숙|호스텔|휴양콘도/.test(rawPurps);
+            const isAmusement = /위락시설|단란주점|유흥주점|무도장|카지노/.test(rawPurps);
+            const isFactory = /공장/.test(rawPurps);
+            const isWarehouse = /창고시설|창고|하역장|물류터미널|집배송/.test(rawPurps);
+            const isAuto = /자동차|주차장|차고|정비공장/.test(rawPurps);
+            const isFuneral = /장례/.test(rawPurps);
+            const isBroadcast = /방송통신|방송국|데이터센터/.test(rawPurps);
+            const isPower = /발전시설|전기저장/.test(rawPurps);
+
+            // 용도별 기준치 분류 (PDF 1~33쪽 기준)
+            const is1500HydrantGroup = (isComm || isSales || isTransport || isMedical || isElderly || isOffice || isLodging || isAmusement || isFactory || isWarehouse || isAuto || isBroadcast || isPower || isFuneral);
+            const is600FireAlarmGroup = (isComm || isMedical || isLodging || isAmusement || isFuneral);
+            const is2000FireAlarmGroup = (isEdu || isTraining);
+            const isSmokeSub1000Group = (isComm || isSales || isTransport || isMedical || isElderly || isLodging || isAmusement || (/물류터미널/.test(fullCtx)));
+
+            const groups = [
+                { key: 'extinguish', icon: '🧯', title: '소화설비', items: [] },
+                { key: 'alarm', icon: '🔔', title: '경보설비', items: [] },
+                { key: 'evac', icon: '🚪', title: '피난구조설비', items: [] },
+                { key: 'water', icon: '🚰', title: '소화용수설비', items: [] },
+                { key: 'activity', icon: '🚒', title: '소화활동설비', items: [] },
+                { key: 'arch', icon: '🏗️', title: '건축·방염 및 기타', items: [] }
+            ];
+            const addItem = (gKey, name, reason) => {
+                const g = groups.find(x => x.key === gKey);
+                if (g && !g.items.some(x => x.name === name)) {
+                    g.items.push({ name, reason });
+                }
+            };
+
+            // 1. 소화설비
+            if (totArea >= 33 || totArea === 0) {
+                const kNote = (/음식점|주방|기숙사|호텔|의료|노유자|장례|학교|공장/.test(fullCtx)) ? ' (주방 K급 소화기 포함)' : '';
+                addItem('extinguish', '소화기구', `연면적 33㎡ 이상 적용${kNote}`);
+            }
+            if ((isApt && ymd >= 20040530) || (isApt && grndFlr >= 11 && ymd >= 19940720) || (isOfficetel && (ymd >= 20221201 || grndFlr >= 30))) {
+                addItem('extinguish', '자동소화장치', isOfficetel ? '오피스텔 각 실별 주방 적용' : '아파트 각 세대별 주방 적용');
+            }
+            if (is1500HydrantGroup) {
+                if (totArea >= 1500) addItem('extinguish', '옥내소화전설비', `연면적 1,500㎡ 이상 (현재 ${Math.round(totArea).toLocaleString()}㎡)`);
+                else if (maxFlr4PlusOrSubArea >= 300) addItem('extinguish', '옥내소화전설비', `지하층·4층 이상 층 바닥면적 300㎡ 이상 (최대 ${Math.round(maxFlr4PlusOrSubArea).toLocaleString()}㎡) 모든 층`);
+            } else {
+                if (totArea >= 3000) addItem('extinguish', '옥내소화전설비', `연면적 3,000㎡ 이상 (현재 ${Math.round(totArea).toLocaleString()}㎡)`);
+                else if (maxFlr4PlusOrSubArea >= 600) addItem('extinguish', '옥내소화전설비', `지하층·4층 이상 층 바닥면적 600㎡ 이상 (최대 ${Math.round(maxFlr4PlusOrSubArea).toLocaleString()}㎡) 모든 층`);
+            }
+            if (spEval && spEval.text) {
+                const spLabel = spEval.text.includes('간이') ? '간이스프링클러설비' : '스프링클러설비';
+                addItem('extinguish', spLabel, `${spEval.text} ${spEval.detail || ''}`.trim());
+            }
+            if (parkingAreaSum >= 200 || (isAuto && totArea >= 800)) {
+                addItem('extinguish', '물분무등소화설비', parkingAreaSum >= 200 ? `내부 차고·주차장 용도 면적 200㎡ 이상 (${Math.round(parkingAreaSum).toLocaleString()}㎡)` : '차고·주차용 건축물 연면적 800㎡ 이상');
+            } else if (elecRoomAreaSum >= 300) {
+                addItem('extinguish', '물분무등소화설비', `전기실·발전실·변전실·통신기기실 바닥면적 300㎡ 이상 (${Math.round(elecRoomAreaSum).toLocaleString()}㎡)`);
+            }
+            if (flr12AreaSum >= 9000) {
+                addItem('extinguish', '옥외소화전설비', `지상 1~2층 바닥면적 합계 9,000㎡ 이상 (${Math.round(flr12AreaSum).toLocaleString()}㎡)`);
+            }
+
+            // 2. 경보설비
+            if (isRowMulti && ymd >= 20241201) {
+                addItem('alarm', '단독경보형감지기', `('24.12.1) 연립·다세대주택 연동형 설치`);
+            } else if (isElderly && /유치원/.test(fullCtx) && totArea < 400) {
+                addItem('alarm', '단독경보형감지기', '연면적 400㎡ 미만 유치원 적용');
+            }
+            if (totArea >= 400 || maxSubArea >= 150) {
+                addItem('alarm', '비상경보설비', totArea >= 400 ? `연면적 400㎡ 이상 모든 층 (${Math.round(totArea).toLocaleString()}㎡)` : `지하층 바닥면적 150㎡ 이상 모든 층 (${Math.round(maxSubArea).toLocaleString()}㎡)`);
+            }
+            const zataReasons = [];
+            if (grndFlr >= 6 && ymd >= 20221201) zataReasons.push(`('22.12.1) 층수 6층 이상 모든 층`);
+            if (isApt && ymd >= 20221201) zataReasons.push(`('22.12.1) 아파트등 모든 층`);
+            else if (isJointHouse && ((grndFlr >= 4 && totArea >= 1000) || totArea >= 500)) zataReasons.push('공동주택 연면적 기준(500㎡/4층이상 1,000㎡ 이상)');
+            else if (isElderly && (totArea >= 400 || /요양원|생활시설/.test(fullCtx))) zataReasons.push('노유자시설 연면적 400㎡ 이상/생활시설');
+            else if (is600FireAlarmGroup && totArea >= 600) zataReasons.push(`연면적 600㎡ 이상 (${Math.round(totArea).toLocaleString()}㎡)`);
+            else if (is2000FireAlarmGroup && totArea >= 2000) zataReasons.push(`연면적 2,000㎡ 이상 (${Math.round(totArea).toLocaleString()}㎡)`);
+            else if (!is600FireAlarmGroup && !is2000FireAlarmGroup && totArea >= 1000) zataReasons.push(`연면적 1,000㎡ 이상 (${Math.round(totArea).toLocaleString()}㎡)`);
+            if (zataReasons.length > 0) {
+                addItem('alarm', '자동화재탐지설비', zataReasons[0] + (ymd >= 20040530 && !isJointHouse ? ' (시각경보기 포함)' : ''));
+            }
+            if (totArea >= 3500 || grndFlr >= 11 || ugrndFlr >= 3) {
+                const brReasons = [];
+                if (totArea >= 3500) brReasons.push(`연면적 3,500㎡ 이상 (${Math.round(totArea).toLocaleString()}㎡)`);
+                if (grndFlr >= 11) brReasons.push(`층수 11층 이상 (지상 ${grndFlr}층)`);
+                if (ugrndFlr >= 3) brReasons.push(`지하층 3층 이상 (지하 ${ugrndFlr}층)`);
+                addItem('alarm', '비상방송설비', brReasons.join(' / '));
+            }
+            if ((isMedical && (ymd >= 20190806 || /요양병원/.test(fullCtx))) || (isElderly && (totArea >= 500 || /요양원|생활시설/.test(fullCtx))) || (/조산원|산후조리원/.test(fullCtx)) || (/의원|치과|한의원/.test(fullCtx) && /입원/.test(fullCtx))) {
+                addItem('alarm', '자동화재속보설비', '의료·노유자·조산원/산후조리원·입원실 의원 적용 대상');
+            }
+
+            // 3. 피난구조설비
+            if (isElderly && grndFlr >= 1) {
+                addItem('evac', '피난기구', '지상 1층~10층 설치 (피난층 제외, 완강기 제외·구조대 적용)');
+            } else if (grndFlr >= 3) {
+                const airMatNote = (isJointHouse && hhldCnt >= 150) ? ' + 150세대 이상 공기안전매트 설치' : '';
+                addItem('evac', '피난기구', `지상 3층~10층 설치 (피난층 제외)${airMatNote}`);
+            }
+            if (isMedical && totalFlrCnt >= 5) {
+                addItem('evac', '인명구조기구', '지하 포함 5개층 이상 병원 (방열복/방화복·공기호흡기 각 2개 이상)');
+            } else if (isLodging && totalFlrCnt >= 7 && /호텔/.test(fullCtx)) {
+                addItem('evac', '인명구조기구', '지하 포함 7층 이상 관광호텔 (방열복·공기호흡기·인공소생기 각 2개 이상)');
+            } else if (isSales && totArea >= 3000) {
+                addItem('evac', '인명구조기구', '대규모점포 해당 시 층마다 공기호흡기 2개 이상 비치');
+            }
+            const guideSize = isApt ? '아파트 소형유도등' : ((isCulture || isReligion || isSales || isMedical || isSports || isAmusement || isBroadcast || isFuneral) ? '대형유도등 적용' : (isOffice ? '중형유도등 적용' : '적용'));
+            addItem('evac', '유도등', guideSize);
+            if ((totalFlrCnt >= 5 && totArea >= 3000) || maxSubArea >= 450) {
+                const emReasons = [];
+                if (totalFlrCnt >= 5 && totArea >= 3000) emReasons.push(`지하 포함 5개층 이상 & 연면적 3,000㎡ 이상 (${totalFlrCnt}개층, ${Math.round(totArea).toLocaleString()}㎡)`);
+                if (maxSubArea >= 450) emReasons.push(`지하층 바닥면적 450㎡ 이상 (${Math.round(maxSubArea).toLocaleString()}㎡)`);
+                addItem('evac', '비상조명등', emReasons.join(' / '));
+            }
+            if (isLodging) {
+                addItem('evac', '휴대용비상조명등', '객실 또는 구획된 실마다 1개 이상 (복도 비상조명등 설치 시 제외)');
+            }
+
+            // 4. 소화용수설비
+            if (totArea >= 5000) {
+                addItem('water', '상수도소화용수설비', `연면적 5,000㎡ 이상 (현재 ${Math.round(totArea).toLocaleString()}㎡)`);
+            }
+
+            // 5. 소화활동설비 (제연설비, 연결송수관설비, 연결살수설비, 비상콘센트설비, 무선통신보조설비)
+            const smokeReasons = [];
+            if (isSmokeSub1000Group && subAreaSum >= 1000) {
+                smokeReasons.push(`지하층 바닥면적 합계 1,000㎡ 이상 (${Math.round(subAreaSum).toLocaleString()}㎡)`);
+            }
+            if (isJointHouse) {
+                if (grndFlr >= 16 || ugrndFlr >= 3) smokeReasons.push('특별피난계단 승강장 (지상 16층 이상 또는 지하 3층 이상)');
+                if (grndFlr >= 10 && ymd >= 20071115) smokeReasons.push('비상용승강기 승강장 (공동주택 지상 10층 이상, 갓복도형 제외)');
+            } else {
+                if (grndFlr >= 11 || ugrndFlr >= 3) smokeReasons.push('특별피난계단 승강장 (지하 3층 이상 또는 지상 11층 이상)');
+                if (heitNum > 31) smokeReasons.push(`비상용승강기 승강장 (건축물 높이 ${heitNum}m > 31m)`);
+            }
+            if (grndFlr >= 30 && ymd >= 20210105) {
+                smokeReasons.push('피난용승강기 승강장 (지상 30층 이상)');
+            }
+            if (smokeReasons.length > 0) {
+                addItem('activity', '제연설비', smokeReasons.join(' / '));
+            }
+
+            const standpipeReasons = [];
+            if (grndFlr >= 5 && totArea >= 6000) standpipeReasons.push(`5층 이상 & 연면적 6,000㎡ 이상 (${grndFlr}층, ${Math.round(totArea).toLocaleString()}㎡)`);
+            if (totalFlrCnt >= 7) standpipeReasons.push(`지하층 포함 7개층 이상 모든 층 (총 ${totalFlrCnt}개층)`);
+            if (ugrndFlr >= 3 && subAreaSum >= 1000) standpipeReasons.push('지하 3개층 이상 & 지하층 바닥합 1,000㎡ 이상');
+            if (standpipeReasons.length > 0) {
+                addItem('activity', '연결송수관설비', standpipeReasons.join(' / '));
+            }
+
+            const sprinkleConnReasons = [];
+            if ((isSales || isTransport) && totArea >= 1000) sprinkleConnReasons.push('판매·운수시설 바닥면적 합계 1,000㎡ 이상');
+            if (isJointHouse || isEdu) {
+                if (subAreaSum >= 700) sprinkleConnReasons.push(`지하층 바닥면적 700㎡ 이상 (${Math.round(subAreaSum).toLocaleString()}㎡)`);
+            } else {
+                if (subAreaSum >= 150) sprinkleConnReasons.push(`지하층 바닥면적 합계 150㎡ 이상 지하 모든 층 (${Math.round(subAreaSum).toLocaleString()}㎡)`);
+            }
+            if (hasParkingSub && parkingAreaSum > 0 && parkingAreaSum < 200 && ymd >= 20260301) {
+                sprinkleConnReasons.push(`('26.3.1) 지하 차고·주차장 200㎡ 미만`);
+            }
+            if (sprinkleConnReasons.length > 0) {
+                addItem('activity', '연결살수설비', sprinkleConnReasons.join(' / '));
+            }
+
+            const outletReasons = [];
+            if (grndFlr >= 11) outletReasons.push(`층수 11층 이상은 11층 이상 층 (지상 ${grndFlr}층)`);
+            if (ugrndFlr >= 3 && subAreaSum >= 1000) outletReasons.push('지하 3개층 이상 & 지하 바닥합 1,000㎡ 이상 지하 모든 층');
+            if (outletReasons.length > 0) {
+                addItem('activity', '비상콘센트설비', outletReasons.join(' / '));
+            }
+
+            const radioReasons = [];
+            if (subAreaSum >= 3000) radioReasons.push(`지하층 바닥면적 합계 3,000㎡ 이상 (${Math.round(subAreaSum).toLocaleString()}㎡)`);
+            if (grndFlr >= 30) radioReasons.push(`30층 이상은 16층 이상 모든 층 (지상 ${grndFlr}층)`);
+            if (ugrndFlr >= 3 && subAreaSum >= 1000) radioReasons.push('지하 3개층 이상 & 지하 바닥합 1,000㎡ 이상 지하 모든 층');
+            if (radioReasons.length > 0) {
+                addItem('activity', '무선통신보조설비', radioReasons.join(' / '));
+            }
+
+            // 6. 건축·방염 및 기타
+            if (isJointHouse && hhldCnt >= 30 && ymd >= 20160229) {
+                addItem('arch', '옥상출입문 자동개폐장치', `('16.2.29 이후) 30세대 이상 공동주택 (${hhldCnt}세대)`);
+            }
+            if (isApt && grndFlr >= 4 && ymd >= 19921026) {
+                let pType = '경량칸막이 또는 경계벽 피난구';
+                if (ymd >= 20140827) pType = '경량칸막이·경계벽 피난구·대피공간·하향식 피난구·대체시설';
+                else if (ymd >= 20100218) pType = '경량칸막이·경계벽 피난구·대피공간·하향식 피난구';
+                else if (ymd >= 20051202) pType = '경량칸막이·경계벽 피난구·대피공간';
+                addItem('arch', '발코니 피난시설', pType);
+            }
+            if (grndFlr >= 11 && flr11PlusAreaSum >= 10000) {
+                addItem('arch', '헬리포트', '11층 이상 중 11층 이상 층 바닥면적 합계 10,000㎡ 이상');
+            }
+            if (isMedical || isElderly || isLodging || (isCulture && totArea >= 300) || (isReligion && totArea >= 300) || (isSports && totArea >= 500) || (isComm && /의원|체력단련|공연장|종교|조산원|산후조리원/.test(fullCtx))) {
+                addItem('arch', '방염 대상', '실내장식물 등 방염성능기준 적용 용도');
+            }
+
+            return groups.filter(g => g.items.length > 0);
+        }
+
+        function renderFireFacilitiesPanel(groups) {
+            const panel = document.getElementById('bldFireFacilitiesDetailPanel');
+            const badge = document.getElementById('bldFireFacCountBadge');
+            if (!panel) return;
+            const totalCount = groups.reduce((acc, g) => acc + g.items.length, 0);
+            if (badge) badge.textContent = `(총 ${totalCount}종 적용)`;
+
+            if (totalCount === 0) {
+                panel.innerHTML = '<div style="font-size:12px; color:#64748b; font-weight:700; padding:6px;">적용되는 법정 소방시설이 확인되지 않았습니다.</div>';
+                return;
+            }
+
+            panel.innerHTML = groups.map(g => `
+                <div class="bld-fire-fac-group">
+                    <div class="bld-fire-fac-group-title"><span>${g.icon}</span><span>${g.title} (${g.items.length})</span></div>
+                    <div class="bld-fire-fac-list">
+                        ${g.items.map(item => `
+                            <div class="bld-fire-fac-item">
+                                <span class="bld-fire-fac-badge">설치 O</span>
+                                <span class="bld-fire-fac-name">${item.name}</span>
+                                <span class="bld-fire-fac-reason">${item.reason}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `).join('') + `<div style="font-size:11px; color:#64748b; font-weight:600; margin-top:2px;">※ 건축물대장 용도·층수·연면적·사용승인일 및 층별현황 기반 법령 기준 산정 결과이며, 실제 현장 설치 여부는 수신반·펌프실 확인이 필요합니다.</div>`;
+        }
+
+        // 동명칭 및 번호 자연순서(오름차순) 정렬 헬퍼 (예: 101동, 102동, 103동... -> A동, B동 -> 상가동, 관리동)
+        function sortBuildingMatchesByDong(matches) {
+            if (!Array.isArray(matches) || matches.length <= 1) return matches;
+            const parseDongSortKey = (m) => {
+                const it = m.item || m || {};
+                const dong = String(it.dongNm || '').trim();
+                const bld = String(it.bldNm || '').trim();
+                const label = dong || bld;
+
+                // 1) "101동", "제101동", "101", "101-1동" 등 숫자로 시작하거나 숫자+동 패턴 추출
+                const numMatch = dong.match(/^(?:제\s*)?(\d+)(?:\s*[-~]\s*(\d+))?\s*(?:동|호)?$/) ||
+                                 dong.match(/(\d+)\s*동/) ||
+                                 (!dong && bld.match(/(\d+)\s*동/));
+                if (numMatch) {
+                    return {
+                        group: 1,
+                        num1: parseInt(numMatch[1], 10),
+                        num2: numMatch[2] ? parseInt(numMatch[2], 10) : 0,
+                        dong,
+                        bld
+                    };
+                }
+                // 2) 동명칭이 있는 비숫자 동 (예: A동, B동, 가동, 상가동, 관리동)
+                if (dong) {
+                    return {
+                        group: 2,
+                        num1: Number.MAX_SAFE_INTEGER,
+                        num2: 0,
+                        dong,
+                        bld
+                    };
+                }
+                // 3) 동명칭이 없는 경우 건축물명칭 기준 정렬
+                return {
+                    group: 3,
+                    num1: Number.MAX_SAFE_INTEGER,
+                    num2: 0,
+                    dong: '',
+                    bld
+                };
+            };
+
+            return [...matches].sort((a, b) => {
+                const ka = parseDongSortKey(a);
+                const kb = parseDongSortKey(b);
+                if (ka.group !== kb.group) return ka.group - kb.group;
+                if (ka.group === 1) {
+                    if (ka.num1 !== kb.num1) return ka.num1 - kb.num1;
+                    if (ka.num2 !== kb.num2) return ka.num2 - kb.num2;
+                }
+                const cmpDong = ka.dong.localeCompare(kb.dong, 'ko', { numeric: true, sensitivity: 'base' });
+                if (cmpDong !== 0) return cmpDong;
+                return ka.bld.localeCompare(kb.bld, 'ko', { numeric: true, sensitivity: 'base' });
+            });
+        }
+
+
+        const BLD_HUB_FLR_API_URL = 'https://apis.data.go.kr/1613000/BldRgstHubService/getBrFlrOulnInfo';
+        const BLD_HUB_JIJIGU_API_URL = 'https://apis.data.go.kr/1613000/BldRgstHubService/getBrJijiguInfo';
+
+        const formatYmdDate = (rawVal) => {
+            const s = String(rawVal || '').replace(/\D/g, '');
+            if (s.length === 8) return `${s.slice(0, 4)}-${s.slice(4, 6)}-${s.slice(6, 8)}`;
+            return s || '-';
+        };
+
+        const formatAreaVal = (val, withUnit = true) => {
+            const n = parseFloat(String(val || '').replace(/[^0-9.]/g, ''));
+            if (!Number.isFinite(n) || n <= 0) return '-';
+            const str = Number.isInteger(n) ? String(n) : String(Math.round(n * 100) / 100);
+            return withUnit ? `${str} ㎡` : str;
+        };
+
+        const formatRateVal = (val) => {
+            const n = parseFloat(String(val || '').replace(/[^0-9.]/g, ''));
+            if (!Number.isFinite(n) || n <= 0) return '-';
+            const str = Number.isInteger(n) ? String(n) : String(Math.round(n * 100) / 100);
+            return `${str} %`;
+        };
+
+        const parseOpenApiItems = (rawStr) => {
+            if (!rawStr) return [];
+            const trimmed = rawStr.trim();
+            if (trimmed.startsWith('{')) {
+                try {
+                    const j = JSON.parse(trimmed);
+                    const item = j?.response?.body?.items?.item;
+                    if (!item) return [];
+                    return Array.isArray(item) ? item : [item];
+                } catch (e) { return []; }
+            }
+            if (trimmed.includes('<item>')) {
+                const xmlDoc = new DOMParser().parseFromString(trimmed, "text/xml");
+                return Array.from(xmlDoc.querySelectorAll("item")).map(node => {
+                    const obj = {};
+                    Array.from(node.children).forEach(ch => { obj[ch.tagName] = ch.textContent.trim(); });
+                    return obj;
+                });
+            }
+            return [];
+        };
+
+        const fetchOpenApiItemsWithFallback = async (urls, timeoutMs = 5500) => {
+            const wrappers = [
+                (u) => u,
+                (u) => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
+                (u) => `https://corsproxy.io/?${encodeURIComponent(u)}`
+            ];
+            for (const qUrl of urls) {
+                for (const wrap of wrappers) {
+                    try {
+                        const ctrl = new AbortController();
+                        const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+                        const res = await fetch(wrap(qUrl), { signal: ctrl.signal });
+                        clearTimeout(timer);
+                        if (res.ok) {
+                            const text = await res.text();
+                            const items = parseOpenApiItems(text);
+                            if (items.length > 0) return items;
+                        }
+                    } catch (e) {}
+                }
+            }
+            return [];
+        };
+
+        let currentLotBuildingMatches = [];
+
+        async function renderBuildingDetailInFacility(matchObj, siblingMatches = null, userSelectedDong = false) {
+            if (Array.isArray(siblingMatches) && siblingMatches.length > 0) {
+                currentLotBuildingMatches = sortBuildingMatchesByDong(siblingMatches);
+            } else if (!currentLotBuildingMatches.some(m => m.item === matchObj.item)) {
+                currentLotBuildingMatches = [matchObj];
+            } else {
+                currentLotBuildingMatches = sortBuildingMatchesByDong(currentLotBuildingMatches);
+            }
+
+            const isSingleBuilding = (currentLotBuildingMatches.length === 1);
+            const showDetailNow = isSingleBuilding || userSelectedDong;
+            const activeMatch = showDetailNow ? matchObj : currentLotBuildingMatches[0];
+            const it = activeMatch.item;
+            const combinedContext = activeMatch.combinedContext || '';
+            const bldNameHint = activeMatch.bldNameHint || '';
+            const roadFullKeyword = activeMatch.roadFullKeyword || '';
+
             const resultEl = document.getElementById('facilityResultContainer');
             const subwayResultEl = document.getElementById('facilitySubwayResultContainer');
-            if (m.isSubway) {
-                resultEl.style.display = 'none';
-                subwayResultEl.style.display = 'flex';
+            const bldResultEl = document.getElementById('facilityBuildingResultContainer');
+            if (resultEl) resultEl.style.display = 'none';
+            if (subwayResultEl) subwayResultEl.style.display = 'none';
+            if (bldResultEl) bldResultEl.style.display = 'flex';
+
+            const sigunguCd = String(it.sigunguCd || activeMatch.sigunguCd || '11680').padStart(5, '0');
+            const bjdongCd = String(it.bjdongCd || activeMatch.bjdongCd || '00000').padStart(5, '0');
+            const platGbRaw = String(it.platGbCd || activeMatch.platGbCd || '0').trim();
+            const pnuPlatType = (platGbRaw === '1') ? '2' : '1';
+            const bunPad = String(it.bun || activeMatch.bun || '0000').padStart(4, '0');
+            const jiPad = String(it.ji || activeMatch.ji || '0000').padStart(4, '0');
+            const bunInt = parseInt(bunPad, 10) || 0;
+            const jiInt = parseInt(jiPad, 10) || 0;
+            const jibunShort = bunInt > 0 ? (jiInt > 0 ? `${bunInt}-${jiInt}` : `${bunInt}`) : '-';
+
+            const pnuEl = document.getElementById('bldLedgerPnuCode');
+            if (pnuEl) pnuEl.textContent = `${sigunguCd}${bjdongCd}-${pnuPlatType}-${bunPad}${jiPad}`;
+
+            // 1. 상단 건축물 목록 표 렌더링 (동 선택 시 선택한 목록 1개만 남기고 나머지 숨김 처리)
+            const topBody = document.getElementById('bldLedgerTopListBody');
+            const guideTextEl = document.getElementById('bldLedgerSelectGuideText');
+            if (topBody) {
+                topBody.innerHTML = '';
+                const rowsToRender = showDetailNow ? [activeMatch] : currentLotBuildingMatches;
+                rowsToRender.forEach((mItem) => {
+                    const rowIt = mItem.item;
+                    const tr = document.createElement('tr');
+                    if (showDetailNow && rowIt === it) tr.className = 'is-selected';
+
+                    const rGrnd = parseInt(rowIt.grndFlrCnt || '0', 10) || 0;
+                    const rUgrnd = parseInt(rowIt.ugrndFlrCnt || '0', 10) || 0;
+                    const rFlrText = (rGrnd > 0 || rUgrnd > 0) ? `지상${rGrnd}/지하${rUgrnd}` : '-';
+                    const bldNmCell = (rowIt.bldNm || '').trim() || '-';
+                    const dongNmCell = (rowIt.dongNm || '').trim() || '-';
+
+                    tr.innerHTML = `
+                        <td style="font-weight:700;">${bldNmCell}</td>
+                        <td style="font-weight:800; color:#1e3a8a;">${dongNmCell}</td>
+                        <td>${(rowIt.mainPurpsCdNm || '').trim() || '-'}</td>
+                        <td style="text-align:right; padding-right:10px; font-weight:800;">${formatAreaVal(rowIt.totArea, false)}</td>
+                        <td style="white-space:nowrap; font-weight:800; color:#1d4ed8;">${rFlrText}</td>
+                    `;
+                    tr.addEventListener('click', () => {
+                        if (showDetailNow && !isSingleBuilding) {
+                            // 이미 선택되어 1개만 보이는 상태에서 행을 다시 클릭하면 전체 동 목록으로 복귀
+                            renderBuildingDetailInFacility(mItem, currentLotBuildingMatches, false);
+                        } else {
+                            renderBuildingDetailInFacility(mItem, currentLotBuildingMatches, true);
+                        }
+                    });
+                    topBody.appendChild(tr);
+                });
+            }
+
+            const spCard = document.getElementById('bldResSprinklerCard');
+            const fireFacWrap = document.getElementById('bldFireFacilitiesToggleWrap');
+            const fireFacBtn = document.getElementById('bldFireFacilitiesToggleBtn');
+            const fireFacPanel = document.getElementById('bldFireFacilitiesDetailPanel');
+            const fireFacChevron = document.getElementById('bldFireFacChevron');
+            const detailSec = document.getElementById('bldLedgerDetailSection');
+            const floorSec = document.getElementById('bldLedgerFloorSection');
+
+            // 패널 접기 초기화
+            if (fireFacPanel) fireFacPanel.style.display = 'none';
+            if (fireFacBtn) fireFacBtn.classList.remove('is-open');
+            if (fireFacChevron) fireFacChevron.textContent = '▼ 펼치기';
+
+            // 여러 동이 있고 아직 특정 동을 선택하지 않은 경우: 목록만 먼저 표시
+            if (!showDetailNow) {
+                if (spCard) spCard.style.display = 'none';
+                if (fireFacWrap) fireFacWrap.style.display = 'none';
+                if (detailSec) detailSec.style.display = 'none';
+                if (floorSec) floorSec.style.display = 'none';
+                if (guideTextEl) {
+                    guideTextEl.innerHTML = `※ 총 ${currentLotBuildingMatches.length}개 동이 조회되었습니다. 위 목록에서 조회할 동(건축물)을 선택하시면 나머지 목록은 숨김 처리되고 상세정보와 층별현황이 표시됩니다.`;
+                    guideTextEl.style.color = '#e11d48';
+                }
+                return;
+            }
+
+            if (spCard) spCard.style.display = 'flex';
+            if (fireFacWrap) fireFacWrap.style.display = 'flex';
+            if (detailSec) detailSec.style.display = 'flex';
+            if (floorSec) floorSec.style.display = 'flex';
+            if (guideTextEl) {
+                if (isSingleBuilding) {
+                    guideTextEl.innerHTML = '※ 단일 건축물(동)이 조회되어 아래에 상세정보와 층별현황이 바로 표시됩니다.';
+                    guideTextEl.style.color = '#0f766e';
+                } else {
+                    const selLabel = [(it.bldNm || '').trim(), (it.dongNm || '').trim()].filter(Boolean).join(' ') || '선택 건축물';
+                    guideTextEl.innerHTML = `<div style="display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap;"><span>※ 선택하신 <b>[${selLabel}]</b>만 표시 중입니다 (나머지 ${currentLotBuildingMatches.length - 1}개 동 숨김).</span><button type="button" id="btnShowAllDongList" class="cas-no-print" style="padding:3px 9px; border-radius:6px; border:1px solid #93c5fd; background:#eff6ff; color:#1d4ed8; font-size:11.5px; font-weight:800; cursor:pointer;">🔄 다른 동 다시 선택 (${currentLotBuildingMatches.length}개 전체보기)</button></div>`;
+                    guideTextEl.style.color = '#1d4ed8';
+                    const showAllBtn = document.getElementById('btnShowAllDongList');
+                    if (showAllBtn) {
+                        showAllBtn.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            renderBuildingDetailInFacility(activeMatch, currentLotBuildingMatches, false);
+                        });
+                    }
+                }
+            }
+
+            // 2. 표제부 상세 표 채우기
+            const bldNm = (it.bldNm || '').trim();
+            const dongNm = (it.dongNm || '').trim();
+            const ledgerType = resolveBuildingLedgerType(it, combinedContext);
+            const regstrTitle = (it.regstrGbCdNm || it.regstrKindCdNm || '일반건축물').trim();
+            const detailTitleEl = document.getElementById('bldLedgerDetailSectionTitle');
+            if (detailTitleEl) detailTitleEl.textContent = `· ${regstrTitle}`;
+
+            const grnd = parseInt(it.grndFlrCnt || '0', 10) || 0;
+            const ugrnd = parseInt(it.ugrndFlrCnt || '0', 10) || 0;
+            const flrBadgeEl = document.getElementById('bldLedgerFlrBadge');
+            if (flrBadgeEl) flrBadgeEl.textContent = `지상 ${grnd}층 / 지하 ${ugrnd}층`;
+
+            const platBase = (it.platPlc || '').replace(/\s*\d+(?:-\d+)?\s*번지.*$/, '').trim() || (it.platPlc || '-');
+            const setCell = (id, val) => {
+                const el = document.getElementById(id);
+                if (el) el.innerHTML = (val !== undefined && val !== null && String(val).trim() !== '') ? val : '&nbsp;';
+            };
+
+            setCell('bldCellPlatPlc', platBase);
+            setCell('bldCellJibun', jibunShort);
+            setCell('bldCellNewPlatPlc', it.newPlatPlc || roadFullKeyword || '-');
+            setCell('bldCellJijigu1', '');
+            setCell('bldCellJijigu2', '');
+            setCell('bldCellJijigu3', '');
+
+            setCell('bldCellPlatArea', formatAreaVal(it.platArea, true));
+            setCell('bldCellTotArea', formatAreaVal(it.totArea, true));
+            setCell('bldCellBldDongNm', [bldNm, dongNm].filter(Boolean).join(' ') || '');
+
+            setCell('bldCellArchArea', formatAreaVal(it.archArea, true));
+            setCell('bldCellVlRatArea', formatAreaVal(it.vlRatEstmTotArea, true));
+            const mainBldCnt = parseInt(it.mainBldCnt || '0', 10);
+            setCell('bldCellMainBldCnt', mainBldCnt > 0 ? `${mainBldCnt} 동` : '동');
+
+            setCell('bldCellBcRat', formatRateVal(it.bcRat));
+            setCell('bldCellVlRat', formatRateVal(it.vlRat));
+            const hhld = parseInt(it.hhldCnt || '0', 10) || 0;
+            const ho = parseInt(it.hoCnt || '0', 10) || 0;
+            const fmly = parseInt(it.fmlyCnt || '0', 10) || 0;
+            const totHoStr = (hhld > 0 || ho > 0 || fmly > 0)
+                ? `${hhld + ho}세대.호 / ${fmly}가구`
+                : '세대.호 / 가구';
+            setCell('bldCellTotHoCnt', totHoStr);
+
+            setCell('bldCellMainPurps', it.mainPurpsCdNm || ledgerType || '-');
+            const strct = (it.strctCdNm || it.etcStrct || '').trim();
+            const roof = (it.roofCdNm || it.etcRoof || '').trim();
+            setCell('bldCellStrctRoof', [strct, roof].filter(Boolean).join('<br>') || '-');
+
+            const atchCnt = parseInt(it.atchBldCnt || '0', 10) || 0;
+            const atchArea = formatAreaVal(it.atchBldArea, false);
+            setCell('bldCellAtchBld', (atchCnt > 0 || (atchArea && atchArea !== '-'))
+                ? `${atchCnt} 동<br>${atchArea !== '-' ? atchArea : 0} ㎡`
+                : '동<br>㎡');
+
+            setCell('bldCellPmsDay', formatYmdDate(it.pmsDay));
+            setCell('bldCellStcnsDay', formatYmdDate(it.stcnsDay));
+            const useAprRaw = String(it.useAprDay || it.pmsDay || it.stcnsDay || '').replace(/\D/g, '');
+            setCell('bldCellUseAprDay', formatYmdDate(it.useAprDay));
+            setCell('bldCellEtcPurps', it.etcPurps || '');
+
+            // 3. 스프링클러 현황 판별 및 API 조회
+            const spIcon = document.getElementById('bldResSprinklerIcon');
+            const spPill = document.getElementById('bldResSprinklerStatusPill');
+            const spText = document.getElementById('bldResSprinklerText');
+            const spDetail = document.getElementById('bldResSprinklerDetail');
+
+            const totAreaNum = parseFloat(String(it.totArea || '0').replace(/[^0-9.]/g, '')) || 0;
+            const archAreaNum = parseFloat(String(it.archArea || '0').replace(/[^0-9.]/g, '')) || 0;
+
+            let lawEval = evaluateSprinklerForFacilityModal(
+                it.mainPurpsCdNm || ledgerType,
+                it.etcPurps || '',
+                useAprRaw,
+                `${grnd}/${ugrnd}`,
+                totAreaNum,
+                combinedContext,
+                bldNameHint || bldNm,
+                ledgerType,
+                archAreaNum
+            );
+
+            const applySprinklerCardStyle = (finalText, finalDetail) => {
+                let cleanSpText = (finalText || '').trim();
+                if (cleanSpText) {
+                    if (cleanSpText.includes('간이')) {
+                        spCard.style.background = '#f0fdfa';
+                        spCard.style.borderColor = '#0d9488';
+                        spIcon.textContent = '💧';
+                        spPill.style.background = '#0d9488';
+                        spPill.textContent = '간이스프링클러';
+                        spText.style.color = '#0f766e';
+                        spDetail.style.color = '#0f766e';
+                    } else {
+                        spCard.style.background = '#ecfdf5';
+                        spCard.style.borderColor = '#10b981';
+                        spIcon.textContent = '💦';
+                        spPill.style.background = '#10b981';
+                        spPill.textContent = '스프링클러 설치';
+                        spText.style.color = '#065f46';
+                        spDetail.style.color = '#047857';
+                    }
+                    spText.textContent = cleanSpText;
+                    spDetail.textContent = finalDetail || '';
+                } else {
+                    spCard.style.background = '#f8fafc';
+                    spCard.style.borderColor = '#cbd5e1';
+                    spIcon.textContent = 'ℹ️';
+                    spPill.style.background = '#64748b';
+                    spPill.textContent = '설치대상 아님 / 미확인';
+                    spText.style.color = '#334155';
+                    spDetail.style.color = '#475569';
+                    spText.textContent = '스프링클러 미설치 (법령 의무 설치 대상 제외)';
+                    spDetail.textContent = finalDetail || '';
+                }
+            };
+
+            applySprinklerCardStyle(lawEval.text, lawEval.detail);
+            renderFireFacilitiesPanel(evaluateAllFireFacilities(it, ledgerType, combinedContext, bldNameHint || bldNm, null, lawEval));
+
+            // 4. 비동기 병렬 조회: (A) 층별개요 API, (B) 지역지구구역 API, (C) 소방안전시스템 API
+            const flrBody = document.getElementById('bldLedgerFloorBody');
+            if (flrBody) {
+                flrBody.innerHTML = '<tr><td colspan="5" style="padding: 14px; color: #64748b;">층별현황 데이터를 불러오는 중입니다...</td></tr>';
+            }
+
+            const flrUrls = [
+                `${BLD_HUB_FLR_API_URL}?sigunguCd=${sigunguCd}&bjdongCd=${bjdongCd}&platGbCd=${platGbRaw}&bun=${bunPad}&ji=${jiPad}&numOfRows=500&pageNo=1&serviceKey=${BLD_HUB_SERVICE_KEY}`,
+                `${BLD_HUB_FLR_API_URL}?sigunguCd=${sigunguCd}&bjdongCd=${bjdongCd}&bun=${bunPad}&ji=${jiPad}&numOfRows=500&pageNo=1&serviceKey=${BLD_HUB_SERVICE_KEY}`
+            ];
+            const jijiguUrls = [
+                `${BLD_HUB_JIJIGU_API_URL}?sigunguCd=${sigunguCd}&bjdongCd=${bjdongCd}&platGbCd=${platGbRaw}&bun=${bunPad}&ji=${jiPad}&numOfRows=100&pageNo=1&serviceKey=${BLD_HUB_SERVICE_KEY}`,
+                `${BLD_HUB_JIJIGU_API_URL}?sigunguCd=${sigunguCd}&bjdongCd=${bjdongCd}&bun=${bunPad}&ji=${jiPad}&numOfRows=100&pageNo=1&serviceKey=${BLD_HUB_SERVICE_KEY}`
+            ];
+
+            Promise.all([
+                fetchOpenApiItemsWithFallback(flrUrls, 5500),
+                fetchOpenApiItemsWithFallback(jijiguUrls, 4500),
+                checkSprinklerInstalledFromApi(
+                    combinedContext,
+                    useAprRaw,
+                    bldNm || bldNameHint,
+                    roadFullKeyword,
+                    ledgerType,
+                    `${grnd}/${ugrnd}`,
+                    totAreaNum,
+                    it.mainPurpsCdNm || ledgerType,
+                    it.etcPurps || '',
+                    archAreaNum
+                ).catch(() => null)
+            ]).then(([flrItems, jijiguItems, spApiRes]) => {
+                // (A) 층별현황 렌더링
+                let filteredFlr = flrItems || [];
+                if (dongNm && filteredFlr.length > 0) {
+                    const exactDongFlr = filteredFlr.filter(f => (f.dongNm || '').trim() === dongNm);
+                    if (exactDongFlr.length > 0) filteredFlr = exactDongFlr;
+                }
+                if (it.mgmBldrgstPk && filteredFlr.length > 0) {
+                    const pkFlr = filteredFlr.filter(f => f.mgmBldrgstPk === it.mgmBldrgstPk);
+                    if (pkFlr.length > 0) filteredFlr = pkFlr;
+                }
+
+                if (flrBody) {
+                    if (filteredFlr.length === 0) {
+                        flrBody.innerHTML = '<tr><td colspan="5" style="padding: 14px; color: #64748b;">등록된 층별현황 정보가 없습니다.</td></tr>';
+                    } else {
+                        const getFlrOrderGroup = (f) => {
+                            const gb = String(f.flrGbCd || '').trim();
+                            const gbNm = String(f.flrGbCdNm || '').trim();
+                            if (gb === '10' || gbNm.includes('지하')) return 1;
+                            if (gb === '20' || gbNm.includes('지상')) return 2;
+                            if (gb === '30' || gbNm.includes('옥탑')) return 3;
+                            return 4;
+                        };
+                        filteredFlr.sort((a, b) => {
+                            const gA = getFlrOrderGroup(a);
+                            const gB = getFlrOrderGroup(b);
+                            if (gA !== gB) return gA - gB;
+                            const nA = parseFloat(a.flrNo || '0') || 0;
+                            const nB = parseFloat(b.flrNo || '0') || 0;
+                            return gA === 1 ? (nB - nA) : (nA - nB);
+                        });
+
+                        flrBody.innerHTML = filteredFlr.map(f => {
+                            const gbNm = (f.flrGbCdNm || (f.flrGbCd === '10' ? '지하' : (f.flrGbCd === '30' ? '옥탑' : '지상'))).trim();
+                            const flrNoNm = (f.flrNoNm || (f.flrNo ? `${f.flrNo}층` : '-')).trim();
+                            const fStrct = (f.strctCdNm || f.etcStrct || strct || '-').trim();
+                            const mPurp = (f.mainPurpsCdNm || '').trim();
+                            const ePurp = (f.etcPurps || '').trim();
+                            let purpDisplay = mPurp || ePurp || '-';
+                            if (mPurp && ePurp && ePurp !== mPurp) {
+                                purpDisplay = ePurp.includes(mPurp) ? ePurp : `${mPurp}(${ePurp})`;
+                            }
+                            const fArea = formatAreaVal(f.area, false);
+                            return `
+                                <tr>
+                                    <td>${gbNm}</td>
+                                    <td>${flrNoNm}</td>
+                                    <td>${fStrct}</td>
+                                    <td>${purpDisplay}</td>
+                                    <td style="text-align:right; padding-right:12px; font-weight:800;">${fArea}</td>
+                                </tr>
+                            `;
+                        }).join('');
+                    }
+                }
+
+                // (B) 용도지역 / 용도지구 / 구역 렌더링
+                if (Array.isArray(jijiguItems) && jijiguItems.length > 0) {
+                    const j1 = [], j2 = [], j3 = [];
+                    jijiguItems.forEach(jj => {
+                        const gbNm = (jj.jijiguGbCdNm || '').trim();
+                        const cdNm = (jj.jijiguCdNm || jj.etcJijigu || '').trim();
+                        if (!cdNm) return;
+                        if (gbNm.includes('지역') || jj.jijiguGbCd === '1') { if (!j1.includes(cdNm)) j1.push(cdNm); }
+                        else if (gbNm.includes('지구') || jj.jijiguGbCd === '2') { if (!j2.includes(cdNm)) j2.push(cdNm); }
+                        else { if (!j3.includes(cdNm)) j3.push(cdNm); }
+                    });
+                    if (j1.length > 0) {
+                        setCell('bldCellJijigu1', j1.length > 1 ? `${j1[0]} 외 ${j1.length - 1}` : j1[0]);
+                    }
+                    if (j2.length > 0) setCell('bldCellJijigu2', j2.join(', '));
+                    if (j3.length > 0) setCell('bldCellJijigu3', j3.join(', '));
+                }
+
+                // (C) 층별현황(filteredFlr) 바닥면적/용도까지 반영하여 스프링클러 재판별
+                const refinedLawEval = evaluateSprinklerForFacilityModal(
+                    it.mainPurpsCdNm || ledgerType,
+                    it.etcPurps || '',
+                    useAprRaw,
+                    `${grnd}/${ugrnd}`,
+                    totAreaNum,
+                    combinedContext,
+                    bldNameHint || bldNm,
+                    ledgerType,
+                    archAreaNum,
+                    filteredFlr
+                );
+                const apiText = spApiRes ? (spApiRes.text || spApiRes.spText || '') : '';
+                const apiDetail = spApiRes ? (spApiRes.detail || '') : '';
+                const finalSpText = refinedLawEval.text || apiText || lawEval.text;
+                const finalSpDetail = (refinedLawEval.text ? refinedLawEval.detail : (apiDetail || refinedLawEval.detail || lawEval.detail));
+                applySprinklerCardStyle(finalSpText, finalSpDetail);
+                renderFireFacilitiesPanel(evaluateAllFireFacilities(it, ledgerType, combinedContext, bldNameHint || bldNm, filteredFlr, { text: finalSpText, detail: finalSpDetail }));
+            });
+        }
+
+        async function searchBuildingsByAddress(query) {
+            const combinedContext = query.trim();
+            const { sigunguCd, bjdongCd, candidateBjdongs, candidateLots, platGbCd, bun, ji, bldNameHint, targetDongNum } = await resolveAddressCodesForFacility(query, '', combinedContext);
+            const roadParts = extractRoadAddressParts(query);
+            const roadFullKeyword = roadParts.fullRoad || roadParts.roadName;
+
+            const fetchWrappers = [
+                (u) => u,
+                (u) => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
+                (u) => `https://corsproxy.io/?${encodeURIComponent(u)}`
+            ];
+
+            const parseBldHubResponseWithTotal = (rawStr) => {
+                if (!rawStr) return { items: [], totalCount: 0 };
+                const trimmed = rawStr.trim();
+                if (trimmed.startsWith('{')) {
+                    try {
+                        const j = JSON.parse(trimmed);
+                        const body = j?.response?.body;
+                        const item = body?.items?.item;
+                        const totalCount = parseInt(body?.totalCount || '0', 10) || 0;
+                        if (!item) return { items: [], totalCount };
+                        return { items: Array.isArray(item) ? item : [item], totalCount };
+                    } catch (e) { return { items: [], totalCount: 0 }; }
+                }
+                if (trimmed.includes('<item>') || trimmed.includes('<totalCount>')) {
+                    const xmlDoc = new DOMParser().parseFromString(trimmed, "text/xml");
+                    const tcNode = xmlDoc.querySelector("totalCount");
+                    const totalCount = tcNode ? (parseInt(tcNode.textContent.trim(), 10) || 0) : 0;
+                    const items = Array.from(xmlDoc.querySelectorAll("item")).map(node => {
+                        const obj = {};
+                        Array.from(node.children).forEach(ch => { obj[ch.tagName] = ch.textContent.trim(); });
+                        return obj;
+                    });
+                    return { items, totalCount };
+                }
+                return { items: [], totalCount: 0 };
+            };
+
+            const fetchPageWithFallback = async (qUrl) => {
+                for (const wrap of fetchWrappers) {
+                    try {
+                        const controller = new AbortController();
+                        const timer = setTimeout(() => controller.abort(), 6500);
+                        const res = await fetch(wrap(qUrl), { signal: controller.signal });
+                        clearTimeout(timer);
+                        if (res.ok) {
+                            const text = await res.text();
+                            const parsed = parseBldHubResponseWithTotal(text);
+                            if (parsed.items.length > 0 || parsed.totalCount > 0) return parsed;
+                        }
+                    } catch (e) {}
+                }
+                return { items: [], totalCount: 0 };
+            };
+
+            const scoreTarget = {
+                bun, ji,
+                roadName: roadParts.roadName,
+                roadBon: roadParts.roadBon,
+                roadBu: roadParts.roadBu,
+                bldNameHint,
+                targetDongNum
+            };
+
+            let matchedItems = [];
+
+            if (candidateLots && candidateLots.length > 0) {
+                const lotResults = await Promise.all(candidateLots.slice(0, 5).map(async (lot) => {
+                    const u1 = `${BLD_HUB_API_URL}?sigunguCd=${lot.sigunguCd}&bjdongCd=${lot.bjdongCd}&platGbCd=${lot.platGbCd}&bun=${lot.bun}&ji=${lot.ji}&numOfRows=500&pageNo=1&serviceKey=${BLD_HUB_SERVICE_KEY}`;
+                    const u2 = `${BLD_HUB_API_URL}?sigunguCd=${lot.sigunguCd}&bjdongCd=${lot.bjdongCd}&bun=${lot.bun}&ji=${lot.ji}&numOfRows=500&pageNo=1&serviceKey=${BLD_HUB_SERVICE_KEY}`;
+                    let r = await fetchPageWithFallback(u1);
+                    if (!r.items || r.items.length === 0) r = await fetchPageWithFallback(u2);
+                    return (r.items || []).map(it => ({ ...it, sigunguCd: it.sigunguCd || lot.sigunguCd, bjdongCd: it.bjdongCd || lot.bjdongCd, bun: it.bun || lot.bun, ji: it.ji || lot.ji }));
+                }));
+                for (const items of lotResults) {
+                    if (items.length > 0) {
+                        const scored = items.map(it => ({ it, ...scoreBuildingCandidate(it, scoreTarget) }));
+                        const validMatches = scored.filter(x => x.isAddressMatched && x.score > 0);
+                        matchedItems = matchedItems.concat(validMatches.length > 0 ? validMatches : items.map(it => ({ it, score: 100, isAddressMatched: true })));
+                    }
+                }
+            }
+            if (matchedItems.length === 0 && bjdongCd && bun) {
+                const queryUrls = [];
+                if (ji && ji !== '0000') {
+                    queryUrls.push(`${BLD_HUB_API_URL}?sigunguCd=${sigunguCd}&bjdongCd=${bjdongCd}&platGbCd=${platGbCd}&bun=${bun}&ji=${ji}&numOfRows=500&pageNo=1&serviceKey=${BLD_HUB_SERVICE_KEY}`);
+                    queryUrls.push(`${BLD_HUB_API_URL}?sigunguCd=${sigunguCd}&bjdongCd=${bjdongCd}&bun=${bun}&ji=${ji}&numOfRows=500&pageNo=1&serviceKey=${BLD_HUB_SERVICE_KEY}`);
+                } else {
+                    queryUrls.push(`${BLD_HUB_API_URL}?sigunguCd=${sigunguCd}&bjdongCd=${bjdongCd}&platGbCd=${platGbCd}&bun=${bun}&numOfRows=500&pageNo=1&serviceKey=${BLD_HUB_SERVICE_KEY}`);
+                    queryUrls.push(`${BLD_HUB_API_URL}?sigunguCd=${sigunguCd}&bjdongCd=${bjdongCd}&bun=${bun}&numOfRows=500&pageNo=1&serviceKey=${BLD_HUB_SERVICE_KEY}`);
+                }
+                for (const qUrl of queryUrls) {
+                    const { items } = await fetchPageWithFallback(qUrl);
+                    if (items.length > 0) {
+                        const enriched = items.map(it => ({ ...it, sigunguCd: it.sigunguCd || sigunguCd, bjdongCd: it.bjdongCd || bjdongCd, bun: it.bun || bun, ji: it.ji || ji }));
+                        const scored = enriched.map(it => ({ it, ...scoreBuildingCandidate(it, scoreTarget) }));
+                        const validMatches = scored.filter(x => x.isAddressMatched && x.score > 0);
+                        if (validMatches.length > 0) {
+                            matchedItems = matchedItems.concat(validMatches);
+                            break;
+                        }
+                    }
+                }
+            } else if (matchedItems.length === 0) {
+                const dongsToSearch = (candidateBjdongs && candidateBjdongs.length > 0)
+                    ? candidateBjdongs
+                    : (bjdongCd ? [{ sigunguCd, bjdongCd }] : []);
+
+                for (const { sigunguCd: sg, bjdongCd: bj } of dongsToSearch) {
+                    const page1Url = `${BLD_HUB_API_URL}?sigunguCd=${sg}&bjdongCd=${bj}&numOfRows=500&pageNo=1&serviceKey=${BLD_HUB_SERVICE_KEY}`;
+                    const p1 = await fetchPageWithFallback(page1Url);
+                    if (p1.items.length > 0) {
+                        const valid1 = p1.items
+                            .map(it => ({ ...it, sigunguCd: it.sigunguCd || sg, bjdongCd: it.bjdongCd || bj }))
+                            .map(it => ({ it, ...scoreBuildingCandidate(it, scoreTarget) }))
+                            .filter(x => x.isAddressMatched && x.score > 0);
+                        matchedItems = matchedItems.concat(valid1);
+                    }
+                    if (matchedItems.length === 0 && p1.totalCount > 500) {
+                        const maxPages = Math.min(20, Math.ceil(p1.totalCount / 500));
+                        for (let startP = 2; startP <= maxPages; startP += 5) {
+                            const batch = [];
+                            for (let p = startP; p < startP + 5 && p <= maxPages; p++) {
+                                const u = `${BLD_HUB_API_URL}?sigunguCd=${sg}&bjdongCd=${bj}&numOfRows=500&pageNo=${p}&serviceKey=${BLD_HUB_SERVICE_KEY}`;
+                                batch.push(fetchPageWithFallback(u));
+                            }
+                            const results = await Promise.all(batch);
+                            for (const r of results) {
+                                if (r.items.length > 0) {
+                                    const valid = r.items
+                                        .map(it => ({ ...it, sigunguCd: it.sigunguCd || sg, bjdongCd: it.bjdongCd || bj }))
+                                        .map(it => ({ it, ...scoreBuildingCandidate(it, scoreTarget) }))
+                                        .filter(x => x.isAddressMatched && x.score > 0);
+                                    matchedItems = matchedItems.concat(valid);
+                                }
+                            }
+                            if (matchedItems.length > 0) break;
+                        }
+                    }
+                    if (matchedItems.length > 0) break;
+                }
+            }
+
+            if (matchedItems.length === 0) return [];
+
+            matchedItems.sort((a, b) => b.score - a.score);
+            const seen = new Set();
+            const uniqueResults = [];
+            for (const m of matchedItems) {
+                const it = m.it;
+                const sig = `${it.bldNm||''}|${it.dongNm||''}|${it.newPlatPlc||''}|${it.platPlc||''}|${it.grndFlrCnt||''}|${it.totArea||''}`;
+                if (!seen.has(sig)) {
+                    seen.add(sig);
+                    uniqueResults.push({
+                        kind: 'building',
+                        item: it,
+                        sigunguCd: it.sigunguCd || sigunguCd,
+                        bjdongCd: it.bjdongCd || bjdongCd,
+                        platGbCd: it.platGbCd || platGbCd,
+                        bun: it.bun || bun,
+                        ji: it.ji || ji,
+                        combinedContext,
+                        bldNameHint,
+                        roadFullKeyword
+                    });
+                }
+            }
+            return sortBuildingMatchesByDong(uniqueResults);
+        }
+
+        async function searchAddressCandidatesFromPostcodify(query) {
+            const cleanQ = (query || '').trim()
+                .replace(/,.*$/, '')
+                .replace(/\([^)]*\)/g, '')
+                .replace(/\b\d{1,4}동\b.*$/, '')
+                .replace(/\b\d{1,4}호\b.*$/, '')
+                .trim();
+            if (!cleanQ) return [];
+
+            const hasSeoulPrefix = /^서울/.test(cleanQ);
+            const postUrls = hasSeoulPrefix
+                ? [
+                    `https://api.poesis.kr/post/search.php?q=${encodeURIComponent(cleanQ)}&v=3.0`,
+                    `https://api.poesis.co.kr/post/search.php?q=${encodeURIComponent(cleanQ)}&v=3.0`
+                  ]
+                : [
+                    `https://api.poesis.kr/post/search.php?q=${encodeURIComponent('서울 ' + cleanQ)}&v=3.0`,
+                    `https://api.poesis.co.kr/post/search.php?q=${encodeURIComponent('서울 ' + cleanQ)}&v=3.0`,
+                    `https://api.poesis.kr/post/search.php?q=${encodeURIComponent(cleanQ)}&v=3.0`
+                  ];
+
+            let rows = [];
+            for (const pUrl of postUrls) {
+                const tryUrls = [
+                    pUrl,
+                    `https://api.allorigins.win/raw?url=${encodeURIComponent(pUrl)}`,
+                    `https://corsproxy.io/?${encodeURIComponent(pUrl)}`
+                ];
+                for (const u of tryUrls) {
+                    try {
+                        const ctrl = new AbortController();
+                        const tId = setTimeout(() => ctrl.abort(), 5000);
+                        const res = await fetch(u, { signal: ctrl.signal });
+                        clearTimeout(tId);
+                        if (res.ok) {
+                            const j = await res.json();
+                            if (Array.isArray(j?.results) && j.results.length > 0) {
+                                const sRows = j.results.filter(r => JSON.stringify(r).includes('서울'));
+                                if (sRows.length > 0) {
+                                    rows = sRows;
+                                    break;
+                                }
+                            }
+                        }
+                    } catch (e) {}
+                }
+                if (rows.length > 0) break;
+            }
+
+            if (rows.length === 0) return [];
+
+            const dongBunJiRegex = /([가-힣]+(?:\d+가)?동|[가-힣]+\d+가|세종로|충무로\d+가|을지로\d+가|남대문로\d+가|태평로\d+가|원효로\d+가|한강로\d+가|동소문동\d+가|삼선동\d+가|동선동\d+가|안암동\d+가|보문동\d+가|영등포동\d+가|당산동\d+가|문래동\d+가|양평동\d+가)\s+(산\s+)?(\d{1,4})(?:-(\d{1,4}))?(?!\d)(?!\s*(?:동|호|층|가|로|길)\b)/g;
+            const inputRoad = extractRoadAddressParts(query);
+            const candidates = [];
+            const seen = new Set();
+
+            for (const r of rows) {
+                const common = [r.ko_common, r.sido, r.sigungu].filter(Boolean).join(' ').trim();
+                const doroPart = (r.ko_doro || r.road_addr || r.doro || '').trim();
+                const jibunPart = (r.ko_jibeon || r.jibeon || r.jibun_addr || '').trim();
+                const bldNm = (r.building_name || r.bld_name || r.bdNm || '').trim();
+                const otherAddrs = (r.other_addresses || '').trim();
+
+                const roadAddr = (doroPart ? (common && !doroPart.includes('서울') ? `${common} ${doroPart}` : doroPart) : '').replace(/\s+/g, ' ').trim();
+                const jibunAddr = (jibunPart ? (common && !jibunPart.includes('서울') ? `${common} ${jibunPart}` : jibunPart) : '').replace(/\s+/g, ' ').trim();
+
+                let sg = '';
+                const guSource = `${common} ${jibunAddr} ${roadAddr}`;
+                for (const [gu, code] of Object.entries(SIGUNGU_CODE_MAP)) {
+                    if (guSource.includes(gu)) { sg = code; break; }
+                }
+
+                let bj = '', pg = '0', b = '', j = '0';
+                const jibunSources = [jibunAddr, otherAddrs];
+                for (const jSrc of jibunSources) {
+                    if (!jSrc) continue;
+                    dongBunJiRegex.lastIndex = 0;
+                    let dm;
+                    while ((dm = dongBunJiRegex.exec(jSrc)) !== null) {
+                        const resSgBj = lookupSigunguAndBjdong(sg, dm[1].trim());
+                        if (resSgBj.bjdongCd && resSgBj.sigunguCd) {
+                            sg = resSgBj.sigunguCd;
+                            bj = resSgBj.bjdongCd;
+                            pg = dm[2] ? '1' : '0';
+                            b = dm[3];
+                            j = dm[4] || '0';
+                            break;
+                        }
+                    }
+                    if (sg && bj && b) break;
+                }
+                if (!sg || !bj || !b) continue;
+
+                const bunPad = b.padStart(4, '0');
+                const jiPad = j.padStart(4, '0');
+                const key = `${sg}|${bj}|${bunPad}|${jiPad}|${roadAddr}`;
+                if (seen.has(key)) continue;
+                seen.add(key);
+
+                const candRoad = extractRoadAddressParts(roadAddr || doroPart);
+                const exactMatch = !!(inputRoad.roadName && candRoad.roadName === inputRoad.roadName &&
+                    (!inputRoad.roadBon || (candRoad.roadBon === inputRoad.roadBon && (candRoad.roadBu || '') === (inputRoad.roadBu || ''))));
+
+                candidates.push({
+                    bldNm,
+                    roadAddr: roadAddr || doroPart,
+                    jibunAddr: jibunAddr || jibunPart || '-',
+                    sigunguCd: sg,
+                    bjdongCd: bj,
+                    platGbCd: pg,
+                    bun: bunPad,
+                    ji: jiPad,
+                    exactMatch
+                });
+            }
+
+            candidates.sort((a, b) => (b.exactMatch ? 1 : 0) - (a.exactMatch ? 1 : 0));
+            return candidates;
+        }
+
+        async function fetchBuildingsForLot(cand, originalQuery) {
+            const urls = [
+                `${BLD_HUB_API_URL}?sigunguCd=${cand.sigunguCd}&bjdongCd=${cand.bjdongCd}&platGbCd=${cand.platGbCd}&bun=${cand.bun}&ji=${cand.ji}&numOfRows=500&pageNo=1&serviceKey=${BLD_HUB_SERVICE_KEY}`,
+                `${BLD_HUB_API_URL}?sigunguCd=${cand.sigunguCd}&bjdongCd=${cand.bjdongCd}&bun=${cand.bun}&ji=${cand.ji}&numOfRows=500&pageNo=1&serviceKey=${BLD_HUB_SERVICE_KEY}`
+            ];
+            const items = await fetchOpenApiItemsWithFallback(urls, 6500);
+
+            const seen = new Set();
+            const unique = [];
+            for (const rawIt of items) {
+                const it = {
+                    ...rawIt,
+                    sigunguCd: rawIt.sigunguCd || cand.sigunguCd,
+                    bjdongCd: rawIt.bjdongCd || cand.bjdongCd,
+                    platGbCd: rawIt.platGbCd || cand.platGbCd,
+                    bun: rawIt.bun || cand.bun,
+                    ji: rawIt.ji || cand.ji
+                };
+                const sig = `${it.bldNm||''}|${it.dongNm||''}|${it.newPlatPlc||''}|${it.platPlc||''}|${it.grndFlrCnt||''}|${it.totArea||''}`;
+                if (!seen.has(sig)) {
+                    seen.add(sig);
+                    unique.push({
+                        kind: 'building',
+                        item: it,
+                        sigunguCd: cand.sigunguCd,
+                        bjdongCd: cand.bjdongCd,
+                        platGbCd: cand.platGbCd,
+                        bun: cand.bun,
+                        ji: cand.ji,
+                        combinedContext: `${originalQuery} ${cand.roadAddr} ${cand.jibunAddr}`,
+                        bldNameHint: cand.bldNm || '',
+                        roadFullKeyword: cand.roadAddr || originalQuery
+                    });
+                }
+            }
+            return sortBuildingMatchesByDong(unique);
+        }
+
+        function displayUnifiedFacilityMatch(m, siblingMatches = null, userSelectedDong = false) {
+            const resultEl = document.getElementById('facilityResultContainer');
+            const subwayResultEl = document.getElementById('facilitySubwayResultContainer');
+            const bldResultEl = document.getElementById('facilityBuildingResultContainer');
+
+            if (m.kind === 'building') {
+                renderBuildingDetailInFacility(m, siblingMatches, userSelectedDong);
+            } else if (m.kind === 'subway' || m.isSubway) {
+                if (resultEl) resultEl.style.display = 'none';
+                if (bldResultEl) bldResultEl.style.display = 'none';
+                if (subwayResultEl) subwayResultEl.style.display = 'flex';
                 renderSubwayDetailInFacility(m.item);
             } else {
-                subwayResultEl.style.display = 'none';
-                resultEl.style.display = 'flex';
+                if (subwayResultEl) subwayResultEl.style.display = 'none';
+                if (bldResultEl) bldResultEl.style.display = 'none';
+                if (resultEl) resultEl.style.display = 'flex';
                 renderFacilityResult(mergeFacilityData(null, m.item, m.item.name));
             }
         }
@@ -10592,93 +12781,184 @@
             const loadingEl = document.getElementById('facilityLoadingIndicator');
             const resultEl = document.getElementById('facilityResultContainer');
             const subwayResultEl = document.getElementById('facilitySubwayResultContainer');
+            const bldResultEl = document.getElementById('facilityBuildingResultContainer');
             const noResultEl = document.getElementById('facilityNoResultBox');
             const multiMatchContainer = document.getElementById('facilityMultiMatchContainer');
             const multiMatchList = document.getElementById('facilityMultiMatchList');
             const multiMatchCount = document.getElementById('facilityMultiMatchCount');
 
             loadingEl.style.display = 'block';
-            noResultEl.style.display = 'none';
-            resultEl.style.display = 'none';
-            if (subwayResultEl) subwayResultEl.style.display = 'none';
-            if (multiMatchContainer) multiMatchContainer.style.display = 'none';
-
             currentTabFacilityState.query = q;
             currentTabFacilityState.hasSearched = true;
+            currentTabFacilityState.noResult = false;
+            noResultEl.style.display = 'none';
+            if (resultEl) resultEl.style.display = 'none';
+            if (subwayResultEl) subwayResultEl.style.display = 'none';
+            if (bldResultEl) bldResultEl.style.display = 'none';
+            if (multiMatchContainer) multiMatchContainer.style.display = 'none';
 
-            // 1. 시설물 검색 (FACILITY_DB 및 오픈API 시도)
             const qClean = q.toLowerCase().replace(/\s+/g, '');
-            const isHanRiverBroadSearch = (qClean === "한강" || qClean === "대교" || qClean === "한강교량" || qClean === "한강대교" || qClean === "한강다리");
+            const isAddressLike = /(?:대로|로|길)\s*(?:지하\s*)?\d+|(?:동|가)\s*(?:산\s*)?\d+(?:-\d+)?|(?:종로구|중구|용산구|성동구|광진구|동대문구|중랑구|성북구|강북구|도봉구|노원구|은평구|서대문구|마포구|양천구|강서구|구로구|금천구|영등포구|동작구|관악구|서초구|강남구|송파구|강동구)\s+\S+/.test(q);
 
-            let facExact = [];
-            let facPartial = [];
-            FACILITY_DB.forEach(item => {
-                const nameClean = item.name.toLowerCase().replace(/\s+/g, '');
-                const aliasMatch = item.aliases && item.aliases.some(a => a.toLowerCase().replace(/\s+/g, '') === qClean);
-                if (nameClean === qClean || aliasMatch) {
-                    facExact.push(item);
-                } else if (nameClean.includes(qClean) || (item.aliases && item.aliases.some(a => a.toLowerCase().replace(/\s+/g, '').includes(qClean)))) {
-                    facPartial.push(item);
+            const combinedMatches = [];
+
+            // 1. 도로 시설물 검색 (주소 검색이 아닐 때 우선)
+            if (!isAddressLike) {
+                const isHanRiverBroadSearch = (qClean === "한강" || qClean === "대교" || qClean === "한강교량" || qClean === "한강대교" || qClean === "한강다리");
+                let facExact = [];
+                let facPartial = [];
+                FACILITY_DB.forEach(item => {
+                    const nameClean = item.name.toLowerCase().replace(/\s+/g, '');
+                    const aliasMatch = item.aliases && item.aliases.some(a => a.toLowerCase().replace(/\s+/g, '') === qClean);
+                    if (nameClean === qClean || aliasMatch) facExact.push(item);
+                    else if (nameClean.includes(qClean) || (item.aliases && item.aliases.some(a => a.toLowerCase().replace(/\s+/g, '').includes(qClean)))) facPartial.push(item);
+                });
+                let facMatches = facExact.length > 0 ? facExact : facPartial;
+                if (isHanRiverBroadSearch) facMatches = FACILITY_DB.filter(it => it.typeName.includes("한강교량"));
+                facMatches.forEach(f => combinedMatches.push({ kind: 'road', item: f }));
+
+                // 2. 지하철역 검색
+                const qNorm = normalizeSubwayStationName(q).toLowerCase();
+                const qRaw = q.toLowerCase().replace(/역$/, "");
+                let subExact = SUBWAY_STATIONS_DB.filter(item => {
+                    const bLower = item.baseName.toLowerCase();
+                    const rLower = item.rawName.toLowerCase();
+                    return bLower === qNorm || bLower === qRaw || rLower === q.toLowerCase() || (qRaw === "서울" && item.baseName === "서울역");
+                });
+                let subPartial = [];
+                if (subExact.length === 0) {
+                    subPartial = SUBWAY_STATIONS_DB.filter(item => item.rawName.toLowerCase().includes(qRaw) || item.baseName.toLowerCase().includes(qNorm));
                 }
-            });
-            if (facExact.length > 1 && qClean === "한강대교") {
-                facExact.sort((a, b) => (a.name === "한강대교" ? -1 : 1));
-            }
-            let facMatches = facExact.length > 0 ? facExact : facPartial;
-            if (isHanRiverBroadSearch) {
-                facMatches = FACILITY_DB.filter(it => it.typeName.includes("한강교량"));
+                const subMatches = subExact.length > 0 ? subExact : subPartial;
+                subMatches.forEach(s => combinedMatches.push({ kind: 'subway', item: s }));
             }
 
-            // 2. 지하철역 검색 (SUBWAY_STATIONS_DB)
-            const qNorm = normalizeSubwayStationName(q).toLowerCase();
-            const qRaw = q.toLowerCase().replace(/역$/, "");
+            // 3. 도로명/지번 주소 오픈API 기반 건축물대장 & 층별현황 & 스프링클러 조회
+            if (isAddressLike || combinedMatches.length === 0) {
+                const addrCandidates = await searchAddressCandidatesFromPostcodify(q);
+                const exactCandidates = addrCandidates.filter(c => c.exactMatch);
 
-            let subExact = SUBWAY_STATIONS_DB.filter(item => {
-                const bLower = item.baseName.toLowerCase();
-                const rLower = item.rawName.toLowerCase();
-                return (
-                    bLower === qNorm ||
-                    bLower === qRaw ||
-                    rLower === q.toLowerCase() ||
-                    (qRaw === "서울" && item.baseName === "서울역")
-                );
-            });
+                if (exactCandidates.length === 1) {
+                    const lotMatches = await fetchBuildingsForLot(exactCandidates[0], q);
+                    lotMatches.forEach(b => combinedMatches.push(b));
+                } else if (addrCandidates.length === 1) {
+                    const lotMatches = await fetchBuildingsForLot(addrCandidates[0], q);
+                    lotMatches.forEach(b => combinedMatches.push(b));
+                } else if (addrCandidates.length > 1 && multiMatchContainer && multiMatchList && multiMatchCount) {
+                    loadingEl.style.display = 'none';
+                    multiMatchCount.textContent = addrCandidates.length;
+                    multiMatchList.innerHTML = '';
+                    multiMatchList.style.flexDirection = 'column';
+                    addrCandidates.forEach((cand) => {
+                        const card = document.createElement('button');
+                        card.type = 'button';
+                        card.className = 'addr-cand-card';
+                        card.innerHTML = `
+                            <div class="addr-cand-info">
+                                <div class="addr-cand-row"><span class="addr-cand-lbl">건물명</span><span class="addr-cand-val">${cand.bldNm || '-'}</span></div>
+                                <div class="addr-cand-row"><span class="addr-cand-lbl">지번</span><span class="addr-cand-val" style="font-weight:600; color:#334155;">${cand.jibunAddr}</span></div>
+                                <div class="addr-cand-row"><span class="addr-cand-lbl">도로명</span><span class="addr-cand-val" style="color:#1e40af;">${cand.roadAddr}${cand.exactMatch ? ' <span style="font-size:10px; background:#dbeafe; color:#1d4ed8; padding:1px 5px; border-radius:4px; margin-left:4px;">일치</span>' : ''}</span></div>
+                            </div>
+                            <span class="addr-cand-action">상세조회</span>
+                        `;
+                        card.addEventListener('click', async () => {
+                            multiMatchList.querySelectorAll('.addr-cand-card').forEach(c => c.classList.remove('is-active'));
+                            card.classList.add('is-active');
+                            if (bldResultEl) bldResultEl.style.display = 'none';
+                            noResultEl.style.display = 'none';
+                            loadingEl.style.display = 'block';
+            currentTabFacilityState.query = q;
+            currentTabFacilityState.hasSearched = true;
+            currentTabFacilityState.noResult = false;
+                            const lotMatches = await fetchBuildingsForLot(cand, q);
+                            loadingEl.style.display = 'none';
+                            if (lotMatches.length === 0) {
+                                noResultEl.style.display = 'flex';
+                                return;
+                            }
+                            currentTabFacilityState.noResult = false;
+                        currentTabFacilityState.matches = lotMatches;
+                        currentTabFacilityState.activeMatchIndex = 0;
+                        currentTabFacilityState.selectedItem = lotMatches[0];
+                        currentTabFacilityState.userSelectedDong = false;
+                        saveCurrentTabData();
+                        displayUnifiedFacilityMatch(lotMatches[0], lotMatches, false);
+                        });
+                        multiMatchList.appendChild(card);
+                    });
+                    multiMatchContainer.style.display = 'flex';
+                    return;
+                }
 
-            let subPartial = [];
-            if (subExact.length === 0) {
-                subPartial = SUBWAY_STATIONS_DB.filter(item =>
-                    item.rawName.toLowerCase().includes(qRaw) ||
-                    item.baseName.toLowerCase().includes(qNorm)
-                );
+                if (combinedMatches.length === 0) {
+                    const bldMatches = await searchBuildingsByAddress(q);
+                    bldMatches.forEach(b => combinedMatches.push(b));
+                }
             }
-            let subMatches = subExact.length > 0 ? subExact : subPartial;
 
             loadingEl.style.display = 'none';
 
-            // 매칭 통합
-            const combinedMatches = [];
-            facMatches.forEach(f => combinedMatches.push({ isSubway: false, item: f }));
-            subMatches.forEach(s => combinedMatches.push({ isSubway: true, item: s }));
-
             if (combinedMatches.length === 0) {
-                currentTabFacilityState.noResult = true;
-                currentTabFacilityState.matches = [];
-                currentTabFacilityState.selectedItem = null;
-                resultEl.style.display = 'none';
-                if (subwayResultEl) subwayResultEl.style.display = 'none';
                 noResultEl.style.display = 'flex';
-                saveCurrentTabData();
                 return;
+            }
+
+            const allAreBuildings = combinedMatches.every(m => m.kind === 'building');
+            if (allAreBuildings) {
+                const sortedBlds = sortBuildingMatchesByDong(combinedMatches);
+                currentTabFacilityState.noResult = false;
+                currentTabFacilityState.matches = sortedBlds;
+                currentTabFacilityState.activeMatchIndex = 0;
+                currentTabFacilityState.selectedItem = sortedBlds[0];
+                currentTabFacilityState.userSelectedDong = false;
+                saveCurrentTabData();
+                displayUnifiedFacilityMatch(sortedBlds[0], sortedBlds, false);
+                return;
+            }
+
+            if (combinedMatches.length > 1 && multiMatchContainer && multiMatchList && multiMatchCount) {
+                multiMatchCount.textContent = combinedMatches.length;
+                multiMatchList.innerHTML = '';
+                multiMatchList.style.flexDirection = 'row';
+                combinedMatches.forEach((m, idx) => {
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = `fac-match-item-btn ${idx === 0 ? 'is-active' : ''}`;
+                    if (m.kind === 'building') {
+                        const it = m.item;
+                        const ledgerType = resolveBuildingLedgerType(it, m.combinedContext);
+                        const nameLabel = [it.bldNm, it.dongNm].filter(Boolean).join(' ') || it.newPlatPlc || it.platPlc || '건축물';
+                        const addrLabel = (it.newPlatPlc || it.platPlc || '').replace(/^서울특별시\s*/, '');
+                        const flrLabel = it.grndFlrCnt ? `(${it.grndFlrCnt}층)` : '';
+                        btn.innerHTML = `<span style="padding: 2px 6px; border-radius: 4px; font-size: 10.5px; font-weight: 800; background: #dcfce7; color: #15803d;">🏢 ${ledgerType}</span> <span>${nameLabel} ${flrLabel}</span>${addrLabel ? ` <span style="font-size: 10.5px; color: #64748b; font-weight: 600;">· ${addrLabel}</span>` : ''}`;
+                    } else if (m.kind === 'subway') {
+                        const colorObj = SUBWAY_LINE_COLORS[m.item.line] || { bg: "#2563eb" };
+                        btn.innerHTML = `<span style="padding: 2px 6px; border-radius: 4px; font-size: 10.5px; font-weight: 900; color: #ffffff; background: ${colorObj.bg};">${m.item.line}</span> <span>${m.item.rawName}역</span>`;
+                    } else {
+                        const icon = m.item.type === 'bridge' ? '🌉' : (m.item.type === 'tunnel' ? '🚇' : '🛣️');
+                        const routeShort = m.item.route ? m.item.route.split('(')[0].trim() : '';
+                        btn.innerHTML = `${icon} ${m.item.name} <span style="font-size: 10.5px; color: #64748b; font-weight: 600;">(${routeShort})</span>`;
+                    }
+                    btn.addEventListener('click', () => {
+                        multiMatchList.querySelectorAll('.fac-match-item-btn').forEach(b => b.classList.remove('is-active'));
+                        btn.classList.add('is-active');
+                        displayUnifiedFacilityMatch(m);
+                    });
+                    multiMatchList.appendChild(btn);
+                });
+                multiMatchContainer.style.display = 'flex';
             }
 
             currentTabFacilityState.noResult = false;
             currentTabFacilityState.matches = combinedMatches;
             currentTabFacilityState.activeMatchIndex = 0;
             currentTabFacilityState.selectedItem = combinedMatches[0];
-
-            renderFacilityState(currentTabFacilityState);
+            currentTabFacilityState.userSelectedDong = false;
             saveCurrentTabData();
+            displayUnifiedFacilityMatch(combinedMatches[0]);
         }
+
+
 
         // 시설물 지하철 복사 버튼 바인딩
         document.getElementById('facBtnCopyRoad')?.addEventListener('click', () => {
@@ -10699,95 +12979,145 @@
                 }
             });
         }
-
-        if (facilityModalOpenBtn) {
-            facilityModalOpenBtn.addEventListener('click', () => {
-                openModal(facilityModal);
+        const bldFireFacilitiesToggleBtn = document.getElementById('bldFireFacilitiesToggleBtn');
+        if (bldFireFacilitiesToggleBtn) {
+            bldFireFacilitiesToggleBtn.addEventListener('click', () => {
+                const panel = document.getElementById('bldFireFacilitiesDetailPanel');
+                const chevron = document.getElementById('bldFireFacChevron');
+                if (!panel) return;
+                const isOpen = panel.style.display === 'flex';
+                panel.style.display = isOpen ? 'none' : 'flex';
+                bldFireFacilitiesToggleBtn.classList.toggle('is-open', !isOpen);
+                if (chevron) chevron.textContent = isOpen ? '▼ 펼치기' : '▲ 접기';
             });
         }
+        if (facilityModalOpenBtn) facilityModalOpenBtn.addEventListener('click', () => openModal(facilityModal));
         if (facilityCloseBtn) facilityCloseBtn.addEventListener('click', () => closeModal(facilityModal));
         if (facilityCloseXBtn) facilityCloseXBtn.addEventListener('click', () => closeModal(facilityModal));
 
         if (saveFacilityImageBtn) {
             saveFacilityImageBtn.addEventListener('click', async () => {
+                const isBldVisible = document.getElementById('facilityBuildingResultContainer') && document.getElementById('facilityBuildingResultContainer').style.display !== 'none';
                 const isSubwayVisible = document.getElementById('facilitySubwayResultContainer') && document.getElementById('facilitySubwayResultContainer').style.display !== 'none';
                 const isFacVisible = document.getElementById('facilityResultContainer') && document.getElementById('facilityResultContainer').style.display !== 'none';
 
                 let target = null;
                 let fileNamePrefix = '시설물정보';
-
-                if (isSubwayVisible) {
+                if (isBldVisible) {
+                    target = document.getElementById('facilityBuildingResultContainer');
+                    const bName = document.getElementById('bldCellBldDongNm')?.textContent?.trim() || document.getElementById('bldCellNewPlatPlc')?.textContent?.trim() || '건축물';
+                    fileNamePrefix = `건축물정보_${bName.replace(/[\/\s()]/g, '_')}`;
+                } else if (isSubwayVisible) {
                     target = document.getElementById('facilitySubwayResultContainer');
-                    const stName = document.getElementById('facSubwayStationName')?.textContent || '지하철';
-                    fileNamePrefix = `지하철역정보_${stName}`;
+                    fileNamePrefix = `지하철역정보_${document.getElementById('facSubwayStationName')?.textContent || '지하철'}`;
                 } else if (isFacVisible) {
                     target = document.getElementById('facilityResultContainer');
-                    const fName = document.getElementById('facTitleName')?.textContent || '시설물';
-                    fileNamePrefix = `시설물제원_${fName}`;
+                    fileNamePrefix = `시설물제원_${document.getElementById('facTitleName')?.textContent || '시설물'}`;
                 } else {
                     target = document.getElementById('facilityScrollContainer');
-                    fileNamePrefix = '시설물제원';
                 }
-
                 if (!target) return;
-
-                if (document.activeElement && typeof document.activeElement.blur === 'function') {
-                    document.activeElement.blur();
-                }
+                if (document.activeElement && typeof document.activeElement.blur === 'function') document.activeElement.blur();
                 showToast('정보를 그림 파일로 생성 중입니다...');
-
                 try {
                     if (typeof html2canvas === 'undefined') throw new Error('html2canvas unavailable');
-
-                    const fullWidth = target.offsetWidth;
-                    const totalHeight = target.scrollHeight + 24;
-
+                    const fireFacPanelEl = document.getElementById('bldFireFacilitiesDetailPanel');
+                    const isFireFacOpen = !!(isBldVisible && fireFacPanelEl && fireFacPanelEl.style.display === 'flex');
+                    const tableWidths = Array.from(target.querySelectorAll('table')).map(t => t.scrollWidth || t.offsetWidth || 0);
+                    const leftColWidth = 520;
+                    const rightColWidth = Math.max(...tableWidths, 740);
+                    const requiredWidth = isBldVisible
+                        ? (isFireFacOpen
+                            ? (leftColWidth + 20 + rightColWidth + 32)
+                            : (Math.max(target.offsetWidth || 0, target.scrollWidth || 0, ...tableWidths, 740) + 32))
+                        : Math.max(target.offsetWidth || 0, target.scrollWidth || 0);
                     const canvas = await html2canvas(target, {
-                        scale: 2,
-                        backgroundColor: '#f1f5f9',
-                        useCORS: true,
-                        logging: false,
-                        width: fullWidth,
-                        height: totalHeight,
-                        windowWidth: document.documentElement.clientWidth,
-                        windowHeight: totalHeight + 500,
-                        scrollY: 0,
-                        scrollX: 0,
+                        scale: 2, backgroundColor: isBldVisible ? '#ffffff' : '#f1f5f9', useCORS: true, logging: false,
+                        width: isBldVisible ? requiredWidth : undefined,
+                        windowWidth: Math.max(document.documentElement.clientWidth, requiredWidth + 80),
+                        scrollY: 0, scrollX: 0,
                         onclone: (clonedDoc) => {
                             const cModalContent = clonedDoc.querySelector('.modal-facility-content');
                             const cScroll = clonedDoc.getElementById('facilityScrollContainer');
                             if (cModalContent) {
+                                cModalContent.style.width = 'auto';
+                                cModalContent.style.maxWidth = 'none';
                                 cModalContent.style.height = 'auto';
                                 cModalContent.style.maxHeight = 'none';
                                 cModalContent.style.overflow = 'visible';
                             }
                             if (cScroll) {
+                                cScroll.style.width = 'auto';
+                                cScroll.style.maxWidth = 'none';
                                 cScroll.style.height = 'auto';
                                 cScroll.style.maxHeight = 'none';
                                 cScroll.style.overflow = 'visible';
                             }
+                            if (isBldVisible) {
+                                const cBld = clonedDoc.getElementById('facilityBuildingResultContainer');
+                                if (cBld) {
+                                    cBld.style.width = `${requiredWidth}px`;
+                                    cBld.style.minWidth = `${requiredWidth}px`;
+                                    cBld.style.maxWidth = 'none';
+                                    cBld.style.height = 'auto';
+                                    cBld.style.maxHeight = 'none';
+                                    cBld.style.overflow = 'visible';
+                                    cBld.style.boxSizing = 'border-box';
+                                    cBld.querySelectorAll('div').forEach(d => {
+                                        if (d.style.overflowX || d.style.overflowY || d.style.maxHeight) {
+                                            d.style.overflow = 'visible';
+                                            d.style.overflowX = 'visible';
+                                            d.style.overflowY = 'visible';
+                                            d.style.maxHeight = 'none';
+                                        }
+                                    });
+                                    cBld.querySelectorAll('.cas-no-print').forEach(el => el.remove());
+                                    if (isFireFacOpen) {
+                                        const cSpCard = clonedDoc.getElementById('bldResSprinklerCard');
+                                        const cFireWrap = clonedDoc.getElementById('bldFireFacilitiesToggleWrap');
+                                        const cChevron = clonedDoc.getElementById('bldFireFacChevron');
+                                        const cTopSec = clonedDoc.getElementById('bldLedgerTopListSection');
+                                        const cDetailSec = clonedDoc.getElementById('bldLedgerDetailSection');
+                                        const cFloorSec = clonedDoc.getElementById('bldLedgerFloorSection');
+
+                                        if (cChevron) cChevron.style.display = 'none';
+
+                                        const leftCol = clonedDoc.createElement('div');
+                                        leftCol.style.cssText = `display: flex; flex-direction: column; gap: 12px; width: ${leftColWidth}px; flex-shrink: 0;`;
+                                        if (cSpCard) leftCol.appendChild(cSpCard);
+                                        if (cFireWrap) leftCol.appendChild(cFireWrap);
+
+                                        const rightCol = clonedDoc.createElement('div');
+                                        rightCol.style.cssText = `display: flex; flex-direction: column; gap: 12px; flex: 1; min-width: ${rightColWidth}px;`;
+                                        if (cTopSec) rightCol.appendChild(cTopSec);
+                                        if (cDetailSec) rightCol.appendChild(cDetailSec);
+                                        if (cFloorSec) rightCol.appendChild(cFloorSec);
+
+                                        cBld.innerHTML = '';
+                                        cBld.style.display = 'flex';
+                                        cBld.style.flexDirection = 'row';
+                                        cBld.style.alignItems = 'flex-start';
+                                        cBld.style.gap = '20px';
+                                        cBld.appendChild(leftCol);
+                                        cBld.appendChild(rightCol);
+                                    }
+                                    cBld.querySelectorAll('table').forEach(tbl => {
+                                        tbl.style.width = '100%';
+                                    });
+                                }
+                            }
                         }
                     });
-
                     const now = new Date();
-                    const dStr = now.getFullYear() +
-                        String(now.getMonth() + 1).padStart(2, '0') +
-                        String(now.getDate()).padStart(2, '0') + '_' +
-                        String(now.getHours()).padStart(2, '0') +
-                        String(now.getMinutes()).padStart(2, '0');
-
-                    const fileName = `${fileNamePrefix}_${dStr}.png`;
-                    await saveCanvasToGalleryOrDownload(
-                        canvas,
-                        fileName,
-                        '고화질 그림 파일 저장이 완료되었습니다.'
-                    );
+                    const dStr = now.getFullYear() + String(now.getMonth() + 1).padStart(2, '0') + String(now.getDate()).padStart(2, '0') + '_' + String(now.getHours()).padStart(2, '0') + String(now.getMinutes()).padStart(2, '0');
+                    await saveCanvasToGalleryOrDownload(canvas, `${fileNamePrefix}_${dStr}.png`, '고화질 그림 파일 저장이 완료되었습니다.');
                 } catch (err) {
                     console.error('Facility image export failed:', err);
                     showToast('그림 파일 저장에 실패했습니다.');
                 }
             });
         }
+
 
         // 위험물 통합검색 로직
         function renderHazmatResult(item) {
@@ -15990,6 +18320,17 @@
             triggerUpdateDebounced();
         });
 
+        function bindTimelineFourDigitLimit(el) {
+            if (!el) return;
+            el.addEventListener('input', () => {
+                const digitsOnly = String(el.value || '').replace(/\D/g, '').slice(0, 4);
+                if (el.value !== digitsOnly) {
+                    el.value = digitsOnly;
+                }
+            });
+        }
+        [timeJiryeong, timeChuldong, timeSeonchak, timeMedical, timeChojin, timeWanjin].forEach(bindTimelineFourDigitLimit);
+
         let dynCount = 0;
         function addDynamicTimelineRow(label = '', time = '') {
             dynCount++;
@@ -15998,12 +18339,14 @@
             div.style.cssText = "display: flex; align-items: center; gap: 4px;";
             div.innerHTML = `
                 <input type="text" placeholder="항목명" value="${label}" class="dyn-label" style="flex: 6; min-width: 0; height: 30px; font-size: 12px; font-weight: 700;">
-                <input type="text" placeholder="시각" value="${time}" class="dyn-time" style="flex: 4; min-width: 0; height: 30px; font-size: 12px; font-weight: 700; text-align: center; padding: 5px 2px;">
+                <input type="text" placeholder="시각" value="${String(time || '').replace(/\D/g, '').slice(0, 4)}" maxlength="4" inputmode="numeric" class="dyn-time" style="flex: 4; min-width: 0; height: 30px; font-size: 12px; font-weight: 700; text-align: center; padding: 5px 2px;">
                 <button type="button" class="dyn-del" style="background: none; border: none; color: #e25858; font-weight: bold; cursor: pointer; padding: 0 4px; font-size: 14px;">✕</button>
             `;
             dynamicTimelineContainer.appendChild(div);
             div.querySelector('.dyn-label').addEventListener('input', triggerUpdateDebounced);
-            div.querySelector('.dyn-time').addEventListener('input', triggerUpdateDebounced);
+            const dynTimeEl = div.querySelector('.dyn-time');
+            bindTimelineFourDigitLimit(dynTimeEl);
+            dynTimeEl.addEventListener('input', triggerUpdateDebounced);
             div.querySelector('.dyn-del').addEventListener('click', () => {
                 div.remove();
                 triggerUpdateDebounced();
