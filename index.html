@@ -3229,7 +3229,7 @@
                                     <div style="font-size: 15px; font-weight: 900; color: #1e3a8a;">· 층별현황</div>
                                     <span style="font-size: 11.5px; color: #64748b; font-weight: 700;">단위 : ㎡</span>
                                 </div>
-                                <div style="max-height: 290px; overflow-y: auto; overflow-x: auto; border-top: 2px solid #94a3b8; border-bottom: 1px solid #cbd5e1;">
+                                <div id="bldLedgerFloorScrollBox" style="max-height: 290px; overflow-y: auto; overflow-x: auto; border-top: 2px solid #94a3b8; border-bottom: 1px solid #cbd5e1;">
                                     <table class="bld-ledger-flr-table">
                                         <thead>
                                             <tr>
@@ -12074,6 +12074,9 @@
 
         let currentLotBuildingMatches = [];
         let currentFacilitySelectedBld = null;
+        const bldHighlightedFloorsMap = new Map();
+        let currentRenderedBldKey = '';
+        let lastRenderedBldQuery = '';
 
         async function renderBuildingDetailInFacility(matchObj, siblingMatches = null, userSelectedDong = false) {
             if (Array.isArray(siblingMatches) && siblingMatches.length > 0) {
@@ -12387,7 +12390,10 @@
                             return gA === 1 ? (nB - nA) : (nA - nB);
                         });
 
-                        flrBody.innerHTML = filteredFlr.map(f => {
+                        currentRenderedBldKey = it.mgmBldrgstPk || [sigunguCd, bjdongCd, bunPad, jiPad, bldNm, dongNm].join('|');
+                        lastRenderedBldQuery = (facilitySearchInput ? facilitySearchInput.value.trim() : '') || (it.newPlatPlc || it.platPlc || '').trim();
+                        const savedHighlightSet = bldHighlightedFloorsMap.get(currentRenderedBldKey);
+                        flrBody.innerHTML = filteredFlr.map((f, idx) => {
                             const gbNm = (f.flrGbCdNm || (f.flrGbCd === '10' ? '지하' : (f.flrGbCd === '30' ? '옥탑' : '지상'))).trim();
                             const flrNoNm = (f.flrNoNm || (f.flrNo ? `${f.flrNo}층` : '-')).trim();
                             const fStrct = (f.strctCdNm || f.etcStrct || strct || '-').trim();
@@ -12398,8 +12404,10 @@
                                 purpDisplay = ePurp.includes(mPurp) ? ePurp : `${mPurp}(${ePurp})`;
                             }
                             const fArea = formatAreaVal(f.area, false);
+                            const rowKey = `${idx}|${gbNm}|${flrNoNm}|${fArea}`;
+                            const isHl = savedHighlightSet && savedHighlightSet.has(rowKey);
                             return `
-                                <tr>
+                                <tr data-flr-key="${rowKey.replace(/"/g, '&quot;')}"${isHl ? ' class="is-flr-highlighted"' : ''}>
                                     <td>${gbNm}</td>
                                     <td>${flrNoNm}</td>
                                     <td>${fStrct}</td>
@@ -13032,7 +13040,16 @@
                 if (!tr || !bldLedgerFloorBodyEl.contains(tr)) return;
                 // 로딩/안내 문구 행(colspan)은 선택 제외
                 if (tr.querySelector('td[colspan]')) return;
-                tr.classList.toggle('is-flr-highlighted');
+                const isNowHl = tr.classList.toggle('is-flr-highlighted');
+                const rKey = tr.getAttribute('data-flr-key');
+                if (currentRenderedBldKey && rKey) {
+                    if (!bldHighlightedFloorsMap.has(currentRenderedBldKey)) {
+                        bldHighlightedFloorsMap.set(currentRenderedBldKey, new Set());
+                    }
+                    const set = bldHighlightedFloorsMap.get(currentRenderedBldKey);
+                    if (isNowHl) set.add(rKey);
+                    else set.delete(rKey);
+                }
             });
         }
         let facilityModalMode = 'facility'; // 'facility' (터널·대교·지하철역 전용) | 'building' (도로명주소 건축물·소방시설 전용)
@@ -13094,7 +13111,7 @@
                 if (noResHint) noResHint.textContent = '예: 가양대교, 구기터널, 마포대교, 남산1호터널, 양재지하차도, 서울역, 강남역 등을 입력해 보세요.';
                 if (footerTxt) footerTxt.textContent = '국토교통부 건설사업정보시스템(건설CALS) 시설물 기본제원 오픈API 및 서울교통공사 역사정보 연동';
                 if (applyBtn) applyBtn.style.display = 'none';
-                if (bldResultEl) bldResultEl.style.display = 'none';
+                if (prevMode !== 'facility' && bldResultEl) bldResultEl.style.display = 'none';
                 if (facilitySearchInput && prevMode !== 'facility') facilitySearchInput.value = lastFacilityModeQuery;
             }
         }
@@ -13117,9 +13134,21 @@
                 configureFacilityModalMode('building');
                 openModal(facilityModal);
                 const addrVal = eventAddrInput ? eventAddrInput.value.trim() : '';
-                if (addrVal && facilitySearchInput) {
+                const bldContainer = document.getElementById('facilityBuildingResultContainer');
+                const alreadyLoadedSame = !!(
+                    addrVal &&
+                    currentFacilitySelectedBld &&
+                    lastRenderedBldQuery &&
+                    lastRenderedBldQuery === addrVal
+                );
+                if (alreadyLoadedSame) {
+                    if (facilitySearchInput) facilitySearchInput.value = addrVal;
+                    if (bldContainer) bldContainer.style.display = 'flex';
+                } else if (addrVal && facilitySearchInput) {
                     facilitySearchInput.value = addrVal;
                     searchFacility(addrVal);
+                } else if (currentFacilitySelectedBld && bldContainer) {
+                    bldContainer.style.display = 'flex';
                 } else if (facilitySearchInput) {
                     setTimeout(() => facilitySearchInput.focus(), 60);
                 }
@@ -13213,6 +13242,31 @@
                     if (typeof html2canvas === 'undefined') throw new Error('html2canvas unavailable');
                     const fireFacPanelEl = document.getElementById('bldFireFacilitiesDetailPanel');
                     const isFireFacOpen = !!(isBldVisible && fireFacPanelEl && fireFacPanelEl.style.display === 'flex');
+
+                    // 소방시설 상세보기가 접혀 있을 때는 층별현황 스크롤창에 현재 보이는 행들만 선별 캡처
+                    let visibleFloorRowIndices = null;
+                    const liveFloorScrollBox = document.getElementById('bldLedgerFloorScrollBox');
+                    if (isBldVisible && !isFireFacOpen && liveFloorScrollBox) {
+                        const boxRect = liveFloorScrollBox.getBoundingClientRect();
+                        const theadEl = liveFloorScrollBox.querySelector('thead');
+                        const headerBottom = theadEl ? theadEl.getBoundingClientRect().bottom : boxRect.top;
+                        const viewTop = Math.max(boxRect.top, headerBottom) - 2;
+                        const viewBottom = boxRect.bottom + 2;
+                        const liveRows = Array.from(liveFloorScrollBox.querySelectorAll('tbody tr'));
+                        if (liveRows.length > 0 && liveFloorScrollBox.scrollHeight > liveFloorScrollBox.clientHeight + 4) {
+                            const matched = new Set();
+                            liveRows.forEach((tr, idx) => {
+                                const r = tr.getBoundingClientRect();
+                                if (r.height <= 0) return;
+                                const overlap = Math.min(r.bottom, viewBottom) - Math.max(r.top, viewTop);
+                                if (overlap >= Math.min(r.height * 0.35, 10)) {
+                                    matched.add(idx);
+                                }
+                            });
+                            if (matched.size > 0) visibleFloorRowIndices = matched;
+                        }
+                    }
+
                     const tableWidths = Array.from(target.querySelectorAll('table')).map(t => t.scrollWidth || t.offsetWidth || 0);
                     const leftColWidth = 520;
                     const rightColWidth = Math.max(...tableWidths, 740);
@@ -13253,6 +13307,15 @@
                                     cBld.style.maxHeight = 'none';
                                     cBld.style.overflow = 'visible';
                                     cBld.style.boxSizing = 'border-box';
+                                    if (!isFireFacOpen && visibleFloorRowIndices) {
+                                        const cFlrBody = clonedDoc.getElementById('bldLedgerFloorBody');
+                                        if (cFlrBody) {
+                                            const cRows = Array.from(cFlrBody.querySelectorAll('tr'));
+                                            cRows.forEach((tr, idx) => {
+                                                if (!visibleFloorRowIndices.has(idx)) tr.remove();
+                                            });
+                                        }
+                                    }
                                     cBld.querySelectorAll('div').forEach(d => {
                                         if (d.style.overflowX || d.style.overflowY || d.style.maxHeight) {
                                             d.style.overflow = 'visible';
