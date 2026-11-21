@@ -3149,18 +3149,19 @@
 
                             <!-- 2. 건축물 표제부 상세 표 -->
                             <div id="bldLedgerDetailSection" style="display: flex; flex-direction: column; gap: 6px; margin-top: 4px;">
-                                <div style="display: flex; align-items: center; justify-content: space-between;">
-                                    <div id="bldLedgerDetailSectionTitle" style="font-size: 15px; font-weight: 900; color: #1e3a8a;">· 일반건축물</div>
-                                    <span id="bldLedgerFlrBadge" style="font-size: 13.5px; font-weight: 900; color: #1d4ed8; background: #eff6ff; border: 1.5px solid #60a5fa; padding: 4px 11px; border-radius: 8px; box-shadow: 0 1px 2px rgba(37, 99, 235, 0.12);">지상 -층 / 지하 -층</span>
+                                <div style="display: flex; align-items: center; justify-content: space-between; gap: 6px; flex-wrap: wrap;">
+                                    <div id="bldLedgerDetailSectionTitle" style="font-size: 15px; font-weight: 900; color: #1e3a8a;">· 내용</div>
+                                    <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                                        <span id="bldLedgerAptHallBadge" style="display: none; font-size: 13.5px; font-weight: 900; color: #047857; background: #ecfdf5; border: 1.5px solid #10b981; padding: 4px 11px; border-radius: 8px; box-shadow: 0 1px 2px rgba(16, 185, 129, 0.14);">복도식</span>
+                                        <span id="bldLedgerFlrBadge" style="font-size: 13.5px; font-weight: 900; color: #1d4ed8; background: #eff6ff; border: 1.5px solid #60a5fa; padding: 4px 11px; border-radius: 8px; box-shadow: 0 1px 2px rgba(37, 99, 235, 0.12);">지상 -층 / 지하 -층</span>
+                                    </div>
                                 </div>
                                 <div style="overflow-x: auto; border-top: 2px solid #94a3b8; border-bottom: 1px solid #cbd5e1;">
                                     <table class="bld-ledger-grid-table">
                                         <tbody>
                                             <tr>
                                                 <th>대지위치</th>
-                                                <td colspan="3" id="bldCellPlatPlc">-</td>
-                                                <th>지번</th>
-                                                <td id="bldCellJibun">-</td>
+                                                <td colspan="5" id="bldCellPlatPlc">-</td>
                                             </tr>
                                             <tr>
                                                 <th>도로명주소</th>
@@ -12162,6 +12163,101 @@
         let currentRenderedBldKey = '';
         let lastRenderedBldQuery = '';
 
+        function isApartmentForHallBadge(it, ledgerType, bldNm) {
+            const txt = `${it?.mainPurpsCdNm || ''} ${it?.etcPurps || ''} ${bldNm || ''}`;
+            if (/도시형생활주택|오피스텔|다세대|연립|다가구|단독주택/.test(txt) && ledgerType !== '아파트' && !/아파트/.test(txt)) {
+                return false;
+            }
+            if (ledgerType === '아파트' || /아파트/.test(txt)) return true;
+            const hhld = parseInt(it?.hhldCnt || '0', 10) || 0;
+            const grnd = parseInt(it?.grndFlrCnt || '0', 10) || 0;
+            if (String(it?.mainPurpsCdNm || '').includes('공동주택') && (hhld >= 20 || grnd >= 5)) return true;
+            return false;
+        }
+
+        function normalizeHallTypeName(raw) {
+            const s = String(raw || '').trim();
+            if (!s) return '';
+            if (s.includes('복도')) return '복도식';
+            if (s.includes('계단')) return '계단식';
+            if (s.includes('혼합') || s.includes('복합') || s.includes('타워')) return '복합식';
+            return '';
+        }
+
+        function detectApartmentHallType(it, ledgerType, bldNm, flrItems = null) {
+            if (!isApartmentForHallBadge(it, ledgerType, bldNm)) return '';
+            const explicitText = `${it?.etcPurps || ''} ${bldNm || ''}`;
+            const explicitMatch = normalizeHallTypeName(explicitText);
+            if (explicitMatch) return explicitMatch;
+
+            const hhld = parseInt(it?.hhldCnt || '0', 10) || 0;
+            const grnd = parseInt(it?.grndFlrCnt || '0', 10) || 0;
+            const rideElvt = parseInt(it?.rideUseElvtCnt || '0', 10) || 0;
+            const emgElvt = parseInt(it?.emgenUseElvtCnt || '0', 10) || 0;
+            const useAprYear = parseInt(String(it?.useAprDay || '').replace(/\D/g, '').substring(0, 4), 10) || 0;
+
+            let resFloors = grnd;
+            if (Array.isArray(flrItems) && flrItems.length > 0) {
+                const aptFlrSet = new Set();
+                flrItems.forEach(f => {
+                    const gb = String(f.flrGbCd || '').trim();
+                    const gbNm = String(f.flrGbCdNm || '').trim();
+                    if (gb === '10' || gbNm.includes('지하') || gb === '30' || gbNm.includes('옥탑')) return;
+                    const pTxt = `${f.mainPurpsCdNm || ''} ${f.etcPurps || ''}`;
+                    if (/아파트|공동주택/.test(pTxt) && !/근린|판매|주차|관리|경로당|어린이/.test(pTxt)) {
+                        aptFlrSet.add(String(f.flrNo || f.flrNoNm || ''));
+                    }
+                });
+                if (aptFlrSet.size > 0) resFloors = aptFlrSet.size;
+            }
+            if (hhld <= 0 || resFloors <= 0) return '계단식';
+
+            const hhldPerFloor = hhld / resFloors;
+            const coreCnt = rideElvt > 0 ? rideElvt : (emgElvt > 0 ? emgElvt : 0);
+
+            if (coreCnt === 0) {
+                // 저층(승강기 없음): 층당 6세대 이상이면 복도식, 아니면 계단식
+                return hhldPerFloor >= 6 ? '복도식' : '계단식';
+            }
+            const hhldPerCore = hhldPerFloor / coreCnt;
+            if (hhldPerCore >= 5.0) return '복도식';
+            if (hhldPerCore <= 2.6) return '계단식';
+            if (useAprYear > 0 && useAprYear < 1998 && hhldPerCore >= 3.8) return '복도식';
+            return '복합식';
+        }
+
+        async function fetchKaptHallType(sigunguCd, bjdongCd, bldNm, roadAddr) {
+            if (!sigunguCd || !bjdongCd) return '';
+            const bjdCode = `${sigunguCd}${bjdongCd}`;
+            const listUrls = [
+                `https://apis.data.go.kr/1613000/AptListService3/getLegaldongAptList3?bjdCode=${bjdCode}&numOfRows=100&pageNo=1&serviceKey=${BLD_HUB_SERVICE_KEY}`,
+                `https://apis.data.go.kr/1613000/AptListService2/getLegaldongAptList?bjdCode=${bjdCode}&numOfRows=100&pageNo=1&serviceKey=${BLD_HUB_SERVICE_KEY}`
+            ];
+            try {
+                const aptItems = await fetchOpenApiItemsWithFallback(listUrls, 3200);
+                if (!aptItems || aptItems.length === 0) return '';
+                const norm = (s) => String(s || '').replace(/아파트|단지|\s+/g, '').toLowerCase();
+                const targetNorm = norm(bldNm);
+                let matchedApt = null;
+                if (targetNorm) {
+                    matchedApt = aptItems.find(a => norm(a.kaptName) === targetNorm)
+                        || aptItems.find(a => norm(a.kaptName).includes(targetNorm) || targetNorm.includes(norm(a.kaptName)));
+                }
+                if (!matchedApt && aptItems.length === 1) matchedApt = aptItems[0];
+                if (!matchedApt || !matchedApt.kaptCode) return '';
+
+                const basisUrls = [
+                    `https://apis.data.go.kr/1613000/AptBasisInfoServiceV3/getAphusBassInfoV3?kaptCode=${encodeURIComponent(matchedApt.kaptCode)}&serviceKey=${BLD_HUB_SERVICE_KEY}`,
+                    `https://apis.data.go.kr/1613000/AptBasisInfoService1/getAphusBassInfo?kaptCode=${encodeURIComponent(matchedApt.kaptCode)}&serviceKey=${BLD_HUB_SERVICE_KEY}`
+                ];
+                const basisItems = await fetchOpenApiItemsWithFallback(basisUrls, 3200);
+                if (basisItems && basisItems.length > 0) {
+                    return normalizeHallTypeName(basisItems[0].codeHallNm || '');
+                }
+            } catch (e) {}
+            return '';
+        }
+
         async function renderBuildingDetailInFacility(matchObj, siblingMatches = null, userSelectedDong = false) {
             if (Array.isArray(siblingMatches) && siblingMatches.length > 0) {
                 currentLotBuildingMatches = sortBuildingMatchesByDong(siblingMatches);
@@ -12289,12 +12385,26 @@
             const ledgerType = resolveBuildingLedgerType(it, combinedContext);
             const regstrTitle = (it.regstrGbCdNm || it.regstrKindCdNm || '일반건축물').trim();
             const detailTitleEl = document.getElementById('bldLedgerDetailSectionTitle');
-            if (detailTitleEl) detailTitleEl.textContent = `· ${regstrTitle}`;
+            if (detailTitleEl) detailTitleEl.textContent = '· 내용';
 
             const grnd = parseInt(it.grndFlrCnt || '0', 10) || 0;
             const ugrnd = parseInt(it.ugrndFlrCnt || '0', 10) || 0;
             const flrBadgeEl = document.getElementById('bldLedgerFlrBadge');
             if (flrBadgeEl) flrBadgeEl.textContent = `지상 ${grnd}층 / 지하 ${ugrnd}층`;
+            const aptHallBadgeEl = document.getElementById('bldLedgerAptHallBadge');
+            const isAptBld = isApartmentForHallBadge(it, ledgerType, bldNm || bldNameHint);
+            let initialHallType = isAptBld ? detectApartmentHallType(it, ledgerType, bldNm || bldNameHint, null) : '';
+            if (aptHallBadgeEl) {
+                if (isAptBld && initialHallType) {
+                    aptHallBadgeEl.textContent = initialHallType;
+                    aptHallBadgeEl.style.display = 'inline-flex';
+                } else {
+                    aptHallBadgeEl.style.display = 'none';
+                }
+            }
+            const kaptHallPromise = isAptBld
+                ? fetchKaptHallType(sigunguCd, bjdongCd, bldNm || bldNameHint, it.newPlatPlc || roadFullKeyword).catch(() => '')
+                : Promise.resolve('');
 
             const platBase = (it.platPlc || '').replace(/\s*\d+(?:-\d+)?\s*번지.*$/, '').trim() || (it.platPlc || '-');
             const setCell = (id, val) => {
@@ -12302,8 +12412,17 @@
                 if (el) el.innerHTML = (val !== undefined && val !== null && String(val).trim() !== '') ? val : '&nbsp;';
             };
 
-            setCell('bldCellPlatPlc', platBase);
-            setCell('bldCellJibun', jibunShort);
+            const jibunClean = (jibunShort || '').replace(/번지\s*$/, '').trim();
+            const platBaseClean = (platBase || '').replace(/번지\s*$/, '').trim();
+            let combinedPlatPlc = platBaseClean;
+            if (jibunClean && jibunClean !== '-') {
+                if (!platBaseClean || platBaseClean === '-') {
+                    combinedPlatPlc = jibunClean;
+                } else if (!platBaseClean.endsWith(jibunClean)) {
+                    combinedPlatPlc = `${platBaseClean} ${jibunClean}`;
+                }
+            }
+            setCell('bldCellPlatPlc', combinedPlatPlc || '-');
             setCell('bldCellNewPlatPlc', it.newPlatPlc || roadFullKeyword || '-');
             setCell('bldCellJijigu1', '');
             setCell('bldCellJijigu2', '');
@@ -12441,7 +12560,7 @@
                     it.etcPurps || '',
                     archAreaNum
                 ).catch(() => null)
-            ]).then(([flrItems, jijiguItems, spApiRes]) => {
+            , kaptHallPromise]).then(([flrItems, jijiguItems, spApiRes, kaptHallType]) => {
                 // (A) 층별현황 렌더링
                 let filteredFlr = flrItems || [];
                 if (dongNm && filteredFlr.length > 0) {
@@ -12535,6 +12654,15 @@
                         if (currentFacilitySelectedBld && currentFacilitySelectedBld.item === it) {
                             currentFacilitySelectedBld.floorUsageMap = builtUsageMap;
                         }
+                    }
+                }
+
+                // (A-2) 아파트 복도유형(복도식/계단식/복합식) K-apt 공식값 우선 반영 및 층별현황 보정
+                if (isAptBld && aptHallBadgeEl && currentFacilitySelectedBld && currentFacilitySelectedBld.item === it) {
+                    const refinedHall = kaptHallType || detectApartmentHallType(it, ledgerType, bldNm || bldNameHint, filteredFlr) || initialHallType;
+                    if (refinedHall) {
+                        aptHallBadgeEl.textContent = refinedHall;
+                        aptHallBadgeEl.style.display = 'inline-flex';
                     }
                 }
 
