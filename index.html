@@ -19375,9 +19375,9 @@
                 if (!isFloorInRange(fl.floor)) return;
                 if (fl.rooms && fl.rooms.length > 0) {
                     fl.rooms.forEach((rm, rIdx) => {
-                        if (!isRoomInRange(rm.name, rIdx)) return;
+                        if (!rm.isBldUsage && !isRoomInRange(rm.name, rIdx)) return;
                         if (rm.text) {
-                            const rawTargetName = rm.name ? rm.name : (fl.floor > 0 ? `${fl.floor}층` : `B${Math.abs(fl.floor)}층`);
+                            const rawTargetName = (rm.name && !rm.isBldUsage) ? rm.name : (fl.floor > 0 ? `${fl.floor}층` : `B${Math.abs(fl.floor)}층`);
                             analyze(rawTargetName, rm.text);
                         }
                     });
@@ -19388,10 +19388,10 @@
 
             function sortRoomTarget(a, b) {
                 function parseTargetScore(name) {
-                    if (name.includes('비고')) return -30000;
-                    if (name.includes('대피')) return -20000;
-                    if (name.includes('옥상')) return 99999;
-                    const bMatch = name.match(/B(\d+)(?:(\d{2})호)?/);
+                    if (name.includes('비고')) return -999999;
+                    if (name.includes('대피')) return -999998;
+                    if (name.includes('옥상')) return 9999999;
+                    const bMatch = name.match(/B(\d+)(?:(\d{2})호|층)?/i);
                     if (bMatch) {
                         const floor = parseInt(bMatch[1], 10);
                         const room = bMatch[2] ? parseInt(bMatch[2], 10) : 0;
@@ -19400,9 +19400,17 @@
                     const fMatch = name.match(/(\d+)층/);
                     if (fMatch) return parseInt(fMatch[1], 10) * 1000;
                     const rMatch = name.match(/(\d+)호/);
-                    if (rMatch) return parseInt(rMatch[1], 10);
+                    if (rMatch) {
+                        const num = parseInt(rMatch[1], 10);
+                        if (num >= 100) {
+                            const floor = Math.floor(num / 100);
+                            const room = num % 100;
+                            return floor * 1000 + room;
+                        }
+                        return num;
+                    }
                     const numMatch = name.match(/\d+/);
-                    return numMatch ? parseInt(numMatch[0], 10) : 50000;
+                    return numMatch ? parseInt(numMatch[0], 10) : 5000000;
                 }
                 return parseTargetScore(a.name) - parseTargetScore(b.name);
             }
