@@ -4708,7 +4708,15 @@
                 noResult: false,
                 activeMatchIndex: 0,
                 matches: [],
-                selectedItem: null
+                selectedItem: null,
+                userSelectedDong: false,
+                buildingModeQuery: '',
+                facilityModeQuery: '',
+                lastRenderedBldQuery: '',
+                currentRenderedBldKey: '',
+                selectedBld: null,
+                lotBuildingMatches: [],
+                highlightedFloors: {}
             };
         }
 
@@ -4724,7 +4732,53 @@
         let currentTabFacilityState = getDefaultFacilityState();
         let currentTabHazmatState = getDefaultHazmatState();
 
+        function syncFacilityRuntimeToTabState() {
+            if (!currentTabFacilityState) currentTabFacilityState = getDefaultFacilityState();
+            if (typeof lastBuildingModeQuery !== 'undefined') currentTabFacilityState.buildingModeQuery = lastBuildingModeQuery || '';
+            if (typeof lastFacilityModeQuery !== 'undefined') currentTabFacilityState.facilityModeQuery = lastFacilityModeQuery || '';
+            if (typeof lastRenderedBldQuery !== 'undefined') currentTabFacilityState.lastRenderedBldQuery = lastRenderedBldQuery || '';
+            if (typeof currentRenderedBldKey !== 'undefined') currentTabFacilityState.currentRenderedBldKey = currentRenderedBldKey || '';
+            if (typeof currentFacilitySelectedBld !== 'undefined') {
+                currentTabFacilityState.selectedBld = currentFacilitySelectedBld ? JSON.parse(JSON.stringify(currentFacilitySelectedBld)) : null;
+            }
+            if (typeof currentLotBuildingMatches !== 'undefined') {
+                currentTabFacilityState.lotBuildingMatches = Array.isArray(currentLotBuildingMatches) ? JSON.parse(JSON.stringify(currentLotBuildingMatches)) : [];
+            }
+            if (typeof bldHighlightedFloorsMap !== 'undefined' && bldHighlightedFloorsMap instanceof Map) {
+                const hlObj = {};
+                bldHighlightedFloorsMap.forEach((setVal, k) => {
+                    if (setVal && setVal.size > 0) hlObj[k] = Array.from(setVal);
+                });
+                currentTabFacilityState.highlightedFloors = hlObj;
+            }
+        }
+
+        function restoreFacilityRuntimeFromTabState(facState) {
+            const st = facState || getDefaultFacilityState();
+            if (typeof lastBuildingModeQuery !== 'undefined') lastBuildingModeQuery = st.buildingModeQuery || '';
+            if (typeof lastFacilityModeQuery !== 'undefined') lastFacilityModeQuery = st.facilityModeQuery || '';
+            if (typeof lastRenderedBldQuery !== 'undefined') lastRenderedBldQuery = st.lastRenderedBldQuery || '';
+            if (typeof currentRenderedBldKey !== 'undefined') currentRenderedBldKey = st.currentRenderedBldKey || '';
+            if (typeof currentFacilitySelectedBld !== 'undefined') {
+                currentFacilitySelectedBld = st.selectedBld ? JSON.parse(JSON.stringify(st.selectedBld)) : null;
+            }
+            if (typeof currentLotBuildingMatches !== 'undefined') {
+                currentLotBuildingMatches = Array.isArray(st.lotBuildingMatches) ? JSON.parse(JSON.stringify(st.lotBuildingMatches)) : [];
+            }
+            if (typeof bldHighlightedFloorsMap !== 'undefined' && bldHighlightedFloorsMap instanceof Map) {
+                bldHighlightedFloorsMap.clear();
+                if (st.highlightedFloors && typeof st.highlightedFloors === 'object') {
+                    Object.entries(st.highlightedFloors).forEach(([k, arr]) => {
+                        if (Array.isArray(arr) && arr.length > 0) {
+                            bldHighlightedFloorsMap.set(k, new Set(arr));
+                        }
+                    });
+                }
+            }
+        }
+
         function renderFacilityState(facState) {
+            restoreFacilityRuntimeFromTabState(facState);
             const input = document.getElementById('facilitySearchInput');
             const loadingEl = document.getElementById('facilityLoadingIndicator');
             const resultEl = document.getElementById('facilityResultContainer');
@@ -11148,6 +11202,13 @@
                 };
                 let fastPostJson = null;
                 try { fastPostJson = await Promise.any(postEndpoints.map(fetchFastPost)); } catch (e) {}
+                if (!fastPostJson) {
+                    const proxyPostUrls = [
+                        `https://api.allorigins.win/raw?url=${encodeURIComponent(postEndpoints[0])}`,
+                        `https://corsproxy.io/?${encodeURIComponent(postEndpoints[0])}`
+                    ];
+                    try { fastPostJson = await Promise.any(proxyPostUrls.map(fetchFastPost)); } catch (e) {}
+                }
                 for (const pJson of (fastPostJson ? [fastPostJson] : [])) {
                     try {
                         {
@@ -12830,22 +12891,51 @@
         }
 
         async function fetchBuildingsForLot(cand, originalQuery) {
-            const urls = [
+            const exactUrls = [
                 `${BLD_HUB_API_URL}?sigunguCd=${cand.sigunguCd}&bjdongCd=${cand.bjdongCd}&platGbCd=${cand.platGbCd}&bun=${cand.bun}&ji=${cand.ji}&numOfRows=500&pageNo=1&serviceKey=${BLD_HUB_SERVICE_KEY}`,
                 `${BLD_HUB_API_URL}?sigunguCd=${cand.sigunguCd}&bjdongCd=${cand.bjdongCd}&bun=${cand.bun}&ji=${cand.ji}&numOfRows=500&pageNo=1&serviceKey=${BLD_HUB_SERVICE_KEY}`
             ];
-            const items = await fetchOpenApiItemsWithFallback(urls, 6500);
+            let items = await fetchOpenApiItemsWithFallback(exactUrls, 3500);
+
+            // 합필·관련지번 등으로 부번(ji)이 다른 표제부에 등재된 경우(예: 천호대로 455 등) 본번(bun) 전체 조회 후 도로명 일치 필터
+            if (!items || items.length === 0) {
+                const bunOnlyUrls = [
+                    `${BLD_HUB_API_URL}?sigunguCd=${cand.sigunguCd}&bjdongCd=${cand.bjdongCd}&bun=${cand.bun}&numOfRows=500&pageNo=1&serviceKey=${BLD_HUB_SERVICE_KEY}`
+                ];
+                const bunItems = await fetchOpenApiItemsWithFallback(bunOnlyUrls, 3500);
+                if (bunItems && bunItems.length > 0) {
+                    const targetRoad = extractRoadAddressParts(cand.roadAddr || originalQuery);
+                    const roadMatched = targetRoad.roadName
+                        ? bunItems.filter(it => {
+                            const r = extractRoadAddressParts(it.newPlatPlc || '');
+                            if (r.roadName !== targetRoad.roadName) return false;
+                            if (targetRoad.roadBon && r.roadBon !== targetRoad.roadBon) return false;
+                            if (targetRoad.roadBu && r.roadBu !== targetRoad.roadBu) return false;
+                            return true;
+                        })
+                        : [];
+                    if (roadMatched.length > 0) {
+                        items = roadMatched;
+                    } else {
+                        const mainLotItems = bunItems.filter(it => String(it.ji || '').replace(/^0+/, '') === '');
+                        items = mainLotItems.length > 0 ? mainLotItems : bunItems;
+                    }
+                }
+            }
 
             const seen = new Set();
             const unique = [];
-            for (const rawIt of items) {
+            for (const rawIt of (items || [])) {
+                const effBun = String(rawIt.bun || cand.bun || '').padStart(4, '0');
+                const effJi = String(rawIt.ji || cand.ji || '0').padStart(4, '0');
+                const effPlatGb = rawIt.platGbCd || cand.platGbCd || '0';
                 const it = {
                     ...rawIt,
                     sigunguCd: rawIt.sigunguCd || cand.sigunguCd,
                     bjdongCd: rawIt.bjdongCd || cand.bjdongCd,
-                    platGbCd: rawIt.platGbCd || cand.platGbCd,
-                    bun: rawIt.bun || cand.bun,
-                    ji: rawIt.ji || cand.ji
+                    platGbCd: effPlatGb,
+                    bun: effBun,
+                    ji: effJi
                 };
                 const sig = `${it.bldNm||''}|${it.dongNm||''}|${it.newPlatPlc||''}|${it.platPlc||''}|${it.grndFlrCnt||''}|${it.totArea||''}`;
                 if (!seen.has(sig)) {
@@ -12853,11 +12943,11 @@
                     unique.push({
                         kind: 'building',
                         item: it,
-                        sigunguCd: cand.sigunguCd,
-                        bjdongCd: cand.bjdongCd,
-                        platGbCd: cand.platGbCd,
-                        bun: cand.bun,
-                        ji: cand.ji,
+                        sigunguCd: it.sigunguCd,
+                        bjdongCd: it.bjdongCd,
+                        platGbCd: effPlatGb,
+                        bun: effBun,
+                        ji: effJi,
                         combinedContext: `${originalQuery} ${cand.roadAddr} ${cand.jibunAddr}`,
                         bldNameHint: cand.bldNm || '',
                         roadFullKeyword: cand.roadAddr || originalQuery
@@ -13139,6 +13229,7 @@
                     const set = bldHighlightedFloorsMap.get(currentRenderedBldKey);
                     if (isNowHl) set.add(rKey);
                     else set.delete(rKey);
+                    saveCurrentTabData();
                 }
             });
         }
@@ -20503,6 +20594,7 @@
                 checkedItems: Array.from(checkedItemsStore),
                 lastSelected: selectedCategoryItem ? { type: selectedCategoryItem.type, no: selectedCategoryItem.cat.no } : null
             };
+            syncFacilityRuntimeToTabState();
             cur.facilityState = JSON.parse(JSON.stringify(currentTabFacilityState));
             cur.hazmatState = JSON.parse(JSON.stringify(currentTabHazmatState));
 
@@ -20800,6 +20892,9 @@
                     cur.hazmatState = getDefaultHazmatState();
                     currentTabFacilityState = getDefaultFacilityState();
                     currentTabHazmatState = getDefaultHazmatState();
+                    floorState.bldFloorUsageMap = null;
+                    floorState.syncAllRooms = false;
+                    if (typeof syncAllRoomsCheck !== 'undefined' && syncAllRoomsCheck) syncAllRoomsCheck.checked = false;
                     renderFacilityState(currentTabFacilityState);
                     renderHazmatState(currentTabHazmatState);
                     cur.archiveId = null;
