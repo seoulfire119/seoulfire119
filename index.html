@@ -2135,6 +2135,42 @@
         .addr-cand-card.is-active .addr-cand-action {
             background: #2563eb;
         }
+        .addr-cand-pagination {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-top: 8px;
+            padding: 6px 4px 2px;
+        }
+        .addr-page-btn {
+            min-width: 30px;
+            height: 30px;
+            padding: 0 8px;
+            border-radius: 7px;
+            border: 1.5px solid #cbd5e1;
+            background: #ffffff;
+            color: #334155;
+            font-size: 12.5px;
+            font-weight: 800;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.12s;
+        }
+        .addr-page-btn:hover {
+            border-color: #2563eb;
+            color: #1d4ed8;
+            background: #eff6ff;
+        }
+        .addr-page-btn.is-active {
+            background: #2563eb;
+            border-color: #2563eb;
+            color: #ffffff;
+            box-shadow: 0 1px 3px rgba(37, 99, 235, 0.3);
+        }
         
         .bld-ledger-top-table, .bld-ledger-grid-table, .bld-ledger-flr-table {
             width: 100%;
@@ -2373,6 +2409,7 @@
                                     <option value="3보">3보</option>
                                     <option value="초진">초진</option>
                                     <option value="완진">완진</option>
+                                    <option value="상황종료">상황종료</option>
                                 </select>
                             </div>
                         </div>
@@ -13229,45 +13266,74 @@
                 } else if (addrCandidates.length > 1 && multiMatchContainer && multiMatchList && multiMatchCount) {
                     loadingEl.style.display = 'none';
                     multiMatchCount.textContent = addrCandidates.length;
-                    multiMatchList.innerHTML = '';
                     multiMatchList.style.flexDirection = 'column';
-                    addrCandidates.forEach((cand) => {
-                        const card = document.createElement('button');
-                        card.type = 'button';
-                        card.className = 'addr-cand-card';
-                        card.innerHTML = `
-                            <div class="addr-cand-info">
-                                <div class="addr-cand-row"><span class="addr-cand-lbl">건물명</span><span class="addr-cand-val">${cand.bldNm || '-'}</span></div>
-                                <div class="addr-cand-row"><span class="addr-cand-lbl">지번</span><span class="addr-cand-val" style="font-weight:600; color:#334155;">${cand.jibunAddr}</span></div>
-                                <div class="addr-cand-row"><span class="addr-cand-lbl">도로명</span><span class="addr-cand-val" style="color:#1e40af;">${cand.roadAddr}${cand.exactMatch ? ' <span style="font-size:10px; background:#dbeafe; color:#1d4ed8; padding:1px 5px; border-radius:4px; margin-left:4px;">일치</span>' : ''}</span></div>
-                            </div>
-                            <span class="addr-cand-action">상세조회</span>
-                        `;
-                        card.addEventListener('click', async () => {
-                            multiMatchList.querySelectorAll('.addr-cand-card').forEach(c => c.classList.remove('is-active'));
-                            card.classList.add('is-active');
-                            if (bldResultEl) bldResultEl.style.display = 'none';
-                            noResultEl.style.display = 'none';
-                            loadingEl.style.display = 'block';
-            currentTabFacilityState.query = q;
-            currentTabFacilityState.hasSearched = true;
-            currentTabFacilityState.noResult = false;
-                            const lotMatches = await fetchBuildingsForLot(cand, q);
-                            loadingEl.style.display = 'none';
-                            if (lotMatches.length === 0) {
-                                noResultEl.style.display = 'flex';
-                                return;
-                            }
-                            currentTabFacilityState.noResult = false;
-                        currentTabFacilityState.matches = lotMatches;
-                        currentTabFacilityState.activeMatchIndex = 0;
-                        currentTabFacilityState.selectedItem = lotMatches[0];
-                        currentTabFacilityState.userSelectedDong = false;
-                        saveCurrentTabData();
-                        displayUnifiedFacilityMatch(lotMatches[0], lotMatches, false);
+
+                    const PAGE_SIZE = 10;
+                    const totalPages = Math.ceil(addrCandidates.length / PAGE_SIZE);
+                    let currentPage = 1;
+
+                    const renderAddrCandPage = (pageNum) => {
+                        currentPage = Math.max(1, Math.min(totalPages, pageNum));
+                        multiMatchList.innerHTML = '';
+                        const startIdx = (currentPage - 1) * PAGE_SIZE;
+                        const pageItems = addrCandidates.slice(startIdx, startIdx + PAGE_SIZE);
+
+                        pageItems.forEach((cand) => {
+                            const card = document.createElement('button');
+                            card.type = 'button';
+                            card.className = 'addr-cand-card';
+                            card.innerHTML = `
+                                <div class="addr-cand-info">
+                                    <div class="addr-cand-row"><span class="addr-cand-lbl">건물명</span><span class="addr-cand-val">${cand.bldNm || '-'}</span></div>
+                                    <div class="addr-cand-row"><span class="addr-cand-lbl">지번</span><span class="addr-cand-val" style="font-weight:600; color:#334155;">${cand.jibunAddr}</span></div>
+                                    <div class="addr-cand-row"><span class="addr-cand-lbl">도로명</span><span class="addr-cand-val" style="color:#1e40af;">${cand.roadAddr}${cand.exactMatch ? ' <span style="font-size:10px; background:#dbeafe; color:#1d4ed8; padding:1px 5px; border-radius:4px; margin-left:4px;">일치</span>' : ''}</span></div>
+                                </div>
+                                <span class="addr-cand-action">상세조회</span>
+                            `;
+                            card.addEventListener('click', async () => {
+                                multiMatchContainer.style.display = 'none';
+                                if (bldResultEl) bldResultEl.style.display = 'none';
+                                noResultEl.style.display = 'none';
+                                loadingEl.style.display = 'block';
+                                currentTabFacilityState.query = q;
+                                currentTabFacilityState.hasSearched = true;
+                                currentTabFacilityState.noResult = false;
+                                const lotMatches = await fetchBuildingsForLot(cand, q);
+                                loadingEl.style.display = 'none';
+                                if (lotMatches.length === 0) {
+                                    noResultEl.style.display = 'flex';
+                                    return;
+                                }
+                                currentTabFacilityState.noResult = false;
+                                currentTabFacilityState.matches = lotMatches;
+                                currentTabFacilityState.activeMatchIndex = 0;
+                                currentTabFacilityState.selectedItem = lotMatches[0];
+                                currentTabFacilityState.userSelectedDong = false;
+                                saveCurrentTabData();
+                                displayUnifiedFacilityMatch(lotMatches[0], lotMatches, false);
+                            });
+                            multiMatchList.appendChild(card);
                         });
-                        multiMatchList.appendChild(card);
-                    });
+
+                        if (totalPages > 1) {
+                            const pagWrap = document.createElement('div');
+                            pagWrap.className = 'addr-cand-pagination';
+                            for (let p = 1; p <= totalPages; p++) {
+                                const pBtn = document.createElement('button');
+                                pBtn.type = 'button';
+                                pBtn.className = `addr-page-btn ${p === currentPage ? 'is-active' : ''}`;
+                                pBtn.textContent = String(p);
+                                pBtn.addEventListener('click', () => {
+                                    renderAddrCandPage(p);
+                                    multiMatchContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                });
+                                pagWrap.appendChild(pBtn);
+                            }
+                            multiMatchList.appendChild(pagWrap);
+                        }
+                    };
+
+                    renderAddrCandPage(1);
                     multiMatchContainer.style.display = 'flex';
                     return;
                 }
@@ -19821,23 +19887,12 @@
             if (!fl) return;
             if (!fl.rooms) fl.rooms = [];
 
-            // 건축물 조회 용도가 들어있는 층에서 + 버튼을 누르면 용도를 제거하고 101호(또는 지하 B101호)부터 시작
-            if (fl.rooms.length === 1 && fl.rooms[0].isBldUsage) {
-                const isPartialRoomActiveForUsage = floorState.partialSetting?.enabled && (floorState.partialSetting.roomStart || floorState.partialSetting.roomEnd);
-                let startNum = 1;
-                if (isPartialRoomActiveForUsage) {
-                    const rStart = parseRoomNum(floorState.partialSetting.roomStart, 0);
-                    const rEnd = parseRoomNum(floorState.partialSetting.roomEnd, 0);
-                    startNum = (floorState.partialSetting.roomStart && floorState.partialSetting.roomEnd)
-                        ? Math.min(rStart, rEnd)
-                        : (floorState.partialSetting.roomStart ? rStart : 1);
-                    if (!startNum || startNum < 1) startNum = 1;
-                }
-                const formatted = startNum < 10 ? '0' + startNum : String(startNum);
-                fl.rooms[0].name = fl.floor > 0 ? `${fl.floor}${formatted}` : `B${Math.abs(fl.floor)}${formatted}`;
-                fl.rooms[0].isBldUsage = false;
+            if (floorState.syncAllRooms) {
                 fl.manualRoomsOverride = true;
-                return;
+            }
+            if (fl.rooms.length === 1 && fl.rooms[0].isBldUsage) {
+                fl.rooms[0].name = '';
+                fl.rooms[0].isBldUsage = false;
             }
 
             const isPartialRoomActive = floorState.partialSetting?.enabled && (floorState.partialSetting.roomStart || floorState.partialSetting.roomEnd);
@@ -19910,17 +19965,7 @@
             if (!fl.rooms) fl.rooms = [];
 
             const restoreUsageOrBlank = (baseRoom) => {
-                const usageMap = floorState.syncAllRooms ? getAvailableBldFloorUsageMap() : null;
-                if (floorState.syncAllRooms && usageMap) {
-                    delete fl.manualRoomsOverride;
-                    return {
-                        id: (baseRoom && baseRoom.id) || `bld-usage-${fl.floor}-${Date.now()}`,
-                        name: usageMap[String(fl.floor)] || '',
-                        text: baseRoom ? (baseRoom.text || '') : '',
-                        isFire: baseRoom ? !!baseRoom.isFire : false,
-                        isBldUsage: true
-                    };
-                }
+                delete fl.manualRoomsOverride;
                 return {
                     id: (baseRoom && baseRoom.id) || `empty-${fl.floor}-${Date.now()}`,
                     name: '',
@@ -19929,11 +19974,6 @@
                     isBldUsage: false
                 };
             };
-
-            // 이미 건축물 조회 용도 표시 상태이고 체크박스가 켜져 있으면 용도를 지우지 않고 유지
-            if (fl.rooms.length === 1 && fl.rooms[0].isBldUsage && floorState.syncAllRooms) {
-                return;
-            }
 
             const isPartialRoomActive = floorState.partialSetting?.enabled && (floorState.partialSetting.roomStart || floorState.partialSetting.roomEnd);
             if (isPartialRoomActive) {
@@ -19986,7 +20026,7 @@
             saveCurrentTabData();
         }
 
-        function createRoomCell(fl, rm, isLast, widthPx, textClass, isTopHeader = false) {
+        function createRoomCell(fl, rm, isLast, widthPx, textClass, isTopHeader = false, hideHeader = false) {
             const cell = document.createElement('div');
             cell.className = 'room-cell';
             const borderRight = isLast ? '' : 'border-right: 1.5px solid #0f172a;';
@@ -20018,8 +20058,8 @@
 
                 const bg = rm.isFire ? '#dc2626' : '#e2e8f0';
                 const color = rm.isFire ? '#ffffff' : '#0f172a';
-                const headerHtml = `
-                    <div class="room-hdr" style="width: ${typeof widthPx === 'string' ? widthPx : (widthPx + 'px')}; flex-shrink: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; font-size: ${textClass}; font-weight: 900; background: ${bg}; color: ${color}; border-right: 1.5px solid #0f172a; cursor: pointer; user-select: none; padding: ${rm.isBldUsage ? '3px 5px' : '2px 1px'}; text-align: center; line-height: 1.25; word-break: keep-all; overflow-wrap: anywhere; letter-spacing: -0.03em; box-sizing: border-box;">
+                const headerHtml = hideHeader ? '' : `
+                    <div class="room-hdr" style="width: ${typeof widthPx === 'string' ? widthPx : (widthPx + 'px')}; flex-shrink: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; font-size: ${textClass}; font-weight: 900; background: ${bg}; color: ${color}; border-right: 1.5px solid #0f172a; cursor: pointer; user-select: none; padding: 2px 1px; text-align: center; line-height: 1.25; word-break: keep-all; overflow-wrap: anywhere; letter-spacing: -0.03em; box-sizing: border-box;">
                         <span>${rm.name || ''}</span>
                         ${rm.isFire ? FIRE_ICON_SVG : ''}
                     </div>
@@ -20055,7 +20095,7 @@
             return cell;
         }
 
-        function renderFloorRow(container, fl, hasBottomBorder, maxTierCols = 1, isGroundDivider = false, roomsToRender = null, uniformUsageWidthPx = null) {
+        function renderFloorRow(container, fl, hasBottomBorder, maxTierCols = 1, isGroundDivider = false, roomsToRender = null, bldUsageMap = null) {
             const row = document.createElement('div');
             let bottomBorderStyle = '';
             if (isGroundDivider) {
@@ -20086,6 +20126,28 @@
 
             left.querySelector('.btn-add').addEventListener('click', () => handleAddRoom(fl.floor));
             left.querySelector('.btn-del').addEventListener('click', () => handleRemoveRoom(fl.floor));
+
+            // 건축물 조회 내용 불러오기 활성화 시: 층수 바로 옆에 독립된 용도 회색칸(기존 1/3의 절반 = 1/6 너비) 배치
+            // + 버튼으로 101, 102 호실을 늘려도 이 회색칸은 그대로 유지됨
+            const showUsageCol = !!(floorState.syncAllRooms && bldUsageMap);
+            if (showUsageCol) {
+                const usageText = bldUsageMap[String(fl.floor)] || '';
+                const blankFireTarget = (roomCount === 0 || isSingleBlank)
+                    ? (rooms[0] || (fl.rooms && fl.rooms[0]) || null)
+                    : null;
+                const isUsageFire = !!(blankFireTarget && blankFireTarget.isFire);
+                const usageCol = document.createElement('div');
+                usageCol.className = 'floor-usage-col';
+                usageCol.style.cssText = `width: calc((100% - 40px) / 6); flex: 0 0 calc((100% - 40px) / 6); min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; font-size: 11px; font-weight: 900; background: ${isUsageFire ? '#dc2626' : '#e2e8f0'}; color: ${isUsageFire ? '#ffffff' : '#0f172a'}; border-right: 1.5px solid #0f172a; padding: 3px 4px; text-align: center; line-height: 1.25; word-break: keep-all; overflow-wrap: anywhere; letter-spacing: -0.03em; user-select: none; box-sizing: border-box; ${blankFireTarget ? 'cursor: pointer;' : ''}`;
+                usageCol.innerHTML = `
+                    <span>${usageText}</span>
+                    ${isUsageFire ? FIRE_ICON_SVG : ''}
+                `;
+                if (blankFireTarget) {
+                    usageCol.addEventListener('click', () => toggleFire(blankFireTarget));
+                }
+                row.appendChild(usageCol);
+            }
 
             const rightCol = document.createElement('div');
             rightCol.style.cssText = 'flex: 1 1 0%; width: 0; min-width: 0; display: flex; flex-direction: column; height: auto; min-height: 38px; box-sizing: border-box;';
@@ -20126,10 +20188,7 @@
                 const tierRow = document.createElement('div');
                 tierRow.className = 'tier-row room-scale-1';
                 tierRow.style.cssText = 'display: grid; grid-template-columns: 1fr; width: 100%; min-width: 0; min-height: 38px; height: auto; align-items: stretch; box-sizing: border-box;';
-                const useUniform = !!(uniformUsageWidthPx && blankRm.isBldUsage);
-                const effectiveWPx = useUniform ? uniformUsageWidthPx : targetWPx;
-                const effectiveTSize = useUniform ? '11.5px' : targetTSize;
-                tierRow.appendChild(createRoomCell(fl, blankRm, true, effectiveWPx, effectiveTSize, false));
+                tierRow.appendChild(createRoomCell(fl, blankRm, true, targetWPx, targetTSize, false, showUsageCol));
                 rightCol.appendChild(tierRow);
             } else {
                 const CHUNK_SIZE = 5;
@@ -20270,9 +20329,7 @@
             let maxTierCols = 1;
             const visibleFloors = floorState.floors.filter(fl => isFloorInRange(fl.floor));
 
-            // 건축물 조회 용도 불러오기 활성화 시 전층 회색칸 너비를 3호실 분할 시 1개 칸과 정확히 동일한 1/3(calc(100% / 3))로 통일
-            const hasAnyBldUsage = visibleFloors.some(fl => fl.rooms && fl.rooms.some(r => r.isBldUsage));
-            const uniformUsageWidthPx = (floorState.syncAllRooms || hasAnyBldUsage) ? 'calc(100% / 3)' : null;
+            const activeUsageMap = floorState.syncAllRooms ? getAvailableBldFloorUsageMap() : null;
 
             visibleFloors.forEach(fl => {
                 const rooms = fl.rooms ? fl.rooms.filter((rm, rIdx) => rm.isBldUsage ? true : isRoomInRange(rm.name, rIdx)) : [];
@@ -20291,7 +20348,7 @@
                 const nextFloor = visibleFloors[idx + 1];
                 const isGroundDivider = (fl.floor === 1 && nextFloor && nextFloor.floor < 0);
                 const roomsForFloor = fl.rooms ? fl.rooms.filter((rm, rIdx) => rm.isBldUsage ? true : isRoomInRange(rm.name, rIdx)) : [];
-                renderFloorRow(container, fl, !isLastFloor, maxTierCols, isGroundDivider, roomsForFloor, uniformUsageWidthPx);
+                renderFloorRow(container, fl, !isLastFloor, maxTierCols, isGroundDivider, roomsForFloor, activeUsageMap);
             });
         }
 
@@ -20390,14 +20447,13 @@
             floorState.floors.forEach(fl => {
                 if (!forceOverwriteManual && fl.manualRoomsOverride) return;
                 delete fl.manualRoomsOverride;
-                const usageText = usageMap[String(fl.floor)] || '';
                 const prevFirst = (fl.rooms && fl.rooms.length > 0) ? fl.rooms[0] : null;
                 fl.rooms = [{
-                    id: (prevFirst && prevFirst.id) || `bld-usage-${fl.floor}-${Date.now()}-${Math.random()}`,
-                    name: usageText,
+                    id: (prevFirst && prevFirst.id) || `empty-${fl.floor}-${Date.now()}-${Math.random()}`,
+                    name: '',
                     text: prevFirst ? (prevFirst.text || '') : '',
                     isFire: prevFirst ? !!prevFirst.isFire : false,
-                    isBldUsage: true
+                    isBldUsage: false
                 }];
             });
             return true;
