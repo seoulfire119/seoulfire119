@@ -20187,7 +20187,7 @@
                 }
                 const tierRow = document.createElement('div');
                 tierRow.className = 'tier-row room-scale-1';
-                tierRow.style.cssText = 'display: grid; grid-template-columns: 1fr; width: 100%; min-width: 0; min-height: 38px; height: auto; align-items: stretch; box-sizing: border-box;';
+                tierRow.style.cssText = 'flex: 1 0 auto; display: grid; grid-template-columns: 1fr; width: 100%; min-width: 0; min-height: 38px; align-items: stretch; box-sizing: border-box;';
                 tierRow.appendChild(createRoomCell(fl, blankRm, true, targetWPx, targetTSize, false, showUsageCol));
                 rightCol.appendChild(tierRow);
             } else {
@@ -20204,7 +20204,7 @@
 
                     const tierRow = document.createElement('div');
                     tierRow.className = `tier-row ${isTopHeader ? 'room-scale-top-header' : sClass}`;
-                    tierRow.style.cssText = `display: grid; grid-template-columns: repeat(${baseCols}, minmax(0, 1fr)); width: 100%; min-width: 0; min-height: ${isTopHeader ? '59px' : '38px'}; height: auto; align-items: stretch; box-sizing: border-box; ${isLastTier ? '' : 'border-bottom: 2px solid #0f172a;'}`;
+                    tierRow.style.cssText = `flex: 1 0 auto; display: grid; grid-template-columns: repeat(${baseCols}, minmax(0, 1fr)); width: 100%; min-width: 0; min-height: ${isTopHeader ? '59px' : '38px'}; align-items: stretch; box-sizing: border-box; ${isLastTier ? '' : 'border-bottom: 2px solid #0f172a;'}`;
 
                     const fillers = Math.max(0, baseCols - tierRooms.length);
 
@@ -20216,7 +20216,7 @@
                     if (fillers > 0) {
                         const f = document.createElement('div');
                         f.className = 'room-cell-filler';
-                        f.style.cssText = `grid-column: span ${fillers}; width: 100%; min-width: 0; min-height: ${isTopHeader ? '59px' : '38px'}; height: auto; background: #f8fafc; box-sizing: border-box;`;
+                        f.style.cssText = `grid-column: span ${fillers}; width: 100%; min-width: 0; min-height: ${isTopHeader ? '59px' : '38px'}; height: 100%; background: #f8fafc; box-sizing: border-box;`;
                         tierRow.appendChild(f);
                     }
 
