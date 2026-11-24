@@ -12314,6 +12314,8 @@
         }
 
         let activeBldDetailRenderSeq = 0;
+        let activeBldDetailBgPromise = Promise.resolve();
+        let activeBldDetailBgPending = false;
 
         async function renderBuildingDetailInFacility(matchObj, siblingMatches = null, userSelectedDong = false) {
             if (Array.isArray(siblingMatches) && siblingMatches.length > 0) {
@@ -12339,12 +12341,10 @@
             const bldResultEl = document.getElementById('facilityBuildingResultContainer');
             if (resultEl) resultEl.style.display = 'none';
             if (subwayResultEl) subwayResultEl.style.display = 'none';
-            if (showDetailNow) {
-                if (loadingEl) loadingEl.style.display = 'block';
-                if (bldResultEl) bldResultEl.style.display = 'none';
-            } else {
-                if (loadingEl) loadingEl.style.display = 'none';
-                if (bldResultEl) bldResultEl.style.display = 'flex';
+            if (loadingEl) loadingEl.style.display = 'none';
+            if (bldResultEl) bldResultEl.style.display = 'flex';
+            if (document.activeElement && document.activeElement === facilitySearchInput) {
+                try { facilitySearchInput.blur(); } catch (e) {}
             }
 
             const sigunguCd = String(it.sigunguCd || activeMatch.sigunguCd || '11680').padStart(5, '0');
@@ -12607,12 +12607,8 @@
                 }
             };
 
-            // 표제부만으로 설치가 확실하면 즉시 표시, 아니면 층별현황·소방청 API 완료 전까지 절대 '미설치'로 조기 단정하지 않음
-            if (lawEval && lawEval.text) {
-                applySprinklerCardStyle(lawEval.text, lawEval.detail, 'final');
-            } else {
-                applySprinklerCardStyle('', '', 'checking');
-            }
+            // 첨부 툴킷과 동일하게 표제부 기준 스프링클러·소방시설 결과를 즉시 표시 (층별현황 수신 시 자동 정밀 보정)
+            applySprinklerCardStyle(lawEval.text, lawEval.detail, 'final');
             currentFacilitySelectedBld = {
                 item: it,
                 ledgerType: ledgerType || '',
@@ -12622,8 +12618,12 @@
             };
             renderFireFacilitiesPanel(evaluateAllFireFacilities(it, ledgerType, combinedContext, bldNameHint || bldNm, null, lawEval));
 
-            // 4. 층별현황·지역지구·소방청 DB·아파트 복도유형을 모두 병렬 조회 완료 후 최종 화면을 한 번에 표시
+            // 4. 비동기 백그라운드 병렬 조회: 건축물·스프링클러는 이미 즉시 표시되었고, 층별현황·지역지구·복도유형은 도착 즉시 자동 반영
             const flrBody = document.getElementById('bldLedgerFloorBody');
+            if (flrBody) {
+                flrBody.innerHTML = '<tr><td colspan="5" style="padding: 14px; color: #64748b;">층별현황 데이터를 불러오는 중입니다...</td></tr>';
+            }
+
             const flrUrls = [
                 `${BLD_HUB_FLR_API_URL}?sigunguCd=${sigunguCd}&bjdongCd=${bjdongCd}&platGbCd=${platGbRaw}&bun=${bunPad}&ji=${jiPad}&numOfRows=500&pageNo=1&serviceKey=${BLD_HUB_SERVICE_KEY}`,
                 `${BLD_HUB_FLR_API_URL}?sigunguCd=${sigunguCd}&bjdongCd=${bjdongCd}&bun=${bunPad}&ji=${jiPad}&numOfRows=500&pageNo=1&serviceKey=${BLD_HUB_SERVICE_KEY}`
@@ -12633,136 +12633,158 @@
                 `${BLD_HUB_JIJIGU_API_URL}?sigunguCd=${sigunguCd}&bjdongCd=${bjdongCd}&bun=${bunPad}&ji=${jiPad}&numOfRows=100&pageNo=1&serviceKey=${BLD_HUB_SERVICE_KEY}`
             ];
 
-            const withDeadline = (promise, ms, fallbackVal) => Promise.race([
-                promise.catch(() => fallbackVal),
-                new Promise(resolve => setTimeout(() => resolve(fallbackVal), ms))
-            ]);
-
             const fetchFlrReliably = async () => {
-                let items = await fetchOpenApiItemsWithFallback(flrUrls, 3200).catch(() => []);
+                let items = await fetchOpenApiItemsWithFallback(flrUrls, 3800).catch(() => []);
                 if (!items || items.length === 0) {
                     const retryUrls = [
                         ...flrUrls,
                         `${BLD_HUB_FLR_API_URL}?sigunguCd=${sigunguCd}&bjdongCd=${bjdongCd}&bun=${bunPad}&numOfRows=500&pageNo=1&serviceKey=${BLD_HUB_SERVICE_KEY}`
                     ];
-                    items = await fetchOpenApiItemsWithFallback(retryUrls, 3500).catch(() => []);
+                    items = await fetchOpenApiItemsWithFallback(retryUrls, 4000).catch(() => []);
                 }
                 return items || [];
             };
 
-            const jijiguRawPromise = fetchOpenApiItemsWithFallback(jijiguUrls, 2200).catch(() => []);
+            // (A) 층별현황 도착 즉시 표 렌더링 + 6번 용도 맵 갱신 + 스프링클러/소방시설 정밀 보정
+            activeBldDetailBgPending = true;
+            const flrBgTask = fetchFlrReliably().then((flrItems) => {
+                if (myRenderSeq !== activeBldDetailRenderSeq) return;
+                let filteredFlr = flrItems || [];
+                if (dongNm && filteredFlr.length > 0) {
+                    const exactDongFlr = filteredFlr.filter(f => (f.dongNm || '').trim() === dongNm);
+                    if (exactDongFlr.length > 0) filteredFlr = exactDongFlr;
+                }
+                if (it.mgmBldrgstPk && filteredFlr.length > 0) {
+                    const pkFlr = filteredFlr.filter(f => f.mgmBldrgstPk === it.mgmBldrgstPk);
+                    if (pkFlr.length > 0) filteredFlr = pkFlr;
+                }
 
-            const [flrItems, jijiguItems, kaptHallType] = await Promise.all([
-                fetchFlrReliably(),
-                withDeadline(jijiguRawPromise, 1800, []),
-                withDeadline(kaptHallPromise, 1800, '')
-            ]);
-
-            if (myRenderSeq !== activeBldDetailRenderSeq) return;
-
-            // (A) 층별현황 정리 및 렌더링
-            let filteredFlr = flrItems || [];
-            if (dongNm && filteredFlr.length > 0) {
-                const exactDongFlr = filteredFlr.filter(f => (f.dongNm || '').trim() === dongNm);
-                if (exactDongFlr.length > 0) filteredFlr = exactDongFlr;
-            }
-            if (it.mgmBldrgstPk && filteredFlr.length > 0) {
-                const pkFlr = filteredFlr.filter(f => f.mgmBldrgstPk === it.mgmBldrgstPk);
-                if (pkFlr.length > 0) filteredFlr = pkFlr;
-            }
-
-            if (flrBody) {
-                if (filteredFlr.length === 0) {
-                    flrBody.innerHTML = '<tr><td colspan="5" style="padding: 14px; color: #64748b;">등록된 층별현황 정보가 없습니다.</td></tr>';
-                } else {
-                    const getFlrOrderGroup = (f) => {
-                        const gb = String(f.flrGbCd || '').trim();
-                        const gbNm = String(f.flrGbCdNm || '').trim();
-                        if (gb === '10' || gbNm.includes('지하')) return 1;
-                        if (gb === '20' || gbNm.includes('지상')) return 2;
-                        if (gb === '30' || gbNm.includes('옥탑')) return 3;
-                        return 4;
-                    };
-                    filteredFlr.sort((a, b) => {
-                        const gA = getFlrOrderGroup(a);
-                        const gB = getFlrOrderGroup(b);
-                        if (gA !== gB) return gA - gB;
-                        const nA = parseFloat(a.flrNo || '0') || 0;
-                        const nB = parseFloat(b.flrNo || '0') || 0;
-                        return gA === 1 ? (nB - nA) : (nA - nB);
-                    });
-
-                    currentRenderedBldKey = it.mgmBldrgstPk || [sigunguCd, bjdongCd, bunPad, jiPad, bldNm, dongNm].join('|');
-                    lastRenderedBldQuery = (facilitySearchInput ? facilitySearchInput.value.trim() : '') || (it.newPlatPlc || it.platPlc || '').trim();
-                    const savedHighlightSet = bldHighlightedFloorsMap.get(currentRenderedBldKey);
-                    flrBody.innerHTML = filteredFlr.map((f, idx) => {
-                        const gbNm = (f.flrGbCdNm || (f.flrGbCd === '10' ? '지하' : (f.flrGbCd === '30' ? '옥탑' : '지상'))).trim();
-                        const flrNoNm = (f.flrNoNm || (f.flrNo ? `${f.flrNo}층` : '-')).trim();
-                        const fStrct = (f.strctCdNm || f.etcStrct || strct || '-').trim();
-                        const mPurp = (f.mainPurpsCdNm || '').trim();
-                        const ePurp = (f.etcPurps || '').trim();
-                        let purpDisplay = mPurp || ePurp || '-';
-                        if (mPurp && ePurp && ePurp !== mPurp) {
-                            purpDisplay = ePurp.includes(mPurp) ? ePurp : `${mPurp}(${ePurp})`;
-                        }
-                        const fArea = formatAreaVal(f.area, false);
-                        const rowKey = `${idx}|${gbNm}|${flrNoNm}|${fArea}`;
-                        const isHl = savedHighlightSet && savedHighlightSet.has(rowKey);
-                        return `
-                            <tr data-flr-key="${rowKey.replace(/"/g, '&quot;')}"${isHl ? ' class="is-flr-highlighted"' : ''}>
-                                <td>${gbNm}</td>
-                                <td>${flrNoNm}</td>
-                                <td>${fStrct}</td>
-                                <td>${purpDisplay}</td>
-                                <td style="text-align:right; padding-right:12px; font-weight:800;">${fArea}</td>
-                            </tr>
-                        `;
-                    }).join('');
-
-                    const flrRawEntriesMap = {};
-                    filteredFlr.forEach(f => {
-                        const gb = String(f.flrGbCd || '').trim();
-                        const gbNm = String(f.flrGbCdNm || '').trim();
-                        const flrNoNmRaw = String(f.flrNoNm || '').trim();
-                        if (gb === '30' || gbNm.includes('옥탑') || flrNoNmRaw.includes('옥탑')) return;
-                        const isBasement = (gb === '10' || gbNm.includes('지하') || /^지하|^B\d/i.test(flrNoNmRaw));
-                        let numVal = parseInt(String(f.flrNo || '').replace(/\D/g, ''), 10);
-                        if (!numVal || isNaN(numVal)) {
-                            const mNum = flrNoNmRaw.match(/(\d+)/);
-                            if (mNum) numVal = parseInt(mNum[1], 10);
-                        }
-                        if (!numVal || isNaN(numVal)) return;
-                        const floorKey = String(isBasement ? -Math.abs(numVal) : Math.abs(numVal));
-                        if (!flrRawEntriesMap[floorKey]) flrRawEntriesMap[floorKey] = [];
-                        flrRawEntriesMap[floorKey].push({
-                            mainPurps: (f.mainPurpsCdNm || '').trim(),
-                            etcPurps: (f.etcPurps || '').trim()
+                if (flrBody) {
+                    if (filteredFlr.length === 0) {
+                        flrBody.innerHTML = '<tr><td colspan="5" style="padding: 14px; color: #64748b;">등록된 층별현황 정보가 없습니다.</td></tr>';
+                    } else {
+                        const getFlrOrderGroup = (f) => {
+                            const gb = String(f.flrGbCd || '').trim();
+                            const gbNm = String(f.flrGbCdNm || '').trim();
+                            if (gb === '10' || gbNm.includes('지하')) return 1;
+                            if (gb === '20' || gbNm.includes('지상')) return 2;
+                            if (gb === '30' || gbNm.includes('옥탑')) return 3;
+                            return 4;
+                        };
+                        filteredFlr.sort((a, b) => {
+                            const gA = getFlrOrderGroup(a);
+                            const gB = getFlrOrderGroup(b);
+                            if (gA !== gB) return gA - gB;
+                            const nA = parseFloat(a.flrNo || '0') || 0;
+                            const nB = parseFloat(b.flrNo || '0') || 0;
+                            return gA === 1 ? (nB - nA) : (nA - nB);
                         });
-                    });
-                    const builtUsageMap = {};
-                    Object.keys(flrRawEntriesMap).forEach(k => {
-                        const compact = summarizeFloorUsagesCompact(flrRawEntriesMap[k]);
-                        if (compact) builtUsageMap[k] = compact;
-                    });
-                    if (currentFacilitySelectedBld && currentFacilitySelectedBld.item === it) {
-                        currentFacilitySelectedBld.floorUsageMap = builtUsageMap;
+
+                        currentRenderedBldKey = it.mgmBldrgstPk || [sigunguCd, bjdongCd, bunPad, jiPad, bldNm, dongNm].join('|');
+                        lastRenderedBldQuery = (facilitySearchInput ? facilitySearchInput.value.trim() : '') || (it.newPlatPlc || it.platPlc || '').trim();
+                        const savedHighlightSet = bldHighlightedFloorsMap.get(currentRenderedBldKey);
+                        flrBody.innerHTML = filteredFlr.map((f, idx) => {
+                            const gbNm = (f.flrGbCdNm || (f.flrGbCd === '10' ? '지하' : (f.flrGbCd === '30' ? '옥탑' : '지상'))).trim();
+                            const flrNoNm = (f.flrNoNm || (f.flrNo ? `${f.flrNo}층` : '-')).trim();
+                            const fStrct = (f.strctCdNm || f.etcStrct || strct || '-').trim();
+                            const mPurp = (f.mainPurpsCdNm || '').trim();
+                            const ePurp = (f.etcPurps || '').trim();
+                            let purpDisplay = mPurp || ePurp || '-';
+                            if (mPurp && ePurp && ePurp !== mPurp) {
+                                purpDisplay = ePurp.includes(mPurp) ? ePurp : `${mPurp}(${ePurp})`;
+                            }
+                            const fArea = formatAreaVal(f.area, false);
+                            const rowKey = `${idx}|${gbNm}|${flrNoNm}|${fArea}`;
+                            const isHl = savedHighlightSet && savedHighlightSet.has(rowKey);
+                            return `
+                                <tr data-flr-key="${rowKey.replace(/"/g, '&quot;')}"${isHl ? ' class="is-flr-highlighted"' : ''}>
+                                    <td>${gbNm}</td>
+                                    <td>${flrNoNm}</td>
+                                    <td>${fStrct}</td>
+                                    <td>${purpDisplay}</td>
+                                    <td style="text-align:right; padding-right:12px; font-weight:800;">${fArea}</td>
+                                </tr>
+                            `;
+                        }).join('');
+
+                        const flrRawEntriesMap = {};
+                        filteredFlr.forEach(f => {
+                            const gb = String(f.flrGbCd || '').trim();
+                            const gbNm = String(f.flrGbCdNm || '').trim();
+                            const flrNoNmRaw = String(f.flrNoNm || '').trim();
+                            if (gb === '30' || gbNm.includes('옥탑') || flrNoNmRaw.includes('옥탑')) return;
+                            const isBasement = (gb === '10' || gbNm.includes('지하') || /^지하|^B\d/i.test(flrNoNmRaw));
+                            let numVal = parseInt(String(f.flrNo || '').replace(/\D/g, ''), 10);
+                            if (!numVal || isNaN(numVal)) {
+                                const mNum = flrNoNmRaw.match(/(\d+)/);
+                                if (mNum) numVal = parseInt(mNum[1], 10);
+                            }
+                            if (!numVal || isNaN(numVal)) return;
+                            const floorKey = String(isBasement ? -Math.abs(numVal) : Math.abs(numVal));
+                            if (!flrRawEntriesMap[floorKey]) flrRawEntriesMap[floorKey] = [];
+                            flrRawEntriesMap[floorKey].push({
+                                mainPurps: (f.mainPurpsCdNm || '').trim(),
+                                etcPurps: (f.etcPurps || '').trim()
+                            });
+                        });
+                        const builtUsageMap = {};
+                        Object.keys(flrRawEntriesMap).forEach(k => {
+                            const compact = summarizeFloorUsagesCompact(flrRawEntriesMap[k]);
+                            if (compact) builtUsageMap[k] = compact;
+                        });
+                        if (currentFacilitySelectedBld && currentFacilitySelectedBld.item === it) {
+                            currentFacilitySelectedBld.floorUsageMap = builtUsageMap;
+                            if (currentFacilitySelectedBld.appliedTabId === activeTabId && Object.keys(builtUsageMap).length > 0) {
+                                floorState.bldFloorUsageMap = JSON.parse(JSON.stringify(builtUsageMap));
+                                if (floorState.syncAllRooms) {
+                                    applyBuildingFloorUsageToFloors(floorState.bldFloorUsageMap, false);
+                                    if (floorState.partialSetting && floorState.partialSetting.enabled) {
+                                        applyPartialSettingUpdate();
+                                    }
+                                    renderTable();
+                                    calculateStatsAndSummary();
+                                    saveCurrentTabData();
+                                }
+                            }
+                        }
                     }
                 }
-            }
 
-            // (B) 아파트 복도유형 최종 확정
-            if (isAptBld && aptHallBadgeEl) {
-                const finalHall = kaptHallType || detectApartmentHallType(it, ledgerType, bldNm || bldNameHint, filteredFlr) || initialHallType;
-                if (finalHall) {
-                    aptHallBadgeEl.textContent = finalHall;
-                    aptHallBadgeEl.style.display = 'inline-flex';
-                } else {
-                    aptHallBadgeEl.style.display = 'none';
+                // 층별현황 기반 아파트 복도유형 보정
+                if (isAptBld && aptHallBadgeEl && !aptHallBadgeEl.dataset.kaptConfirmed) {
+                    const flrHall = detectApartmentHallType(it, ledgerType, bldNm || bldNameHint, filteredFlr) || initialHallType;
+                    if (flrHall) {
+                        aptHallBadgeEl.textContent = flrHall;
+                        aptHallBadgeEl.style.display = 'inline-flex';
+                    }
                 }
-            }
 
-            // (C) 용도지역 / 용도지구 / 구역 최종 반영
-            if (Array.isArray(jijiguItems) && jijiguItems.length > 0) {
+                // 층별현황 기반 스프링클러 및 소방시설 최종 정밀 반영
+                const refinedLawEval = evaluateSprinklerForFacilityModal(
+                    it.mainPurpsCdNm || ledgerType,
+                    it.etcPurps || '',
+                    useAprRaw,
+                    `${grnd}/${ugrnd}`,
+                    totAreaNum,
+                    combinedContext,
+                    bldNameHint || bldNm,
+                    ledgerType,
+                    archAreaNum,
+                    filteredFlr
+                );
+                const finalSpText = refinedLawEval.text || lawEval.text || '';
+                const finalSpDetail = refinedLawEval.text ? refinedLawEval.detail : (refinedLawEval.detail || lawEval.detail || '');
+                applySprinklerCardStyle(finalSpText, finalSpDetail, 'final');
+                if (currentFacilitySelectedBld && currentFacilitySelectedBld.item === it) {
+                    currentFacilitySelectedBld.sprinklerText = finalSpText;
+                    currentFacilitySelectedBld.sprinklerDetail = finalSpDetail;
+                }
+                renderFireFacilitiesPanel(evaluateAllFireFacilities(it, ledgerType, combinedContext, bldNameHint || bldNm, filteredFlr, { text: finalSpText, detail: finalSpDetail }));
+            });
+
+            // (B) 용도지역 / 용도지구 / 구역: 도착 즉시 셀 업데이트
+            const jijiguBgTask = fetchOpenApiItemsWithFallback(jijiguUrls, 3200).catch(() => []).then((jijiguItems) => {
+                if (myRenderSeq !== activeBldDetailRenderSeq || !Array.isArray(jijiguItems) || jijiguItems.length === 0) return;
                 const j1 = [], j2 = [], j3 = [];
                 jijiguItems.forEach(jj => {
                     const gbNm = (jj.jijiguGbCdNm || '').trim();
@@ -12775,44 +12797,32 @@
                 if (j1.length > 0) setCell('bldCellJijigu1', j1.length > 1 ? `${j1[0]} 외 ${j1.length - 1}` : j1[0]);
                 if (j2.length > 0) setCell('bldCellJijigu2', j2.join(', '));
                 if (j3.length > 0) setCell('bldCellJijigu3', j3.join(', '));
-            }
+            });
 
-            // (D) 스프링클러 및 소방시설 최종 확정
-            const refinedLawEval = evaluateSprinklerForFacilityModal(
-                it.mainPurpsCdNm || ledgerType,
-                it.etcPurps || '',
-                useAprRaw,
-                `${grnd}/${ugrnd}`,
-                totAreaNum,
-                combinedContext,
-                bldNameHint || bldNm,
-                ledgerType,
-                archAreaNum,
-                filteredFlr
-            );
-            const finalSpText = refinedLawEval.text || lawEval.text || '';
-            const finalSpDetail = refinedLawEval.text ? refinedLawEval.detail : (refinedLawEval.detail || lawEval.detail || '');
-            const finalMode = finalSpText ? 'final' : (filteredFlr.length > 0 ? 'final' : 'flr_unavailable');
-            applySprinklerCardStyle(finalSpText, finalSpDetail, finalMode);
-            if (currentFacilitySelectedBld && currentFacilitySelectedBld.item === it) {
-                currentFacilitySelectedBld.sprinklerText = finalSpText;
-                currentFacilitySelectedBld.sprinklerDetail = finalSpDetail;
-            }
-            renderFireFacilitiesPanel(evaluateAllFireFacilities(it, ledgerType, combinedContext, bldNameHint || bldNm, filteredFlr, { text: finalSpText, detail: finalSpDetail }));
+            // (C) K-apt 아파트 복도유형: 도착 즉시 우선 반영
+            if (aptHallBadgeEl) delete aptHallBadgeEl.dataset.kaptConfirmed;
+            const kaptBgTask = kaptHallPromise.then((kaptHallType) => {
+                if (myRenderSeq !== activeBldDetailRenderSeq || !isAptBld || !aptHallBadgeEl || !kaptHallType) return;
+                aptHallBadgeEl.textContent = kaptHallType;
+                aptHallBadgeEl.style.display = 'inline-flex';
+                aptHallBadgeEl.dataset.kaptConfirmed = '1';
+            }).catch(() => {});
 
-            // 모든 조회가 완료된 최종 결과 화면을 한 번에 표시 + 모바일 터치/스크롤 잠김 방지
-            if (document.activeElement && document.activeElement === facilitySearchInput) {
-                try { facilitySearchInput.blur(); } catch (e) {}
-            }
-            if (loadingEl) loadingEl.style.display = 'none';
-            if (bldResultEl) bldResultEl.style.display = 'flex';
+            activeBldDetailBgPromise = Promise.allSettled([
+                flrBgTask.catch(() => {}),
+                jijiguBgTask.catch(() => {}),
+                kaptBgTask
+            ]).finally(() => {
+                if (myRenderSeq === activeBldDetailRenderSeq) {
+                    activeBldDetailBgPending = false;
+                }
+            });
+
+            // 모바일 터치/스크롤 레이어 활성화 보장
             const scrollBox = document.getElementById('facilityScrollContainer');
             if (scrollBox) {
                 requestAnimationFrame(() => {
                     scrollBox.style.overflowY = 'auto';
-                    const curTop = scrollBox.scrollTop;
-                    scrollBox.scrollTop = curTop + 1;
-                    scrollBox.scrollTop = curTop;
                 });
             }
         }
@@ -12824,6 +12834,8 @@
             const stripAreaNumbersPreserveUnits = (str) => {
                 let s = String(str || '').trim();
                 if (!s) return '';
+                // (계단실), 계단실 제거 (예: 일반음식점(계단실), 일반음식점, 계단실 -> 일반음식점)
+                s = s.replace(/\(\s*계단실\s*\)/g, '').replace(/(?:^|[,·\s\/]+)계단실(?=[,·\s\/)]|$)/g, '');
                 s = s.replace(/\(\s*[0-9]+(?:[.,][0-9]+)?\s*(?:㎡|m2|m²|제곱미터|평)?\s*\)/gi, '');
                 s = s.replace(/(?:^|[\s:=-])[0-9]+(?:[.,][0-9]+)?\s*(?:㎡|m2|m²|제곱미터|평)(?=[\s,/)\]]|$)/gi, '');
                 s = s.replace(/(?:^|[\s:=-])[0-9]+\.[0-9]+(?!\s*(?:가구|세대|호|실|층|종|차|인|명|동))(?=[\s,/)\]]|$)/g, '');
@@ -12834,7 +12846,7 @@
 
             const normalizeGroupName = (raw) => {
                 let s = stripAreaNumbersPreserveUnits(raw);
-                if (!s || s === '-') return '';
+                if (!s || s === '-' || /^계단실$/.test(s)) return '';
                 if (/제?[12]종\s*근린생활시설|근린생활시설/.test(s)) return '근생시설';
                 s = s.replace(/^기타\s*/, '');
                 return s.trim();
@@ -12857,6 +12869,7 @@
                 if (!s || s === groupName) return '';
                 if (/^(?:제?[12]종\s*근린생활시설|근린생활시설|근생시설)$/.test(s)) return '';
                 if (/^[0-9]+(?:[.,][0-9]+)?$/.test(s)) return '';
+                if (/^계단실$/.test(s)) return '';
                 return s;
             };
 
@@ -13882,29 +13895,43 @@
 
         if (saveFacilityImageBtn) {
             saveFacilityImageBtn.addEventListener('click', async () => {
-                const isBldVisible = document.getElementById('facilityBuildingResultContainer') && document.getElementById('facilityBuildingResultContainer').style.display !== 'none';
-                const isSubwayVisible = document.getElementById('facilitySubwayResultContainer') && document.getElementById('facilitySubwayResultContainer').style.display !== 'none';
-                const isFacVisible = document.getElementById('facilityResultContainer') && document.getElementById('facilityResultContainer').style.display !== 'none';
-
-                let target = null;
-                let fileNamePrefix = '시설물정보';
-                if (isBldVisible) {
-                    target = document.getElementById('facilityBuildingResultContainer');
-                    const bName = document.getElementById('bldCellBldDongNm')?.textContent?.trim() || document.getElementById('bldCellNewPlatPlc')?.textContent?.trim() || '건축물';
-                    fileNamePrefix = `건축물정보_${bName.replace(/[\/\s()]/g, '_')}`;
-                } else if (isSubwayVisible) {
-                    target = document.getElementById('facilitySubwayResultContainer');
-                    fileNamePrefix = `지하철역정보_${document.getElementById('facSubwayStationName')?.textContent || '지하철'}`;
-                } else if (isFacVisible) {
-                    target = document.getElementById('facilityResultContainer');
-                    fileNamePrefix = `시설물제원_${document.getElementById('facTitleName')?.textContent || '시설물'}`;
-                } else {
-                    target = document.getElementById('facilityScrollContainer');
-                }
-                if (!target) return;
-                if (document.activeElement && typeof document.activeElement.blur === 'function') document.activeElement.blur();
-                showToast('정보를 그림 파일로 생성 중입니다...');
+                if (saveFacilityImageBtn.dataset.exporting === '1') return;
+                saveFacilityImageBtn.dataset.exporting = '1';
                 try {
+                    const isBldVisibleInit = document.getElementById('facilityBuildingResultContainer') && document.getElementById('facilityBuildingResultContainer').style.display !== 'none';
+                    if (isBldVisibleInit && activeBldDetailBgPending) {
+                        showToast('층별현황 등 상세 정보 로딩 완료 후 그림 파일로 저장합니다...');
+                        const seqAtClick = activeBldDetailRenderSeq;
+                        await activeBldDetailBgPromise;
+                        // 대기 중 다른 건물로 바뀌었으면 새 건물의 백그라운드도 끝까지 대기
+                        while (activeBldDetailBgPending && activeBldDetailRenderSeq !== seqAtClick) {
+                            await activeBldDetailBgPromise;
+                        }
+                        await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+                    }
+
+                    const isBldVisible = document.getElementById('facilityBuildingResultContainer') && document.getElementById('facilityBuildingResultContainer').style.display !== 'none';
+                    const isSubwayVisible = document.getElementById('facilitySubwayResultContainer') && document.getElementById('facilitySubwayResultContainer').style.display !== 'none';
+                    const isFacVisible = document.getElementById('facilityResultContainer') && document.getElementById('facilityResultContainer').style.display !== 'none';
+
+                    let target = null;
+                    let fileNamePrefix = '시설물정보';
+                    if (isBldVisible) {
+                        target = document.getElementById('facilityBuildingResultContainer');
+                        const bName = document.getElementById('bldCellBldDongNm')?.textContent?.trim() || document.getElementById('bldCellNewPlatPlc')?.textContent?.trim() || '건축물';
+                        fileNamePrefix = `건축물정보_${bName.replace(/[\/\s()]/g, '_')}`;
+                    } else if (isSubwayVisible) {
+                        target = document.getElementById('facilitySubwayResultContainer');
+                        fileNamePrefix = `지하철역정보_${document.getElementById('facSubwayStationName')?.textContent || '지하철'}`;
+                    } else if (isFacVisible) {
+                        target = document.getElementById('facilityResultContainer');
+                        fileNamePrefix = `시설물제원_${document.getElementById('facTitleName')?.textContent || '시설물'}`;
+                    } else {
+                        target = document.getElementById('facilityScrollContainer');
+                    }
+                    if (!target) return;
+                    if (document.activeElement && typeof document.activeElement.blur === 'function') document.activeElement.blur();
+                    showToast('정보를 그림 파일로 생성 중입니다...');
                     if (typeof html2canvas === 'undefined') throw new Error('html2canvas unavailable');
                     const fireFacPanelEl = document.getElementById('bldFireFacilitiesDetailPanel');
                     const isFireFacOpen = !!(isBldVisible && fireFacPanelEl && fireFacPanelEl.style.display === 'flex');
@@ -14033,6 +14060,8 @@
                 } catch (err) {
                     console.error('Facility image export failed:', err);
                     showToast('그림 파일 저장에 실패했습니다.');
+                } finally {
+                    delete saveFacilityImageBtn.dataset.exporting;
                 }
             });
         }
