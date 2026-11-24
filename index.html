@@ -2953,7 +2953,7 @@
                 </div>
 
                 <!-- 본문 스크롤 영역 -->
-                <div id="facilityScrollContainer" style="flex: 1; overflow-y: auto; padding: 20px 16px; display: flex; flex-direction: column; justify-content: space-between; gap: 20px; background: #f1f5f9;">
+                <div id="facilityScrollContainer" style="flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; touch-action: pan-y; padding: 20px 16px; display: flex; flex-direction: column; justify-content: space-between; gap: 20px; background: #f1f5f9;">
                     <div style="max-width: 640px; width: 100%; margin: 0 auto; display: flex; flex-direction: column; gap: 18px;">
                         <!-- 타이틀 & 검색창 -->
                         <div style="text-align: center; display: flex; flex-direction: column; align-items: center; gap: 13px;">
@@ -3267,7 +3267,7 @@
                                     <div style="font-size: 15px; font-weight: 900; color: #1e3a8a;">· 층별현황</div>
                                     <span style="font-size: 11.5px; color: #64748b; font-weight: 700;">단위 : ㎡</span>
                                 </div>
-                                <div id="bldLedgerFloorScrollBox" style="max-height: 290px; overflow-y: auto; overflow-x: auto; border-top: 2px solid #94a3b8; border-bottom: 1px solid #cbd5e1;">
+                                <div id="bldLedgerFloorScrollBox" style="max-height: 290px; overflow-y: auto; overflow-x: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: auto; touch-action: pan-x pan-y; border-top: 2px solid #94a3b8; border-bottom: 1px solid #cbd5e1;">
                                     <table class="bld-ledger-flr-table">
                                         <thead>
                                             <tr>
@@ -12161,22 +12161,22 @@
         const openApiResponseCache = new Map();
         const postcodifyQueryCache = new Map();
 
-        const fetchOpenApiItemsWithFallback = async (urls, timeoutMs = 4000) => {
+        const fetchOpenApiItemsWithFallback = async (urls, timeoutMs = 5500) => {
             const cacheKey = urls.join('||');
             if (openApiResponseCache.has(cacheKey)) {
                 return openApiResponseCache.get(cacheKey);
             }
-            const fetchSingle = async (targetUrl, ms) => {
+            const fetchSingleItems = async (targetUrl, ms) => {
                 const ctrl = new AbortController();
                 const timer = setTimeout(() => ctrl.abort(), ms);
                 try {
                     const res = await fetch(targetUrl, { signal: ctrl.signal });
                     clearTimeout(timer);
                     if (!res.ok) throw new Error('HTTP ' + res.status);
-                    const text = await res.text();
-                    const isValidApiPayload = text.includes('<response>') || text.includes('"response"') || text.includes('<items') || text.includes('<totalCount>');
-                    if (!isValidApiPayload) throw new Error('Invalid payload');
-                    return { valid: true, items: parseOpenApiItems(text) };
+                    const rawText = await res.text();
+                    const items = parseOpenApiItems(rawText);
+                    if (items.length > 0) return items;
+                    throw new Error('Empty items');
                 } catch (e) {
                     clearTimeout(timer);
                     throw e;
@@ -12187,38 +12187,27 @@
                 (u) => `https://corsproxy.io/?${encodeURIComponent(u)}`
             ];
 
-            // 1) 후보 URL들을 직접 호출로 동시 병렬 실행 (urls[0] 우선 채택, 정상 응답 시 프록시 대기 없음)
-            const directSettled = await Promise.allSettled(urls.map(u => fetchSingle(u, Math.min(Math.max(timeoutMs, 3500), 4800))));
-            let anyDirectValid = false;
-            for (const st of directSettled) {
-                if (st.status === 'fulfilled' && st.value && st.value.valid) {
-                    anyDirectValid = true;
-                    if (st.value.items.length > 0) {
-                        openApiResponseCache.set(cacheKey, st.value.items);
-                        return st.value.items;
-                    }
+            // 1) 후보 URL 직접 호출을 병렬 경쟁(Promise.any) — urls[0]이 0.2초 만에 성공하면 다른 URL을 기다리지 않고 즉시 반환!
+            try {
+                const fastDirect = await Promise.any(urls.map(u => fetchSingleItems(u, timeoutMs)));
+                if (fastDirect && fastDirect.length > 0) {
+                    openApiResponseCache.set(cacheKey, fastDirect);
+                    return fastDirect;
                 }
-            }
-            if (anyDirectValid) {
-                openApiResponseCache.set(cacheKey, []);
-                return [];
-            }
+            } catch (e) {}
 
-            // 2) 직접 호출이 모두 네트워크/CORS 실패했을 때만 프록시 병렬 경쟁
+            // 2) 직접 호출이 모두 실패/빈응답인 경우에만 프록시 병렬 경쟁 (빈 결과는 캐시하지 않음)
             try {
                 const proxyCalls = [];
                 urls.forEach(qUrl => {
                     proxyWrappers.forEach(w => {
-                        proxyCalls.push(fetchSingle(w(qUrl), 3500).then(r => {
-                            if (!r || r.items.length === 0) throw new Error('Empty proxy');
-                            return r.items;
-                        }));
+                        proxyCalls.push(fetchSingleItems(w(qUrl), timeoutMs));
                     });
                 });
-                const fastItems = await Promise.any(proxyCalls);
-                if (fastItems && fastItems.length > 0) {
-                    openApiResponseCache.set(cacheKey, fastItems);
-                    return fastItems;
+                const fastProxy = await Promise.any(proxyCalls);
+                if (fastProxy && fastProxy.length > 0) {
+                    openApiResponseCache.set(cacheKey, fastProxy);
+                    return fastProxy;
                 }
             } catch (e) {}
             return [];
@@ -12325,6 +12314,8 @@
             return '';
         }
 
+        let activeBldDetailRenderSeq = 0;
+
         async function renderBuildingDetailInFacility(matchObj, siblingMatches = null, userSelectedDong = false) {
             if (Array.isArray(siblingMatches) && siblingMatches.length > 0) {
                 currentLotBuildingMatches = sortBuildingMatchesByDong(siblingMatches);
@@ -12334,6 +12325,8 @@
                 currentLotBuildingMatches = sortBuildingMatchesByDong(currentLotBuildingMatches);
             }
 
+            const myRenderSeq = ++activeBldDetailRenderSeq;
+            const loadingEl = document.getElementById('facilityLoadingIndicator');
             const isSingleBuilding = (currentLotBuildingMatches.length === 1);
             const showDetailNow = isSingleBuilding || userSelectedDong;
             const activeMatch = showDetailNow ? matchObj : currentLotBuildingMatches[0];
@@ -12347,7 +12340,13 @@
             const bldResultEl = document.getElementById('facilityBuildingResultContainer');
             if (resultEl) resultEl.style.display = 'none';
             if (subwayResultEl) subwayResultEl.style.display = 'none';
-            if (bldResultEl) bldResultEl.style.display = 'flex';
+            if (showDetailNow) {
+                if (loadingEl) loadingEl.style.display = 'block';
+                if (bldResultEl) bldResultEl.style.display = 'none';
+            } else {
+                if (loadingEl) loadingEl.style.display = 'none';
+                if (bldResultEl) bldResultEl.style.display = 'flex';
+            }
 
             const sigunguCd = String(it.sigunguCd || activeMatch.sigunguCd || '11680').padStart(5, '0');
             const bjdongCd = String(it.bjdongCd || activeMatch.bjdongCd || '00000').padStart(5, '0');
@@ -12552,8 +12551,20 @@
                 archAreaNum
             );
 
-            const applySprinklerCardStyle = (finalText, finalDetail) => {
+            const applySprinklerCardStyle = (finalText, finalDetail, mode = 'final') => {
                 let cleanSpText = (finalText || '').trim();
+                if (mode === 'checking' && !cleanSpText) {
+                    spCard.style.background = '#eff6ff';
+                    spCard.style.borderColor = '#60a5fa';
+                    spIcon.textContent = '🔍';
+                    spPill.style.background = '#2563eb';
+                    spPill.textContent = '정밀 확인 중';
+                    spText.style.color = '#1e3a8a';
+                    spDetail.style.color = '#1d4ed8';
+                    spText.textContent = '층별현황 · 소방청 DB 기반 스프링클러 정밀 판별 중...';
+                    spDetail.textContent = '층별 바닥면적·용도 및 소방시설 정보 조회 완료 후 최종 확정됩니다.';
+                    return;
+                }
                 if (cleanSpText) {
                     if (cleanSpText.includes('간이')) {
                         spCard.style.background = '#f0fdfa';
@@ -12574,6 +12585,16 @@
                     }
                     spText.textContent = cleanSpText;
                     spDetail.textContent = finalDetail || '';
+                } else if (mode === 'flr_unavailable') {
+                    spCard.style.background = '#fffbeb';
+                    spCard.style.borderColor = '#f59e0b';
+                    spIcon.textContent = '⚠️';
+                    spPill.style.background = '#d97706';
+                    spPill.textContent = '층별 확인 필요';
+                    spText.style.color = '#92400e';
+                    spDetail.style.color = '#b45309';
+                    spText.textContent = '스프링클러 설치여부 재확인 필요 (층별현황 응답 지연)';
+                    spDetail.textContent = finalDetail || '층별 용도·바닥면적 데이터가 조회되지 않았습니다. 잠시 후 다시 검색해 주세요.';
                 } else {
                     spCard.style.background = '#f8fafc';
                     spCard.style.borderColor = '#cbd5e1';
@@ -12587,7 +12608,12 @@
                 }
             };
 
-            applySprinklerCardStyle(lawEval.text, lawEval.detail);
+            // 표제부만으로 설치가 확실하면 즉시 표시, 아니면 층별현황·소방청 API 완료 전까지 절대 '미설치'로 조기 단정하지 않음
+            if (lawEval && lawEval.text) {
+                applySprinklerCardStyle(lawEval.text, lawEval.detail, 'final');
+            } else {
+                applySprinklerCardStyle('', '', 'checking');
+            }
             currentFacilitySelectedBld = {
                 item: it,
                 ledgerType: ledgerType || '',
@@ -12597,12 +12623,8 @@
             };
             renderFireFacilitiesPanel(evaluateAllFireFacilities(it, ledgerType, combinedContext, bldNameHint || bldNm, null, lawEval));
 
-            // 4. 비동기 독립 병렬 조회: 층별현황·지역지구·K-apt·소방안전시스템을 각각 도착 즉시 렌더링 (체감 로딩 속도 대폭 단축)
+            // 4. 층별현황·지역지구·소방청 DB·아파트 복도유형을 모두 병렬 조회 완료 후 최종 화면을 한 번에 표시
             const flrBody = document.getElementById('bldLedgerFloorBody');
-            if (flrBody) {
-                flrBody.innerHTML = '<tr><td colspan="5" style="padding: 14px; color: #64748b;">층별현황 데이터를 불러오는 중입니다...</td></tr>';
-            }
-
             const flrUrls = [
                 `${BLD_HUB_FLR_API_URL}?sigunguCd=${sigunguCd}&bjdongCd=${bjdongCd}&platGbCd=${platGbRaw}&bun=${bunPad}&ji=${jiPad}&numOfRows=500&pageNo=1&serviceKey=${BLD_HUB_SERVICE_KEY}`,
                 `${BLD_HUB_FLR_API_URL}?sigunguCd=${sigunguCd}&bjdongCd=${bjdongCd}&bun=${bunPad}&ji=${jiPad}&numOfRows=500&pageNo=1&serviceKey=${BLD_HUB_SERVICE_KEY}`
@@ -12612,11 +12634,25 @@
                 `${BLD_HUB_JIJIGU_API_URL}?sigunguCd=${sigunguCd}&bjdongCd=${bjdongCd}&bun=${bunPad}&ji=${jiPad}&numOfRows=100&pageNo=1&serviceKey=${BLD_HUB_SERVICE_KEY}`
             ];
 
-            const isStillCurrentItem = () => !!(currentFacilitySelectedBld && currentFacilitySelectedBld.item === it);
+            const withDeadline = (promise, ms, fallbackVal) => Promise.race([
+                promise.catch(() => fallbackVal),
+                new Promise(resolve => setTimeout(() => resolve(fallbackVal), ms))
+            ]);
 
-            const flrPromise = fetchOpenApiItemsWithFallback(flrUrls, 4000).catch(() => []);
-            const jijiguPromise = fetchOpenApiItemsWithFallback(jijiguUrls, 3500).catch(() => []);
-            const spApiPromise = checkSprinklerInstalledFromApi(
+            const fetchFlrReliably = async () => {
+                let items = await fetchOpenApiItemsWithFallback(flrUrls, 3200).catch(() => []);
+                if (!items || items.length === 0) {
+                    const retryUrls = [
+                        ...flrUrls,
+                        `${BLD_HUB_FLR_API_URL}?sigunguCd=${sigunguCd}&bjdongCd=${bjdongCd}&bun=${bunPad}&numOfRows=500&pageNo=1&serviceKey=${BLD_HUB_SERVICE_KEY}`
+                    ];
+                    items = await fetchOpenApiItemsWithFallback(retryUrls, 3500).catch(() => []);
+                }
+                return items || [];
+            };
+
+            const jijiguRawPromise = fetchOpenApiItemsWithFallback(jijiguUrls, 2500).catch(() => []);
+            const spApiRawPromise = checkSprinklerInstalledFromApi(
                 combinedContext,
                 useAprRaw,
                 bldNm || bldNameHint,
@@ -12629,150 +12665,118 @@
                 archAreaNum
             ).catch(() => null);
 
-            let resolvedFilteredFlr = [];
+            const [flrItems, jijiguItems, spApiRes, kaptHallType] = await Promise.all([
+                fetchFlrReliably(),
+                withDeadline(jijiguRawPromise, 2000, []),
+                withDeadline(spApiRawPromise, 2200, null),
+                withDeadline(kaptHallPromise, 2000, '')
+            ]);
 
-            // (A) 층별현황: 도착하는 즉시 표 렌더링 + 6번 간략 용도 맵 생성 + 스프링클러/소방시설 1차 보정
-            const flrDonePromise = flrPromise.then((flrItems) => {
-                if (!isStillCurrentItem()) return [];
-                let filteredFlr = flrItems || [];
-                if (dongNm && filteredFlr.length > 0) {
-                    const exactDongFlr = filteredFlr.filter(f => (f.dongNm || '').trim() === dongNm);
-                    if (exactDongFlr.length > 0) filteredFlr = exactDongFlr;
-                }
-                if (it.mgmBldrgstPk && filteredFlr.length > 0) {
-                    const pkFlr = filteredFlr.filter(f => f.mgmBldrgstPk === it.mgmBldrgstPk);
-                    if (pkFlr.length > 0) filteredFlr = pkFlr;
-                }
-                resolvedFilteredFlr = filteredFlr;
+            if (myRenderSeq !== activeBldDetailRenderSeq) return;
 
-                if (flrBody) {
-                    if (filteredFlr.length === 0) {
-                        flrBody.innerHTML = '<tr><td colspan="5" style="padding: 14px; color: #64748b;">등록된 층별현황 정보가 없습니다.</td></tr>';
-                    } else {
-                        const getFlrOrderGroup = (f) => {
-                            const gb = String(f.flrGbCd || '').trim();
-                            const gbNm = String(f.flrGbCdNm || '').trim();
-                            if (gb === '10' || gbNm.includes('지하')) return 1;
-                            if (gb === '20' || gbNm.includes('지상')) return 2;
-                            if (gb === '30' || gbNm.includes('옥탑')) return 3;
-                            return 4;
-                        };
-                        filteredFlr.sort((a, b) => {
-                            const gA = getFlrOrderGroup(a);
-                            const gB = getFlrOrderGroup(b);
-                            if (gA !== gB) return gA - gB;
-                            const nA = parseFloat(a.flrNo || '0') || 0;
-                            const nB = parseFloat(b.flrNo || '0') || 0;
-                            return gA === 1 ? (nB - nA) : (nA - nB);
-                        });
+            // (A) 층별현황 정리 및 렌더링
+            let filteredFlr = flrItems || [];
+            if (dongNm && filteredFlr.length > 0) {
+                const exactDongFlr = filteredFlr.filter(f => (f.dongNm || '').trim() === dongNm);
+                if (exactDongFlr.length > 0) filteredFlr = exactDongFlr;
+            }
+            if (it.mgmBldrgstPk && filteredFlr.length > 0) {
+                const pkFlr = filteredFlr.filter(f => f.mgmBldrgstPk === it.mgmBldrgstPk);
+                if (pkFlr.length > 0) filteredFlr = pkFlr;
+            }
 
-                        currentRenderedBldKey = it.mgmBldrgstPk || [sigunguCd, bjdongCd, bunPad, jiPad, bldNm, dongNm].join('|');
-                        lastRenderedBldQuery = (facilitySearchInput ? facilitySearchInput.value.trim() : '') || (it.newPlatPlc || it.platPlc || '').trim();
-                        const savedHighlightSet = bldHighlightedFloorsMap.get(currentRenderedBldKey);
-                        flrBody.innerHTML = filteredFlr.map((f, idx) => {
-                            const gbNm = (f.flrGbCdNm || (f.flrGbCd === '10' ? '지하' : (f.flrGbCd === '30' ? '옥탑' : '지상'))).trim();
-                            const flrNoNm = (f.flrNoNm || (f.flrNo ? `${f.flrNo}층` : '-')).trim();
-                            const fStrct = (f.strctCdNm || f.etcStrct || strct || '-').trim();
-                            const mPurp = (f.mainPurpsCdNm || '').trim();
-                            const ePurp = (f.etcPurps || '').trim();
-                            let purpDisplay = mPurp || ePurp || '-';
-                            if (mPurp && ePurp && ePurp !== mPurp) {
-                                purpDisplay = ePurp.includes(mPurp) ? ePurp : `${mPurp}(${ePurp})`;
-                            }
-                            const fArea = formatAreaVal(f.area, false);
-                            const rowKey = `${idx}|${gbNm}|${flrNoNm}|${fArea}`;
-                            const isHl = savedHighlightSet && savedHighlightSet.has(rowKey);
-                            return `
-                                <tr data-flr-key="${rowKey.replace(/"/g, '&quot;')}"${isHl ? ' class="is-flr-highlighted"' : ''}>
-                                    <td>${gbNm}</td>
-                                    <td>${flrNoNm}</td>
-                                    <td>${fStrct}</td>
-                                    <td>${purpDisplay}</td>
-                                    <td style="text-align:right; padding-right:12px; font-weight:800;">${fArea}</td>
-                                </tr>
-                            `;
-                        }).join('');
+            if (flrBody) {
+                if (filteredFlr.length === 0) {
+                    flrBody.innerHTML = '<tr><td colspan="5" style="padding: 14px; color: #64748b;">등록된 층별현황 정보가 없습니다.</td></tr>';
+                } else {
+                    const getFlrOrderGroup = (f) => {
+                        const gb = String(f.flrGbCd || '').trim();
+                        const gbNm = String(f.flrGbCdNm || '').trim();
+                        if (gb === '10' || gbNm.includes('지하')) return 1;
+                        if (gb === '20' || gbNm.includes('지상')) return 2;
+                        if (gb === '30' || gbNm.includes('옥탑')) return 3;
+                        return 4;
+                    };
+                    filteredFlr.sort((a, b) => {
+                        const gA = getFlrOrderGroup(a);
+                        const gB = getFlrOrderGroup(b);
+                        if (gA !== gB) return gA - gB;
+                        const nA = parseFloat(a.flrNo || '0') || 0;
+                        const nB = parseFloat(b.flrNo || '0') || 0;
+                        return gA === 1 ? (nB - nA) : (nA - nB);
+                    });
 
-                        // 6번 층별현황 [건축물 조회 내용 불러오기]용 간략화·중복통합 층별 용도 맵 생성
-                        const flrRawEntriesMap = {};
-                        filteredFlr.forEach(f => {
-                            const gb = String(f.flrGbCd || '').trim();
-                            const gbNm = String(f.flrGbCdNm || '').trim();
-                            const flrNoNmRaw = String(f.flrNoNm || '').trim();
-                            if (gb === '30' || gbNm.includes('옥탑') || flrNoNmRaw.includes('옥탑')) return;
-                            const isBasement = (gb === '10' || gbNm.includes('지하') || /^지하|^B\d/i.test(flrNoNmRaw));
-                            let numVal = parseInt(String(f.flrNo || '').replace(/\D/g, ''), 10);
-                            if (!numVal || isNaN(numVal)) {
-                                const mNum = flrNoNmRaw.match(/(\d+)/);
-                                if (mNum) numVal = parseInt(mNum[1], 10);
-                            }
-                            if (!numVal || isNaN(numVal)) return;
-                            const floorKey = String(isBasement ? -Math.abs(numVal) : Math.abs(numVal));
-                            if (!flrRawEntriesMap[floorKey]) flrRawEntriesMap[floorKey] = [];
-                            flrRawEntriesMap[floorKey].push({
-                                mainPurps: (f.mainPurpsCdNm || '').trim(),
-                                etcPurps: (f.etcPurps || '').trim()
-                            });
-                        });
-                        const builtUsageMap = {};
-                        Object.keys(flrRawEntriesMap).forEach(k => {
-                            const compact = summarizeFloorUsagesCompact(flrRawEntriesMap[k]);
-                            if (compact) builtUsageMap[k] = compact;
-                        });
-                        if (isStillCurrentItem()) {
-                            currentFacilitySelectedBld.floorUsageMap = builtUsageMap;
-                            if (currentFacilitySelectedBld.appliedTabId === activeTabId && Object.keys(builtUsageMap).length > 0) {
-                                floorState.bldFloorUsageMap = JSON.parse(JSON.stringify(builtUsageMap));
-                                if (floorState.syncAllRooms) {
-                                    applyBuildingFloorUsageToFloors(floorState.bldFloorUsageMap, false);
-                                    if (floorState.partialSetting && floorState.partialSetting.enabled) {
-                                        applyPartialSettingUpdate();
-                                    }
-                                    renderTable();
-                                    calculateStatsAndSummary();
-                                    saveCurrentTabData();
-                                }
-                            }
+                    currentRenderedBldKey = it.mgmBldrgstPk || [sigunguCd, bjdongCd, bunPad, jiPad, bldNm, dongNm].join('|');
+                    lastRenderedBldQuery = (facilitySearchInput ? facilitySearchInput.value.trim() : '') || (it.newPlatPlc || it.platPlc || '').trim();
+                    const savedHighlightSet = bldHighlightedFloorsMap.get(currentRenderedBldKey);
+                    flrBody.innerHTML = filteredFlr.map((f, idx) => {
+                        const gbNm = (f.flrGbCdNm || (f.flrGbCd === '10' ? '지하' : (f.flrGbCd === '30' ? '옥탑' : '지상'))).trim();
+                        const flrNoNm = (f.flrNoNm || (f.flrNo ? `${f.flrNo}층` : '-')).trim();
+                        const fStrct = (f.strctCdNm || f.etcStrct || strct || '-').trim();
+                        const mPurp = (f.mainPurpsCdNm || '').trim();
+                        const ePurp = (f.etcPurps || '').trim();
+                        let purpDisplay = mPurp || ePurp || '-';
+                        if (mPurp && ePurp && ePurp !== mPurp) {
+                            purpDisplay = ePurp.includes(mPurp) ? ePurp : `${mPurp}(${ePurp})`;
                         }
+                        const fArea = formatAreaVal(f.area, false);
+                        const rowKey = `${idx}|${gbNm}|${flrNoNm}|${fArea}`;
+                        const isHl = savedHighlightSet && savedHighlightSet.has(rowKey);
+                        return `
+                            <tr data-flr-key="${rowKey.replace(/"/g, '&quot;')}"${isHl ? ' class="is-flr-highlighted"' : ''}>
+                                <td>${gbNm}</td>
+                                <td>${flrNoNm}</td>
+                                <td>${fStrct}</td>
+                                <td>${purpDisplay}</td>
+                                <td style="text-align:right; padding-right:12px; font-weight:800;">${fArea}</td>
+                            </tr>
+                        `;
+                    }).join('');
+
+                    const flrRawEntriesMap = {};
+                    filteredFlr.forEach(f => {
+                        const gb = String(f.flrGbCd || '').trim();
+                        const gbNm = String(f.flrGbCdNm || '').trim();
+                        const flrNoNmRaw = String(f.flrNoNm || '').trim();
+                        if (gb === '30' || gbNm.includes('옥탑') || flrNoNmRaw.includes('옥탑')) return;
+                        const isBasement = (gb === '10' || gbNm.includes('지하') || /^지하|^B\d/i.test(flrNoNmRaw));
+                        let numVal = parseInt(String(f.flrNo || '').replace(/\D/g, ''), 10);
+                        if (!numVal || isNaN(numVal)) {
+                            const mNum = flrNoNmRaw.match(/(\d+)/);
+                            if (mNum) numVal = parseInt(mNum[1], 10);
+                        }
+                        if (!numVal || isNaN(numVal)) return;
+                        const floorKey = String(isBasement ? -Math.abs(numVal) : Math.abs(numVal));
+                        if (!flrRawEntriesMap[floorKey]) flrRawEntriesMap[floorKey] = [];
+                        flrRawEntriesMap[floorKey].push({
+                            mainPurps: (f.mainPurpsCdNm || '').trim(),
+                            etcPurps: (f.etcPurps || '').trim()
+                        });
+                    });
+                    const builtUsageMap = {};
+                    Object.keys(flrRawEntriesMap).forEach(k => {
+                        const compact = summarizeFloorUsagesCompact(flrRawEntriesMap[k]);
+                        if (compact) builtUsageMap[k] = compact;
+                    });
+                    if (currentFacilitySelectedBld && currentFacilitySelectedBld.item === it) {
+                        currentFacilitySelectedBld.floorUsageMap = builtUsageMap;
                     }
                 }
+            }
 
-                // 층별현황 기반 아파트 복도유형 1차 보정
-                if (isAptBld && aptHallBadgeEl && isStillCurrentItem()) {
-                    const flrHall = detectApartmentHallType(it, ledgerType, bldNm || bldNameHint, filteredFlr) || initialHallType;
-                    if (flrHall) {
-                        aptHallBadgeEl.textContent = flrHall;
-                        aptHallBadgeEl.style.display = 'inline-flex';
-                    }
+            // (B) 아파트 복도유형 최종 확정
+            if (isAptBld && aptHallBadgeEl) {
+                const finalHall = kaptHallType || detectApartmentHallType(it, ledgerType, bldNm || bldNameHint, filteredFlr) || initialHallType;
+                if (finalHall) {
+                    aptHallBadgeEl.textContent = finalHall;
+                    aptHallBadgeEl.style.display = 'inline-flex';
+                } else {
+                    aptHallBadgeEl.style.display = 'none';
                 }
+            }
 
-                // 층별현황 기반 스프링클러/소방시설 1차 즉시 반영
-                const flrLawEval = evaluateSprinklerForFacilityModal(
-                    it.mainPurpsCdNm || ledgerType,
-                    it.etcPurps || '',
-                    useAprRaw,
-                    `${grnd}/${ugrnd}`,
-                    totAreaNum,
-                    combinedContext,
-                    bldNameHint || bldNm,
-                    ledgerType,
-                    archAreaNum,
-                    filteredFlr
-                );
-                const step1SpText = flrLawEval.text || lawEval.text;
-                const step1SpDetail = flrLawEval.text ? flrLawEval.detail : lawEval.detail;
-                applySprinklerCardStyle(step1SpText, step1SpDetail);
-                if (isStillCurrentItem()) {
-                    currentFacilitySelectedBld.sprinklerText = step1SpText || '';
-                    currentFacilitySelectedBld.sprinklerDetail = step1SpDetail || '';
-                }
-                renderFireFacilitiesPanel(evaluateAllFireFacilities(it, ledgerType, combinedContext, bldNameHint || bldNm, filteredFlr, { text: step1SpText, detail: step1SpDetail }));
-                return filteredFlr;
-            });
-
-            // (B) 용도지역 / 용도지구 / 구역: 도착 즉시 셀 업데이트
-            jijiguPromise.then((jijiguItems) => {
-                if (!isStillCurrentItem() || !Array.isArray(jijiguItems) || jijiguItems.length === 0) return;
+            // (C) 용도지역 / 용도지구 / 구역 최종 반영
+            if (Array.isArray(jijiguItems) && jijiguItems.length > 0) {
                 const j1 = [], j2 = [], j3 = [];
                 jijiguItems.forEach(jj => {
                     const gbNm = (jj.jijiguGbCdNm || '').trim();
@@ -12785,49 +12789,67 @@
                 if (j1.length > 0) setCell('bldCellJijigu1', j1.length > 1 ? `${j1[0]} 외 ${j1.length - 1}` : j1[0]);
                 if (j2.length > 0) setCell('bldCellJijigu2', j2.join(', '));
                 if (j3.length > 0) setCell('bldCellJijigu3', j3.join(', '));
-            });
+            }
 
-            // (C) K-apt 공식 아파트 복도유형: 도착 즉시 우선 반영
-            kaptHallPromise.then((kaptHallType) => {
-                if (!isStillCurrentItem() || !isAptBld || !aptHallBadgeEl || !kaptHallType) return;
-                aptHallBadgeEl.textContent = kaptHallType;
-                aptHallBadgeEl.style.display = 'inline-flex';
-            });
+            // (D) 스프링클러 및 소방시설 최종 확정
+            const refinedLawEval = evaluateSprinklerForFacilityModal(
+                it.mainPurpsCdNm || ledgerType,
+                it.etcPurps || '',
+                useAprRaw,
+                `${grnd}/${ugrnd}`,
+                totAreaNum,
+                combinedContext,
+                bldNameHint || bldNm,
+                ledgerType,
+                archAreaNum,
+                filteredFlr
+            );
+            const apiText = spApiRes ? (spApiRes.text || spApiRes.spText || '') : '';
+            const apiDetail = spApiRes ? (spApiRes.detail || '') : '';
+            const finalSpText = refinedLawEval.text || apiText || lawEval.text || '';
+            const finalSpDetail = (refinedLawEval.text ? refinedLawEval.detail : (apiDetail || refinedLawEval.detail || lawEval.detail || ''));
+            const finalMode = finalSpText ? 'final' : (filteredFlr.length > 0 ? 'final' : 'flr_unavailable');
+            applySprinklerCardStyle(finalSpText, finalSpDetail, finalMode);
+            if (currentFacilitySelectedBld && currentFacilitySelectedBld.item === it) {
+                currentFacilitySelectedBld.sprinklerText = finalSpText;
+                currentFacilitySelectedBld.sprinklerDetail = finalSpDetail;
+            }
+            renderFireFacilitiesPanel(evaluateAllFireFacilities(it, ledgerType, combinedContext, bldNameHint || bldNm, filteredFlr, { text: finalSpText, detail: finalSpDetail }));
 
-            // (D) 소방안전시스템 API: 층별현황과 결합해 스프링클러 최종 보정
-            Promise.all([flrDonePromise, spApiPromise]).then(([filteredFlr, spApiRes]) => {
-                if (!isStillCurrentItem() || !spApiRes) return;
-                const flrList = Array.isArray(filteredFlr) ? filteredFlr : resolvedFilteredFlr;
-                const refinedLawEval = evaluateSprinklerForFacilityModal(
-                    it.mainPurpsCdNm || ledgerType,
-                    it.etcPurps || '',
-                    useAprRaw,
-                    `${grnd}/${ugrnd}`,
-                    totAreaNum,
-                    combinedContext,
-                    bldNameHint || bldNm,
-                    ledgerType,
-                    archAreaNum,
-                    flrList
-                );
-                const apiText = spApiRes.text || spApiRes.spText || '';
-                const apiDetail = spApiRes.detail || '';
-                const finalSpText = refinedLawEval.text || apiText || lawEval.text;
-                const finalSpDetail = (refinedLawEval.text ? refinedLawEval.detail : (apiDetail || refinedLawEval.detail || lawEval.detail));
-                applySprinklerCardStyle(finalSpText, finalSpDetail);
-                if (isStillCurrentItem()) {
-                    currentFacilitySelectedBld.sprinklerText = finalSpText || '';
-                    currentFacilitySelectedBld.sprinklerDetail = finalSpDetail || '';
-                }
-                renderFireFacilitiesPanel(evaluateAllFireFacilities(it, ledgerType, combinedContext, bldNameHint || bldNm, flrList, { text: finalSpText, detail: finalSpDetail }));
-            });
+            // 모든 조회가 완료된 최종 결과 화면을 한 번에 표시 + 모바일 터치/스크롤 잠김 방지
+            if (document.activeElement && document.activeElement === facilitySearchInput) {
+                try { facilitySearchInput.blur(); } catch (e) {}
+            }
+            if (loadingEl) loadingEl.style.display = 'none';
+            if (bldResultEl) bldResultEl.style.display = 'flex';
+            const scrollBox = document.getElementById('facilityScrollContainer');
+            if (scrollBox) {
+                requestAnimationFrame(() => {
+                    scrollBox.style.overflowY = 'auto';
+                    const curTop = scrollBox.scrollTop;
+                    scrollBox.scrollTop = curTop + 1;
+                    scrollBox.scrollTop = curTop;
+                });
+            }
         }
 
         function summarizeFloorUsagesCompact(entries) {
             if (!Array.isArray(entries) || entries.length === 0) return '';
 
+            // 면적 숫자(예: 106.74㎡, 85.2m2, (106.74), 일반음식점 106.74)만 제거하고 '3가구', '4세대' 등 세대/가구 수는 그대로 보존
+            const stripAreaNumbersPreserveUnits = (str) => {
+                let s = String(str || '').trim();
+                if (!s) return '';
+                s = s.replace(/\(\s*[0-9]+(?:[.,][0-9]+)?\s*(?:㎡|m2|m²|제곱미터|평)?\s*\)/gi, '');
+                s = s.replace(/(?:^|[\s:=-])[0-9]+(?:[.,][0-9]+)?\s*(?:㎡|m2|m²|제곱미터|평)(?=[\s,/)\]]|$)/gi, '');
+                s = s.replace(/(?:^|[\s:=-])[0-9]+\.[0-9]+(?!\s*(?:가구|세대|호|실|층|종|차|인|명|동))(?=[\s,/)\]]|$)/g, '');
+                s = s.replace(/([가-힣])\s*[:=-]?\s*[0-9]{2,5}(?!\s*(?:가구|세대|호|실|층|종|차|인|명|동|가|길|로|번지))(?=[\s,/)\]]|$)/g, '$1');
+                s = s.replace(/\(\s*\)/g, '').replace(/\s{2,}/g, ' ').replace(/^[,·\/:=-\s]+|[,·\/:=-\s]+$/g, '').trim();
+                return s;
+            };
+
             const normalizeGroupName = (raw) => {
-                let s = String(raw || '').trim();
+                let s = stripAreaNumbersPreserveUnits(raw);
                 if (!s || s === '-') return '';
                 if (/제?[12]종\s*근린생활시설|근린생활시설/.test(s)) return '근생시설';
                 s = s.replace(/^기타\s*/, '');
@@ -12835,24 +12857,25 @@
             };
 
             const cleanSubToken = (tok, groupName) => {
-                let s = String(tok || '').trim();
+                let s = stripAreaNumbersPreserveUnits(tok);
                 if (!s || s === '-') return '';
-                // "제2종근린생활시설(사무소)" 형태에서 내부 핵심 명칭 추출
                 const innerM = s.match(/^(?:제?[12]종\s*근린생활시설|근린생활시설|근생시설)\s*\(([^)]+)\)$/);
-                if (innerM) s = innerM[1].trim();
+                if (innerM) s = stripAreaNumbersPreserveUnits(innerM[1]);
                 s = s.replace(/^제?[12]종\s*근린생활시설\s*/g, '').replace(/^근린생활시설\s*/g, '').trim();
-                // 중첩 괄호 단순화: "상점(소매점)" -> "소매점"
                 const subParenM = s.match(/^([가-힣A-Za-z0-9]+)\(([^)]+)\)$/);
                 if (subParenM) {
-                    s = subParenM[2].trim();
+                    const innerVal = subParenM[2].trim();
+                    if (!/\d+\s*(?:가구|세대)/.test(innerVal)) {
+                        s = innerVal;
+                    }
                 }
-                s = s.replace(/^기타\s*/, '').trim();
+                s = stripAreaNumbersPreserveUnits(s).replace(/^기타\s*/, '').trim();
                 if (!s || s === groupName) return '';
                 if (/^(?:제?[12]종\s*근린생활시설|근린생활시설|근생시설)$/.test(s)) return '';
+                if (/^[0-9]+(?:[.,][0-9]+)?$/.test(s)) return '';
                 return s;
             };
 
-            // 그룹별(순서 유지)로 세부 용도 중복 통합
             const groupOrder = [];
             const groupSubs = new Map();
             const addToGroup = (gName, subs) => {
@@ -12869,18 +12892,14 @@
 
             entries.forEach(({ mainPurps, etcPurps }) => {
                 let gName = normalizeGroupName(mainPurps);
-                const etcRaw = String(etcPurps || '').trim();
+                const etcRaw = stripAreaNumbersPreserveUnits(etcPurps);
 
                 if (!gName && etcRaw) {
                     const mPrefix = etcRaw.match(/^([^(,]+)\(([^)]+)\)/);
-                    if (mPrefix) {
-                        gName = normalizeGroupName(mPrefix[1]);
-                    } else {
-                        gName = normalizeGroupName(etcRaw);
-                    }
+                    if (mPrefix) gName = normalizeGroupName(mPrefix[1]);
+                    else gName = normalizeGroupName(etcRaw);
                 }
 
-                // etcPurps를 쉼표/중점 기준으로 분리해 세부 용도 수집
                 const extractedSubs = [];
                 if (etcRaw && etcRaw !== '-') {
                     const strippedOuter = etcRaw.replace(/^(?:제?[12]종\s*근린생활시설|근린생활시설|근생시설)\s*\((.*)\)$/, '$1');
@@ -12890,9 +12909,9 @@
                     });
                 }
 
-                // 공동주택 + 아파트 -> "아파트"로 간략화
                 if (gName === '공동주택' && extractedSubs.some(x => x.includes('아파트'))) {
-                    addToGroup('아파트', []);
+                    const aptWithCount = extractedSubs.find(x => /아파트.*\d+\s*(?:가구|세대)/.test(x));
+                    addToGroup(aptWithCount || '아파트', []);
                     return;
                 }
                 addToGroup(gName, extractedSubs);
@@ -12900,16 +12919,15 @@
 
             if (groupOrder.length === 0) return '';
 
-            // 1) 단독 그룹(예: 해당 층이 전부 근생시설)인 경우: 근생시설(학원, 의원) 형태
             if (groupOrder.length === 1) {
                 const g = groupOrder[0];
                 const subs = groupSubs.get(g) || [];
                 if (subs.length === 0) return g;
+                if (g === '근생시설' && subs.length === 1) return subs[0];
+                if (subs.length === 1 && /\d+\s*(?:가구|세대)/.test(subs[0]) && subs[0].includes('(')) return subs[0];
                 return `${g}(${subs.join(', ')})`;
             }
 
-            // 2) 복수 그룹이 섞인 경우(예: 근생시설 + 교육연구시설):
-            //    근생시설은 세부 용도(사무소, 소매점)만 간결히 꺼내고, 타 용도는 그룹명(교육연구시설 등)으로 중복 없이 나열
             const flatParts = [];
             const pushUnique = (v) => {
                 if (v && !flatParts.includes(v)) flatParts.push(v);
@@ -12920,7 +12938,8 @@
                     if (subs.length > 0) subs.forEach(pushUnique);
                     else pushUnique(g);
                 } else {
-                    pushUnique(g);
+                    const countSub = subs.find(x => /\d+\s*(?:가구|세대)/.test(x));
+                    pushUnique(countSub ? (countSub.includes('(') ? countSub : `${g}(${countSub})`) : g);
                 }
             });
             return flatParts.join(', ');
@@ -13353,13 +13372,13 @@
             return sortBuildingMatchesByDong(unique);
         }
 
-        function displayUnifiedFacilityMatch(m, siblingMatches = null, userSelectedDong = false) {
+        async function displayUnifiedFacilityMatch(m, siblingMatches = null, userSelectedDong = false) {
             const resultEl = document.getElementById('facilityResultContainer');
             const subwayResultEl = document.getElementById('facilitySubwayResultContainer');
             const bldResultEl = document.getElementById('facilityBuildingResultContainer');
 
             if (m.kind === 'building') {
-                renderBuildingDetailInFacility(m, siblingMatches, userSelectedDong);
+                return await renderBuildingDetailInFacility(m, siblingMatches, userSelectedDong);
             } else if (m.kind === 'subway' || m.isSubway) {
                 currentFacilitySelectedBld = null;
                 if (resultEl) resultEl.style.display = 'none';
@@ -13486,8 +13505,8 @@
                                 currentTabFacilityState.hasSearched = true;
                                 currentTabFacilityState.noResult = false;
                                 const lotMatches = await fetchBuildingsForLot(cand, q);
-                                loadingEl.style.display = 'none';
                                 if (lotMatches.length === 0) {
+                                    loadingEl.style.display = 'none';
                                     noResultEl.style.display = 'flex';
                                     return;
                                 }
@@ -13497,7 +13516,7 @@
                                 currentTabFacilityState.selectedItem = lotMatches[0];
                                 currentTabFacilityState.userSelectedDong = false;
                                 saveCurrentTabData();
-                                displayUnifiedFacilityMatch(lotMatches[0], lotMatches, false);
+                                await displayUnifiedFacilityMatch(lotMatches[0], lotMatches, false);
                             });
                             multiMatchList.appendChild(card);
                         });
@@ -13547,7 +13566,7 @@
                 currentTabFacilityState.selectedItem = sortedBlds[0];
                 currentTabFacilityState.userSelectedDong = false;
                 saveCurrentTabData();
-                displayUnifiedFacilityMatch(sortedBlds[0], sortedBlds, false);
+                await displayUnifiedFacilityMatch(sortedBlds[0], sortedBlds, false);
                 return;
             }
 
@@ -17679,23 +17698,34 @@
                 };
 
                 let fireItems = [];
-                outerLoop:
-                for (const qUrl of urlsToTry) {
-                    for (const wrap of fetchWrappers) {
-                        try {
-                            const controller = new AbortController();
-                            const timer = setTimeout(() => controller.abort(), 2800);
-                            const res = await fetch(wrap(qUrl), { signal: controller.signal });
-                            clearTimeout(timer);
-                            if (res.ok) {
-                                const text = await res.text();
-                                const parsed = parseFireSysResponse(text);
-                                if (parsed.length > 0) {
-                                    fireItems = parsed;
-                                    break outerLoop;
-                                }
-                            }
-                        } catch (e) {}
+                const fetchFireSingle = async (targetUrl, ms) => {
+                    const controller = new AbortController();
+                    const timer = setTimeout(() => controller.abort(), ms);
+                    try {
+                        const res = await fetch(targetUrl, { signal: controller.signal });
+                        clearTimeout(timer);
+                        if (!res.ok) throw new Error('HTTP ' + res.status);
+                        const txt = await res.text();
+                        const parsed = parseFireSysResponse(txt);
+                        if (parsed.length > 0) return parsed;
+                        throw new Error('Empty');
+                    } catch (e) {
+                        clearTimeout(timer);
+                        throw e;
+                    }
+                };
+                if (urlsToTry.length > 0) {
+                    try {
+                        fireItems = await Promise.any(urlsToTry.map(u => fetchFireSingle(u, 1800)));
+                    } catch (e) {}
+                    if (fireItems.length === 0) {
+                        const proxyCalls = [];
+                        urlsToTry.forEach(qUrl => {
+                            fetchWrappers.slice(1).forEach(wrap => {
+                                proxyCalls.push(fetchFireSingle(wrap(qUrl), 2000));
+                            });
+                        });
+                        try { fireItems = await Promise.any(proxyCalls); } catch (e) {}
                     }
                 }
 
