@@ -3137,15 +3137,14 @@
                         <!-- 건축물대장 및 스프링클러 검색 결과 컨테이너 -->
                         <div id="facilityBuildingResultContainer" style="display: none; flex-direction: column; gap: 14px; background: #ffffff; padding: 14px; border-radius: 14px; border: 1px solid #cbd5e1;">
                             <!-- 0. 스프링클러 설치 현황 배너 -->
-                            <div id="bldResSprinklerCard" style="padding: 14px 16px; border-radius: 10px; border: 1.5px solid #10b981; border-left: 5px solid #10b981; display: flex; flex-direction: column; gap: 6px; background: #ecfdf5;">
+                            <div id="bldResSprinklerCard" style="padding: 13px 15px; border-radius: 10px; border: 1.5px solid #10b981; border-left: 5px solid #10b981; display: flex; flex-direction: column; gap: 5px; background: #ecfdf5;">
                                 <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
-                                    <div style="display: flex; align-items: center; gap: 6px; font-weight: 900; font-size: 14.5px; color: #047857;">
+                                    <div style="display: flex; align-items: center; gap: 6px; font-weight: 900; font-size: 15px; color: #065f46;">
                                         <span id="bldResSprinklerIcon">💦</span>
-                                        <span id="bldResSprinklerTitle">스프링클러 설치 현황</span>
+                                        <span id="bldResSprinklerText">스프링클러 전층 설치</span>
                                     </div>
-                                    <span id="bldResSprinklerStatusPill" style="padding: 2px 8px; border-radius: 6px; background: #10b981; color: #ffffff; font-size: 11px; font-weight: 800;">설치대상</span>
+                                    <span id="bldResSprinklerStatusPill" style="flex-shrink: 0; padding: 2px 8px; border-radius: 6px; background: #10b981; color: #ffffff; font-size: 11px; font-weight: 800;">설치대상</span>
                                 </div>
-                                <div id="bldResSprinklerText" style="font-size: 14.5px; font-weight: 900; color: #065f46;">스프링클러 전층 설치</div>
                                 <div id="bldResSprinklerDetail" style="font-size: 12px; font-weight: 700; color: #047857; line-height: 1.45;">[적용기준: ...]</div>
                             </div>
 
@@ -12603,7 +12602,7 @@
                     spPill.textContent = '설치대상 아님 / 미확인';
                     spText.style.color = '#334155';
                     spDetail.style.color = '#475569';
-                    spText.textContent = '스프링클러 미설치 (법령 의무 설치 대상 제외)';
+                    spText.textContent = '스프링클러 미설치';
                     spDetail.textContent = finalDetail || '';
                 }
             };
@@ -12651,25 +12650,12 @@
                 return items || [];
             };
 
-            const jijiguRawPromise = fetchOpenApiItemsWithFallback(jijiguUrls, 2500).catch(() => []);
-            const spApiRawPromise = checkSprinklerInstalledFromApi(
-                combinedContext,
-                useAprRaw,
-                bldNm || bldNameHint,
-                roadFullKeyword,
-                ledgerType,
-                `${grnd}/${ugrnd}`,
-                totAreaNum,
-                it.mainPurpsCdNm || ledgerType,
-                it.etcPurps || '',
-                archAreaNum
-            ).catch(() => null);
+            const jijiguRawPromise = fetchOpenApiItemsWithFallback(jijiguUrls, 2200).catch(() => []);
 
-            const [flrItems, jijiguItems, spApiRes, kaptHallType] = await Promise.all([
+            const [flrItems, jijiguItems, kaptHallType] = await Promise.all([
                 fetchFlrReliably(),
-                withDeadline(jijiguRawPromise, 2000, []),
-                withDeadline(spApiRawPromise, 2200, null),
-                withDeadline(kaptHallPromise, 2000, '')
+                withDeadline(jijiguRawPromise, 1800, []),
+                withDeadline(kaptHallPromise, 1800, '')
             ]);
 
             if (myRenderSeq !== activeBldDetailRenderSeq) return;
@@ -12804,10 +12790,8 @@
                 archAreaNum,
                 filteredFlr
             );
-            const apiText = spApiRes ? (spApiRes.text || spApiRes.spText || '') : '';
-            const apiDetail = spApiRes ? (spApiRes.detail || '') : '';
-            const finalSpText = refinedLawEval.text || apiText || lawEval.text || '';
-            const finalSpDetail = (refinedLawEval.text ? refinedLawEval.detail : (apiDetail || refinedLawEval.detail || lawEval.detail || ''));
+            const finalSpText = refinedLawEval.text || lawEval.text || '';
+            const finalSpDetail = refinedLawEval.text ? refinedLawEval.detail : (refinedLawEval.detail || lawEval.detail || '');
             const finalMode = finalSpText ? 'final' : (filteredFlr.length > 0 ? 'final' : 'flr_unavailable');
             applySprinklerCardStyle(finalSpText, finalSpDetail, finalMode);
             if (currentFacilitySelectedBld && currentFacilitySelectedBld.item === it) {
@@ -13721,7 +13705,7 @@
                 if (heroSub) heroSub.textContent = '(도로명·지번주소 기반 건축물대장 · 스프링클러 · 소방시설)';
                 if (facilitySearchInput) facilitySearchInput.placeholder = '도로명주소 또는 지번주소를 입력하세요 (예: 테헤란로 152, 역삼동 737)';
                 if (noResHint) noResHint.textContent = '예: 테헤란로 152, 월드컵로 207, 역삼동 737 등 도로명 또는 지번주소를 입력해 보세요.';
-                if (footerTxt) footerTxt.textContent = '국토교통부 건축물대장(표제부·층별현황·지역지구) & 소방청 스프링클러 정보 연동';
+                if (footerTxt) footerTxt.textContent = '국토교통부 건축물대장(표제부·층별현황·지역지구) & 소방시설 적용기준 연동';
                 if (applyBtn) applyBtn.style.display = 'inline-flex';
                 if (resultEl) resultEl.style.display = 'none';
                 if (subwayResultEl) subwayResultEl.style.display = 'none';
@@ -17625,186 +17609,24 @@
         // [1차 검증] 건축물대장 표제부의 주용도, 층수, 연면적, 사용승인일 법령 설치기준 정밀 판정
         // [2차 검증] 특정소방대상물소방시설정보서비스 오픈API와 교차 검증하되, 기준 미달 건물에 대한 오매칭 오탐 원천 차단
         async function checkSprinklerInstalledFromApi(combinedContext, useAprDay, bldNameHint, roadNameKeyword, ledgerType = '', grndFlrCnt = '', totArea = '', mainPurpsCdNm = '', etcPurps = '', archArea = '') {
-            try {
-                const cleanContext = String(combinedContext || '')
-                    .replace(/고층건물\s*\([^)]*\)/gi, '')
-                    .replace(/재난분류[^\n\r]*/gi, '');
-
-                const grnd = parseInt(grndFlrCnt || '0', 10);
-                const area = parseFloat(String(totArea || '').replace(/[^0-9.]/g, '')) || 0;
-                const arch = parseFloat(String(archArea || '').replace(/[^0-9.]/g, '')) || 0;
-                const approxFloorArea = arch > 0 ? arch : (grnd > 0 ? (area / grnd) : area);
-
-                // 1) 법령 설치기준 사전 정밀 판정 (주용도, 층수, 연면적, 사용승인일, 각 층 바닥면적)
-                const lawEval = evaluateSprinklerByLawAndUsage(
-                    mainPurpsCdNm || ledgerType,
-                    etcPurps,
-                    useAprDay,
-                    grndFlrCnt,
-                    totArea,
-                    cleanContext,
-                    bldNameHint,
-                    ledgerType,
-                    archArea
-                );
-
-                // [핵심 가드레일] 주용도, 연면적, 층수, 바닥면적, 사용승인일 기준 미충족 시 설치 오탐 원천 차단:
-                const isSmallLowRise = (grnd > 0 && grnd < 6 && approxFloorArea < 1000);
-                const isNotObligatedFacility = ['단독주택', '다세대주택', '연립주택'].includes(ledgerType) && !lawEval.isInstalled;
-
-                if ((isSmallLowRise && !lawEval.isInstalled) || isNotObligatedFacility) {
-                    return { text: '', detail: '' };
-                }
-
-                // 2) 오픈API 특정소방대상물 소방시설정보서비스 조회 (고신뢰도 매칭에 한해 인정)
-                const aprYear = (useAprDay && /^\d{4}/.test(String(useAprDay))) ? String(useAprDay).substring(0, 4) : '';
-                const urlsToTry = [];
-
-                if (bldNameHint && bldNameHint.length >= 2) {
-                    urlsToTry.push(`${FIRE_SYS_API_URL}?serviceKey=${encodeURIComponent(BLD_HUB_SERVICE_KEY)}&numOfRows=100&pageNo=1&resultType=xml&ctpvNm=${encodeURIComponent('서울특별시')}&fireObjNm=${encodeURIComponent(bldNameHint)}`);
-                }
-                if (roadNameKeyword && roadNameKeyword.length >= 3) {
-                    urlsToTry.push(`${FIRE_SYS_API_URL}?serviceKey=${encodeURIComponent(BLD_HUB_SERVICE_KEY)}&numOfRows=100&pageNo=1&resultType=xml&ctpvNm=${encodeURIComponent('서울특별시')}&ronmAddr=${encodeURIComponent(roadNameKeyword)}`);
-                }
-
-                const fetchWrappers = [
-                    (u) => u,
-                    (u) => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
-                    (u) => `https://corsproxy.io/?${encodeURIComponent(u)}`
-                ];
-
-                const parseFireSysResponse = (rawStr) => {
-                    if (!rawStr) return [];
-                    const trimmed = rawStr.trim();
-                    if (trimmed.startsWith('{')) {
-                        try {
-                            const j = JSON.parse(trimmed);
-                            const item = j?.response?.body?.items?.item;
-                            if (!item) return [];
-                            return Array.isArray(item) ? item : [item];
-                        } catch (e) { return []; }
-                    }
-                    if (trimmed.includes('<item>')) {
-                        const xmlDoc = new DOMParser().parseFromString(trimmed, "text/xml");
-                        return Array.from(xmlDoc.querySelectorAll("item")).map(node => {
-                            const obj = {};
-                            Array.from(node.children).forEach(ch => {
-                                obj[ch.tagName] = ch.textContent.trim();
-                            });
-                            return obj;
-                        });
-                    }
-                    return [];
-                };
-
-                let fireItems = [];
-                const fetchFireSingle = async (targetUrl, ms) => {
-                    const controller = new AbortController();
-                    const timer = setTimeout(() => controller.abort(), ms);
-                    try {
-                        const res = await fetch(targetUrl, { signal: controller.signal });
-                        clearTimeout(timer);
-                        if (!res.ok) throw new Error('HTTP ' + res.status);
-                        const txt = await res.text();
-                        const parsed = parseFireSysResponse(txt);
-                        if (parsed.length > 0) return parsed;
-                        throw new Error('Empty');
-                    } catch (e) {
-                        clearTimeout(timer);
-                        throw e;
-                    }
-                };
-                if (urlsToTry.length > 0) {
-                    try {
-                        fireItems = await Promise.any(urlsToTry.map(u => fetchFireSingle(u, 1800)));
-                    } catch (e) {}
-                    if (fireItems.length === 0) {
-                        const proxyCalls = [];
-                        urlsToTry.forEach(qUrl => {
-                            fetchWrappers.slice(1).forEach(wrap => {
-                                proxyCalls.push(fetchFireSingle(wrap(qUrl), 2000));
-                            });
-                        });
-                        try { fireItems = await Promise.any(proxyCalls); } catch (e) {}
-                    }
-                }
-
-                if (fireItems.length > 0) {
-                    let bestMatch = null;
-                    let bestScore = 0;
-
-                    fireItems.forEach(it => {
-                        const dump = JSON.stringify(it);
-                        let score = 0;
-                        let hasHighConfidenceMatch = false;
-
-                        if (bldNameHint && bldNameHint.length >= 2 && dump.includes(bldNameHint)) {
-                            score += 60;
-                            hasHighConfidenceMatch = true;
-                        }
-                        if (roadNameKeyword && roadNameKeyword.length >= 3 && dump.includes(roadNameKeyword)) {
-                            score += 40;
-                            hasHighConfidenceMatch = true;
-                        }
-
-                        if (hasHighConfidenceMatch && score > bestScore) {
-                            bestScore = score;
-                            bestMatch = it;
-                        }
-                    });
-
-                    const targetItem = (bestScore >= 50) ? bestMatch : null;
-                    if (targetItem) {
-                        let apiSprk = false;
-                        let apiSimple = false;
-
-                        const entries = Object.entries(targetItem);
-                        for (const [k, v] of entries) {
-                            const keyLower = k.toLowerCase();
-                            const valStr = String(v).trim();
-                            const valPositive = (valStr === 'Y' || valStr === '유' || valStr === '설치' || valStr === '전층' || valStr.includes('설치') || (parseInt(valStr, 10) > 0));
-
-                            const isSimpleKey = keyLower.includes('간이') || keyLower.includes('smp') || keyLower.includes('simple');
-                            const isSprkKey = keyLower.includes('sprk') || keyLower.includes('spkl') || keyLower.includes('sprinkler') || keyLower.includes('스프링클러') || keyLower.includes('sp');
-
-                            if (isSimpleKey && isSprkKey) {
-                                if (valPositive && !valStr.includes('미설치') && !valStr.includes('무')) {
-                                    apiSimple = true;
-                                }
-                            } else if (isSprkKey && !isSimpleKey) {
-                                if (valPositive && !valStr.includes('간이') && !valStr.includes('미설치') && !valStr.includes('무')) {
-                                    apiSprk = true;
-                                }
-                            }
-                        }
-
-                        if (apiSprk) {
-                            const retText = (grnd >= 6 || (apiScopeText && apiScopeText.includes('전층'))) ? '스프링클러 전층 설치' : '스프링클러 설치';
-                            const retDetail = lawEval.isInstalled ? lawEval.detail : '[소방시설정보: 특정소방대상물 소방시설정보서비스 등록 확인]';
-                            return { text: retText, detail: retDetail };
-                        }
-                        if (apiSimple) {
-                            return { text: '간이 스프링클러 설치', detail: lawEval.isInstalled ? lawEval.detail : '[소방시설정보: 특정소방대상물 소방시설정보서비스 등록 확인]' };
-                        }
-                        if (!lawEval.isInstalled) {
-                            return { text: '', detail: '' };
-                        }
-                    }
-                }
-
-                // 3) 소방시설정보 API 매칭이 없거나 미등록된 경우: 법령 설치기준 적용
-                if (lawEval && lawEval.isInstalled) {
-                    return { text: lawEval.text, detail: lawEval.detail };
-                }
-
-                return { text: '', detail: '' };
-            } catch (err) {
-                console.warn('checkSprinklerInstalledFromApi 예외:', err);
-                return { text: '', detail: '' };
-            }
+            const grndMatch = String(grndFlrCnt || '').match(/^(\d+)/);
+            const grndFlr = grndMatch ? parseInt(grndMatch[1], 10) : 0;
+            const totAreaNum = parseFloat(String(totArea || '0').replace(/[^0-9.]/g, '')) || 0;
+            const archAreaNum = parseFloat(String(archArea || '0').replace(/[^0-9.]/g, '')) || 0;
+            const lawResult = evaluateSprinklerByLawAndUsage(
+                mainPurpsCdNm || ledgerType,
+                etcPurps,
+                useAprDay,
+                grndFlr,
+                totAreaNum,
+                combinedContext,
+                bldNameHint,
+                ledgerType,
+                archAreaNum
+            );
+            return { text: lawResult?.text || '', detail: lawResult?.detail || '' };
         }
 
-        // 서울시 25개 자치구 시군구코드(5자리) 매핑
         const SIGUNGU_CODE_MAP = {
             "종로구": "11110", "중구": "11140", "용산구": "11170", "성동구": "11200",
             "광진구": "11215", "동대문구": "11230", "중랑구": "11260", "성북구": "11290",
