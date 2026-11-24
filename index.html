@@ -2378,7 +2378,7 @@
                             <button id="reinputSafetyMapBtn" type="button" style="display: none; background: #dc2626; color: #ffffff; border: none; padding: 3px 9px; border-radius: 5px; font-size: 11px; font-weight: 800; cursor: pointer;">재입력</button>
                         </div>
                     </div>
-                    <textarea id="safetyMapRawInput" rows="2" placeholder="소방안전지도 텍스트를 복사해서 붙여넣으세요 (붙여넣기 시 자동 입력)" style="min-height: 44px; font-size: 12px; font-weight: 600; border-color: #fecaca; background: #ffffff;"></textarea>
+                    <textarea id="safetyMapRawInput" rows="2" placeholder="소방안전지도 텍스트를 복사해서 붙여넣으세요 (붙여넣기 시 자동 입력)" style="min-height: 44px; font-size: 12px; font-weight: 600; border-color: #fecaca; background: #ffffff;" autocomplete="off"></textarea>
                 </div>
 
                 <!-- 1. 보고서 제목 설정 -->
@@ -2396,12 +2396,12 @@
                         </div>
                         <div>
                             <span class="label-text">구/동 명칭</span>
-                            <input type="text" id="titleLocInput" placeholder="강남구 압구정동">
+                            <input type="text" id="titleLocInput" placeholder="강남구 압구정동" autocomplete="off">
                         </div>
                         <div>
                             <span class="label-text">진행 단계</span>
                             <div class="combo-box">
-                                <input type="text" id="titleStepInput" placeholder="선택 또는 직접 입력">
+                                <input type="text" id="titleStepInput" placeholder="선택 또는 직접 입력" autocomplete="off">
                                 <select id="titleStepDropdown">
                                     <option value=""></option>
                                     <option value="1보">1보</option>
@@ -2428,7 +2428,7 @@
                             <span>🏢 건축물/소방시설 조회</span>
                         </button>
                     </div>
-                    <input type="text" id="eventAddrInput" placeholder="마포구 월드컵로 207, 31동 502호">
+                    <input type="text" id="eventAddrInput" placeholder="마포구 월드컵로 207, 31동 502호" autocomplete="off">
                     <div style="display: flex; align-items: center; justify-content: space-between; gap: 6px; padding-top: 5px; margin-top: 2px; border-top: 1px dashed #e2e8f0;">
                         <label class="chk-label" style="border: none; padding: 0; background: none; font-size: 12px; font-weight: 800; color: #4f46e5;">
                             <input type="checkbox" id="bldIncludeCheck"> 건축물 현황 입력
@@ -2440,7 +2440,7 @@
                             <div>
                                 <span class="label-text">구조</span>
                                 <div class="combo-box">
-                                    <input type="text" id="bldStructureInput" placeholder="철근콘크리트구조">
+                                    <input type="text" id="bldStructureInput" placeholder="철근콘크리트구조" autocomplete="off">
                                     <select id="bldStructureDropdown">
                                         <option value=""></option>
                                         <option value="철근콘크리트구조">철근콘크리트구조</option>
@@ -2450,17 +2450,17 @@
                             </div>
                             <div>
                                 <span class="label-text">층수 (지상/지하)</span>
-                                <input type="text" id="bldFloorsInput" placeholder="5/1">
+                                <input type="text" id="bldFloorsInput" placeholder="5/1" autocomplete="off">
                             </div>
                         </div>
                         <div class="grid-2">
                             <div>
                                 <span class="label-text">연면적</span>
-                                <input type="text" id="bldAreaInput" placeholder="44827.95">
+                                <input type="text" id="bldAreaInput" placeholder="44827.95" autocomplete="off">
                             </div>
                             <div>
                                 <span class="label-text">사용승인</span>
-                                <input type="text" id="bldAprDateInput" placeholder="20200101">
+                                <input type="text" id="bldAprDateInput" placeholder="20200101" autocomplete="off">
                             </div>
                         </div>
                         <div id="bldSprinklerBadge" style="display: none; background: #ecfdf5; border: 1.5px solid #10b981; color: #047857; padding: 6px 10px; border-radius: 6px; font-size: 11.5px; font-weight: 900; align-items: flex-start; justify-content: space-between; gap: 6px;">
@@ -2492,37 +2492,37 @@
                     <div class="grid-2">
                         <div style="display: flex; align-items: center; gap: 4px; min-width: 0;">
                             <span style="font-size: 10px; font-weight: 800; width: 28px; text-align: center; flex-shrink: 0; color: #1e293b; line-height: 1.15; letter-spacing: -0.05em;">신고<br>접수</span>
-                            <input type="text" id="timeJiryeong" maxlength="4" placeholder="1111" style="flex: 1; min-width: 0; height: 30px; font-size: 12px; font-weight: 700; text-align: center;">
+                            <input type="text" id="timeJiryeong" maxlength="4" placeholder="1111" style="flex: 1; min-width: 0; height: 30px; font-size: 12px; font-weight: 700; text-align: center;" autocomplete="off">
                         </div>
                         <div style="display: flex; align-items: center; gap: 4px; min-width: 0;">
                             <span style="font-size: 11px; font-weight: 800; width: 28px; text-align: center; flex-shrink: 0; color: #1e293b; letter-spacing: -0.04em;">출동</span>
-                            <input type="text" id="timeChuldong" maxlength="4" placeholder="1028" style="flex: 1; min-width: 0; height: 30px; font-size: 12px; font-weight: 700; text-align: center;">
+                            <input type="text" id="timeChuldong" maxlength="4" placeholder="1028" style="flex: 1; min-width: 0; height: 30px; font-size: 12px; font-weight: 700; text-align: center;" autocomplete="off">
                         </div>
                     </div>
 
                     <!-- 2) 선착대 단독 줄 -->
                     <div style="display: flex; align-items: center; gap: 4px;">
                         <span style="font-size: 11px; font-weight: 800; width: 36px; text-align: center; flex-shrink: 0; color: #1e293b; letter-spacing: -0.04em;">선착대</span>
-                        <input type="text" id="unitSeonchak" placeholder="연희대" style="flex: 1; min-width: 0; height: 30px; font-size: 12px; font-weight: 700;">
-                        <input type="text" id="timeSeonchak" maxlength="4" placeholder="1033" style="flex: 1; min-width: 0; height: 30px; font-size: 12px; font-weight: 700; text-align: center; padding: 5px 2px;">
+                        <input type="text" id="unitSeonchak" placeholder="연희대" style="flex: 1; min-width: 0; height: 30px; font-size: 12px; font-weight: 700;" autocomplete="off">
+                        <input type="text" id="timeSeonchak" maxlength="4" placeholder="1033" style="flex: 1; min-width: 0; height: 30px; font-size: 12px; font-weight: 700; text-align: center; padding: 5px 2px;" autocomplete="off">
                     </div>
 
                     <!-- 3) 임시의료소 단독 줄 -->
                     <div style="display: flex; align-items: center; gap: 4px;">
                         <span style="font-size: 10px; font-weight: 800; width: 36px; text-align: center; flex-shrink: 0; color: #1e293b; line-height: 1.15; letter-spacing: -0.05em;">임시<br>의료소</span>
-                        <input type="text" id="unitMedical" placeholder="연희6" style="flex: 1; min-width: 0; height: 30px; font-size: 12px; font-weight: 700;">
-                        <input type="text" id="timeMedical" maxlength="4" placeholder="1231" style="flex: 1; min-width: 0; height: 30px; font-size: 12px; font-weight: 700; text-align: center; padding: 5px 2px;">
+                        <input type="text" id="unitMedical" placeholder="연희6" style="flex: 1; min-width: 0; height: 30px; font-size: 12px; font-weight: 700;" autocomplete="off">
+                        <input type="text" id="timeMedical" maxlength="4" placeholder="1231" style="flex: 1; min-width: 0; height: 30px; font-size: 12px; font-weight: 700; text-align: center; padding: 5px 2px;" autocomplete="off">
                     </div>
 
                     <!-- 4) 초진 / 완진 (2열 균등 배치) -->
                     <div class="grid-2">
                         <div style="display: flex; align-items: center; gap: 4px; min-width: 0;">
                             <span style="font-size: 11px; font-weight: 800; width: 28px; text-align: center; flex-shrink: 0; color: #1e293b; letter-spacing: -0.04em;">초진</span>
-                            <input type="text" id="timeChojin" maxlength="4" placeholder="1049" style="flex: 1; min-width: 0; height: 30px; font-size: 12px; font-weight: 700; text-align: center;">
+                            <input type="text" id="timeChojin" maxlength="4" placeholder="1049" style="flex: 1; min-width: 0; height: 30px; font-size: 12px; font-weight: 700; text-align: center;" autocomplete="off">
                         </div>
                         <div style="display: flex; align-items: center; gap: 4px; min-width: 0;">
                             <span style="font-size: 11px; font-weight: 800; width: 28px; text-align: center; flex-shrink: 0; color: #1e293b; letter-spacing: -0.04em;">완진</span>
-                            <input type="text" id="timeWanjin" maxlength="4" placeholder="1204" style="flex: 1; min-width: 0; height: 30px; font-size: 12px; font-weight: 700; text-align: center;">
+                            <input type="text" id="timeWanjin" maxlength="4" placeholder="1204" style="flex: 1; min-width: 0; height: 30px; font-size: 12px; font-weight: 700; text-align: center;" autocomplete="off">
                         </div>
                     </div>
 
@@ -2533,27 +2533,27 @@
                 <!-- 4. 신고 내용 & 소방서 출동정보 -->
                 <div class="card">
                     <div class="card-title">4. 신고 내용</div>
-                    <textarea id="pSection1" rows="3" placeholder="신고 내용 입력" style="min-height: 56px; font-size: 12.5px; font-weight: 700;"></textarea>
+                    <textarea id="pSection1" rows="3" placeholder="신고 내용 입력" style="min-height: 56px; font-size: 12.5px; font-weight: 700;" autocomplete="off"></textarea>
 
                     <div class="sub-box">
                         <!-- 소방서 한 줄 -->
                         <div style="display: flex; align-items: center; gap: 5px;">
                             <span style="font-size: 11px; font-weight: 800; color: #1e293b; width: 42px; flex-shrink: 0;">소방서:</span>
-                            <input type="text" id="stationNameInput" placeholder="동작" style="flex: 1; height: 30px; font-weight: 800; font-size: 12.5px;">
+                            <input type="text" id="stationNameInput" placeholder="동작" style="flex: 1; height: 30px; font-weight: 800; font-size: 12.5px;" autocomplete="off">
                         </div>
                         <!-- 진압, 구조, 구급 한 줄 -->
                         <div class="grid-3" style="gap: 4px;">
                             <div style="display: flex; align-items: center; gap: 3px; min-width: 0;">
                                 <span style="font-size: 11px; font-weight: 800; color: #1e293b; width: 24px; flex-shrink: 0; text-align: center;">진압</span>
-                                <input type="text" id="jinapCntInput" placeholder="0" style="flex: 1; min-width: 0; text-align: center; height: 30px; font-size: 12.5px; font-weight: 800; padding: 4px 2px;">
+                                <input type="text" id="jinapCntInput" placeholder="0" style="flex: 1; min-width: 0; text-align: center; height: 30px; font-size: 12.5px; font-weight: 800; padding: 4px 2px;" autocomplete="off">
                             </div>
                             <div style="display: flex; align-items: center; gap: 3px; min-width: 0;">
                                 <span style="font-size: 11px; font-weight: 800; color: #1e293b; width: 24px; flex-shrink: 0; text-align: center;">구조</span>
-                                <input type="text" id="gujoCntInput" placeholder="0" style="flex: 1; min-width: 0; text-align: center; height: 30px; font-size: 12.5px; font-weight: 800; padding: 4px 2px;">
+                                <input type="text" id="gujoCntInput" placeholder="0" style="flex: 1; min-width: 0; text-align: center; height: 30px; font-size: 12.5px; font-weight: 800; padding: 4px 2px;" autocomplete="off">
                             </div>
                             <div style="display: flex; align-items: center; gap: 3px; min-width: 0;">
                                 <span style="font-size: 11px; font-weight: 800; color: #1e293b; width: 24px; flex-shrink: 0; text-align: center;">구급</span>
-                                <input type="text" id="gugeupCntInput" placeholder="0" style="flex: 1; min-width: 0; text-align: center; height: 30px; font-size: 12.5px; font-weight: 800; padding: 4px 2px;">
+                                <input type="text" id="gugeupCntInput" placeholder="0" style="flex: 1; min-width: 0; text-align: center; height: 30px; font-size: 12.5px; font-weight: 800; padding: 4px 2px;" autocomplete="off">
                             </div>
                         </div>
                         <div style="font-size: 10.5px; color: #4f46e5; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-left: 2px;">
@@ -2565,7 +2565,7 @@
                 <!-- 5. 소방 대응상황 -->
                 <div class="card">
                     <div class="card-title">5. 소방 대응상황</div>
-                    <textarea id="pSection2" rows="3" placeholder="진압 내용 작성" style="min-height: 52px; font-size: 12.5px; font-weight: 700;"></textarea>
+                    <textarea id="pSection2" rows="3" placeholder="진압 내용 작성" style="min-height: 52px; font-size: 12.5px; font-weight: 700;" autocomplete="off"></textarea>
                 </div>
 
                 <!-- 6. 인명피해 및 대피현황 -->
@@ -2583,7 +2583,7 @@
                             </button>
                         </div>
                     </div>
-                    <textarea id="pSection3" rows="3" placeholder="상세 내용 작성" style="min-height: 52px; font-size: 12.5px; font-weight: 700;"></textarea>
+                    <textarea id="pSection3" rows="3" placeholder="상세 내용 작성" style="min-height: 52px; font-size: 12.5px; font-weight: 700;" autocomplete="off"></textarea>
                 </div>
 
                 <!-- 7. 유관기관 -->
@@ -2597,7 +2597,7 @@
                         <label class="chk-label"><input type="checkbox" id="etcCheck">기타</label>
                     </div>
                     <div id="etcInputContainer" style="display: none; margin-top: 3px;">
-                        <input type="text" id="etcInput" placeholder="기타 유관기관 직접 입력">
+                        <input type="text" id="etcInput" placeholder="기타 유관기관 직접 입력" autocomplete="off">
                     </div>
                 </div>
 
@@ -2613,7 +2613,7 @@
                             <button id="memoHistoryBtn" type="button" class="memo-btn memo-btn-history">이전 기록</button>
                         </div>
                     </div>
-                    <textarea id="pMemoInput" rows="3" style="min-height: 56px; font-size: 12.5px; font-weight: 700;"></textarea>
+                    <textarea id="pMemoInput" rows="3" style="min-height: 56px; font-size: 12.5px; font-weight: 700;" autocomplete="off"></textarea>
                 </div>
             </section>
 
@@ -2645,7 +2645,7 @@
                     </div>
                     <button id="copyBtn" class="copy-btn">전체 복사</button>
                 </div>
-                <textarea id="outputText" placeholder="왼쪽 항목을 작성하면 실시간 자동 생성됩니다."></textarea>
+                <textarea id="outputText" placeholder="왼쪽 항목을 작성하면 실시간 자동 생성됩니다." autocomplete="off"></textarea>
             </section>
         </main>
 
@@ -2671,7 +2671,7 @@
                             <label for="input-floor-ratio" style="font-size: 13.5px; font-weight: 800; color: #f1f5f9; white-space: nowrap;">
                                 층수 <span style="color: #93c5fd; font-size: 12px; font-weight: 600;">(지상/지하)</span>:
                             </label>
-                            <input type="text" id="input-floor-ratio" value="5/0" placeholder="5/0" style="width: 70px; height: 28px; border: 1.5px solid #cbd5e1; border-radius: 5px; text-align: center; font-size: 13.5px; font-weight: 800; color: #0f172a; background: #ffffff; outline: none; box-shadow: inset 0 1px 2px rgba(0,0,0,0.06);">
+                            <input type="text" id="input-floor-ratio" value="5/0" placeholder="5/0" style="width: 70px; height: 28px; border: 1.5px solid #cbd5e1; border-radius: 5px; text-align: center; font-size: 13.5px; font-weight: 800; color: #0f172a; background: #ffffff; outline: none; box-shadow: inset 0 1px 2px rgba(0,0,0,0.06);" autocomplete="off">
                         </div>
                         <label style="display: flex; align-items: center; gap: 5px; cursor: pointer; user-select: none; background: #1e293b; border: 1px solid #475569; padding: 4px 9px; border-radius: 5px;">
                             <input type="checkbox" id="syncAllRoomsCheck" style="width: 14px; height: 14px; cursor: pointer; accent-color: #e25858;">
@@ -2688,17 +2688,17 @@
                         <div id="partialInputsContainer" style="display: none; align-items: center; gap: 4px; flex-wrap: nowrap; flex-shrink: 0;">
                             <div style="display: flex; align-items: center; gap: 2px; font-size: 11.5px; color: #f1f5f9; font-weight: 700; white-space: nowrap;">
                                 <span style="color: #94a3b8; font-size: 11px;">층수:</span>
-                                <input type="text" id="partialFloorStart" placeholder="B1" style="width: 44px; height: 24px; border: 1px solid #cbd5e1; border-radius: 4px; text-align: center; font-size: 11.5px; font-weight: 800; color: #0f172a; background: #ffffff; outline: none; padding: 0 2px;">
+                                <input type="text" id="partialFloorStart" placeholder="B1" style="width: 44px; height: 24px; border: 1px solid #cbd5e1; border-radius: 4px; text-align: center; font-size: 11.5px; font-weight: 800; color: #0f172a; background: #ffffff; outline: none; padding: 0 2px;" autocomplete="off">
                                 <span>층~</span>
-                                <input type="text" id="partialFloorEnd" placeholder="25" style="width: 44px; height: 24px; border: 1px solid #cbd5e1; border-radius: 4px; text-align: center; font-size: 11.5px; font-weight: 800; color: #0f172a; background: #ffffff; outline: none; padding: 0 2px;">
+                                <input type="text" id="partialFloorEnd" placeholder="25" style="width: 44px; height: 24px; border: 1px solid #cbd5e1; border-radius: 4px; text-align: center; font-size: 11.5px; font-weight: 800; color: #0f172a; background: #ffffff; outline: none; padding: 0 2px;" autocomplete="off">
                                 <span>층</span>
                             </div>
                             <span style="color: #64748b; font-size: 11px;">|</span>
                             <div style="display: flex; align-items: center; gap: 2px; font-size: 11.5px; color: #f1f5f9; font-weight: 700; white-space: nowrap;">
                                 <span style="color: #94a3b8; font-size: 11px;">호실:</span>
-                                <input type="text" id="partialRoomStart" placeholder="1" style="width: 28px; height: 24px; border: 1px solid #cbd5e1; border-radius: 4px; text-align: center; font-size: 11.5px; font-weight: 800; color: #0f172a; background: #ffffff; outline: none; padding: 0 1px;">
+                                <input type="text" id="partialRoomStart" placeholder="1" style="width: 28px; height: 24px; border: 1px solid #cbd5e1; border-radius: 4px; text-align: center; font-size: 11.5px; font-weight: 800; color: #0f172a; background: #ffffff; outline: none; padding: 0 1px;" autocomplete="off">
                                 <span>호~</span>
-                                <input type="text" id="partialRoomEnd" placeholder="4" style="width: 28px; height: 24px; border: 1px solid #cbd5e1; border-radius: 4px; text-align: center; font-size: 11.5px; font-weight: 800; color: #0f172a; background: #ffffff; outline: none; padding: 0 1px;">
+                                <input type="text" id="partialRoomEnd" placeholder="4" style="width: 28px; height: 24px; border: 1px solid #cbd5e1; border-radius: 4px; text-align: center; font-size: 11.5px; font-weight: 800; color: #0f172a; background: #ffffff; outline: none; padding: 0 1px;" autocomplete="off">
                                 <span>호</span>
                             </div>
                         </div>
@@ -2963,14 +2963,14 @@
                             <h1 id="facilityModalHeroTitle" style="font-size: clamp(20px, 4.3vw, 26px); font-weight: 900; color: #0f172a; letter-spacing: -0.03em; margin: 0;">시설물 제원 및 현황정보 검색</h1>
                             <div id="facilityModalHeroSub" style="font-size: 13.5px; font-weight: 700; color: #475569; letter-spacing: -0.02em; margin-top: -4px;">(터널, 대교, 지하차도, 지하철역 등)</div>
 
-                            <form id="facilitySearchForm" style="position: relative; width: 100%; max-width: 560px; margin: 0 auto;">
+                            <form id="facilitySearchForm" style="position: relative; width: 100%; max-width: 560px; margin: 0 auto;" autocomplete="off">
                                 <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: #64748b; font-size: 17px; pointer-events: none;"></i>
                                 <input
                                     type="text"
                                     id="facilitySearchInput"
                                     class="facility-search-input"
                                     placeholder="건축물 주소(도로명·지번) 또는 시설물(터널·대교·지하철역) 입력"
-                                >
+                                 autocomplete="off">
                                 <button type="submit" class="facility-search-btn">
                                     <span>검색</span>
                                 </button>
@@ -3330,14 +3330,14 @@
                             </div>
                             <h1 style="font-size: clamp(21px, 4.5vw, 27px); font-weight: 900; color: #0f172a; letter-spacing: -0.03em;">위험물 핵심 대응요령 검색</h1>
 
-                            <form id="hazmatSearchForm" style="position: relative; width: 100%; max-width: 560px; margin: 0 auto;">
+                            <form id="hazmatSearchForm" style="position: relative; width: 100%; max-width: 560px; margin: 0 auto;" autocomplete="off">
                                 <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: #64748b; font-size: 17px; pointer-events: none;"></i>
                                 <input
                                     type="text"
                                     id="hazmatSearchInput"
                                     class="hazmat-search-input"
                                     placeholder="물질명 또는 CAS 번호를 입력하세요 (예: 메탄올, 아세톤, 벤젠, 황산, 67-56-1)"
-                                >
+                                 autocomplete="off">
                                 <button type="submit" class="hazmat-search-btn">
                                     <span>검색</span>
                                 </button>
@@ -4590,18 +4590,18 @@
 
                 tr.innerHTML = `
                     <td class="td-cas-no">${rowNo}</td>
-                    <td><input type="text" class="cas-tbl-input cas-in-name" value="${row.name || ''}" placeholder="이름"></td>
-                    <td><input type="text" class="cas-tbl-input cas-in-gender" value="${row.genderAge || ''}" placeholder="남성/30대"></td>
-                    <td><input type="text" class="cas-tbl-input cas-in-loc" value="${row.location || ''}" placeholder="발견장소"></td>
+                    <td><input type="text" class="cas-tbl-input cas-in-name" value="${row.name || ''}" placeholder="이름" autocomplete="off"></td>
+                    <td><input type="text" class="cas-tbl-input cas-in-gender" value="${row.genderAge || ''}" placeholder="남성/30대" autocomplete="off"></td>
+                    <td><input type="text" class="cas-tbl-input cas-in-loc" value="${row.location || ''}" placeholder="발견장소" autocomplete="off"></td>
                     <td class="cas-cell-toggle ${isCrit ? 'is-checked-critical' : ''}" data-sev="critical" title="긴급 선택">${isCrit ? '✓' : ''}</td>
                     <td class="cas-cell-toggle ${isUrg ? 'is-checked-urgent' : ''}" data-sev="urgent" title="응급 선택">${isUrg ? '✓' : ''}</td>
                     <td class="cas-cell-toggle ${isNonUrg ? 'is-checked-nonurgent' : ''}" data-sev="nonUrgent" title="비응급 선택">${isNonUrg ? '✓' : ''}</td>
                     <td class="cas-cell-toggle ${isDead ? 'is-checked-dead' : ''}" data-sev="dead" title="사망 선택">${isDead ? '✓' : ''}</td>
-                    <td><input type="text" class="cas-tbl-input cas-in-symptom" value="${row.symptom || ''}" placeholder="주증상"></td>
+                    <td><input type="text" class="cas-tbl-input cas-in-symptom" value="${row.symptom || ''}" placeholder="주증상" autocomplete="off"></td>
                     <td class="cas-cell-toggle ${isTrans ? 'is-checked-trans' : ''}" data-trans="transported" title="이송 선택">${isTrans ? '✓' : ''}</td>
                     <td class="cas-cell-toggle ${isNotTrans ? 'is-checked-not-trans' : ''}" data-trans="notTransported" title="미이송 선택">${isNotTrans ? '✓' : ''}</td>
-                    <td><input type="text" class="cas-tbl-input cas-in-hosp" value="${row.hospital || ''}" placeholder="병원명"></td>
-                    <td><input type="text" class="cas-tbl-input cas-in-remarks" value="${row.remarks || ''}" placeholder="비고"></td>
+                    <td><input type="text" class="cas-tbl-input cas-in-hosp" value="${row.hospital || ''}" placeholder="병원명" autocomplete="off"></td>
+                    <td><input type="text" class="cas-tbl-input cas-in-remarks" value="${row.remarks || ''}" placeholder="비고" autocomplete="off"></td>
                     <td class="cas-no-print"><button type="button" class="cas-del-row-btn" title="해당 행 삭제">&times;</button></td>
                 `;
 
@@ -12690,6 +12690,18 @@
                         });
                         if (currentFacilitySelectedBld && currentFacilitySelectedBld.item === it) {
                             currentFacilitySelectedBld.floorUsageMap = builtUsageMap;
+                            if (currentFacilitySelectedBld.appliedTabId === activeTabId && Object.keys(builtUsageMap).length > 0) {
+                                floorState.bldFloorUsageMap = JSON.parse(JSON.stringify(builtUsageMap));
+                                if (floorState.syncAllRooms) {
+                                    applyBuildingFloorUsageToFloors(floorState.bldFloorUsageMap, false);
+                                    if (floorState.partialSetting && floorState.partialSetting.enabled) {
+                                        applyPartialSettingUpdate();
+                                    }
+                                    renderTable();
+                                    calculateStatsAndSummary();
+                                    saveCurrentTabData();
+                                }
+                            }
                         }
                     }
                 }
@@ -13634,13 +13646,44 @@
                     it.etcPurps || ''
                 );
 
-                if (currentFacilitySelectedBld && currentFacilitySelectedBld.floorUsageMap) {
-                    floorState.bldFloorUsageMap = JSON.parse(JSON.stringify(currentFacilitySelectedBld.floorUsageMap));
-                    if (floorState.syncAllRooms) {
-                        applyBuildingFloorUsageToFloors(floorState.bldFloorUsageMap);
-                        renderTable();
-                        calculateStatsAndSummary();
+                // 6번 층별현황도 바뀐 주소의 건축물 층수·용도·제목으로 완전히 갱신
+                if (currentFacilitySelectedBld) {
+                    currentFacilitySelectedBld.appliedTabId = activeTabId;
+                    const newUsageMap = (currentFacilitySelectedBld.floorUsageMap && Object.keys(currentFacilitySelectedBld.floorUsageMap).length > 0)
+                        ? JSON.parse(JSON.stringify(currentFacilitySelectedBld.floorUsageMap))
+                        : {};
+                    if (addrChanged) {
+                        // 주소가 바뀐 경우 이전 주소의 부분설정·층 호실 구성을 새 건축물 기준으로 초기화
+                        floorState.floors = [];
+                        if (floorState.partialSetting) {
+                            floorState.partialSetting.enabled = false;
+                            floorState.partialSetting.floorStart = '';
+                            floorState.partialSetting.floorEnd = '';
+                            floorState.partialSetting.roomStart = '';
+                            floorState.partialSetting.roomEnd = '';
+                        }
+                        if (typeof partialSettingCheck !== 'undefined' && partialSettingCheck) partialSettingCheck.checked = false;
+                        if (typeof partialInputsContainer !== 'undefined' && partialInputsContainer) partialInputsContainer.style.display = 'none';
+                        if (typeof partialFloorStart !== 'undefined' && partialFloorStart) partialFloorStart.value = '';
+                        if (typeof partialFloorEnd !== 'undefined' && partialFloorEnd) partialFloorEnd.value = '';
+                        if (typeof partialRoomStart !== 'undefined' && partialRoomStart) partialRoomStart.value = '';
+                        if (typeof partialRoomEnd !== 'undefined' && partialRoomEnd) partialRoomEnd.value = '';
+                        syncFloorsFromRatio();
                     }
+                    floorState.bldFloorUsageMap = newUsageMap;
+                    floorState.syncAllRooms = true;
+                    if (typeof syncAllRoomsCheck !== 'undefined' && syncAllRoomsCheck) {
+                        syncAllRoomsCheck.checked = true;
+                    }
+                    if (Object.keys(newUsageMap).length > 0) {
+                        applyBuildingFloorUsageToFloors(newUsageMap, true);
+                    }
+                    if (floorState.partialSetting && floorState.partialSetting.enabled) {
+                        applyPartialSettingUpdate();
+                    }
+                    updateFloorBannerTitle();
+                    renderTable();
+                    calculateStatsAndSummary();
                     saveCurrentTabData();
                 }
                 closeModal(facilityModal);
@@ -14616,13 +14659,13 @@
                     </div>
                     <span style="font-size: 10.5px; color: #334155; font-weight: 800;">국가위험물정보시스템 연동</span>
                 </div>
-                <form class="hazmat-search-form">
+                <form class="hazmat-search-form" autocomplete="off">
                     <span style="position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: #64748b; font-size: 13.5px; pointer-events: none;">🔍</span>
                     <input
                         type="text"
                         class="hazmat-search-input"
                         placeholder="물질명 또는 CAS 번호 입력 (예: 메탄올, 아세톤, 벤젠, 황산, 나트륨, 67-56-1)"
-                    >
+                     autocomplete="off">
                     <button type="submit" class="hazmat-search-btn">검색</button>
                 </form>
                 <div class="hazmat-loading" style="display: none; text-align: center; padding: 10px 0; font-size: 12px; color: #475569; font-weight: 700;">
@@ -14930,7 +14973,7 @@
                     </div>
                     <span style="font-size: 10.5px; color: #334155; font-weight: 800;">서울교통공사 1~8호선 연동</span>
                 </div>
-                <form class="hazmat-search-form subway-search-form">
+                <form class="hazmat-search-form subway-search-form" autocomplete="off">
                     <span style="position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: #64748b; font-size: 13.5px; pointer-events: none;">🔍</span>
                     <input
                         type="text"
@@ -19025,8 +19068,8 @@
             div.id = `dyn-timeline-${dynCount}`;
             div.style.cssText = "display: flex; align-items: center; gap: 4px;";
             div.innerHTML = `
-                <input type="text" placeholder="항목명" value="${label}" class="dyn-label" style="flex: 6; min-width: 0; height: 30px; font-size: 12px; font-weight: 700;">
-                <input type="text" placeholder="시각" value="${String(time || '').replace(/\D/g, '').slice(0, 4)}" maxlength="4" class="dyn-time" style="flex: 4; min-width: 0; height: 30px; font-size: 12px; font-weight: 700; text-align: center; padding: 5px 2px;">
+                <input type="text" placeholder="항목명" value="${label}" class="dyn-label" style="flex: 6; min-width: 0; height: 30px; font-size: 12px; font-weight: 700;" autocomplete="off">
+                <input type="text" placeholder="시각" value="${String(time || '').replace(/\D/g, '').slice(0, 4)}" maxlength="4" class="dyn-time" style="flex: 4; min-width: 0; height: 30px; font-size: 12px; font-weight: 700; text-align: center; padding: 5px 2px;" autocomplete="off">
                 <button type="button" class="dyn-del" style="background: none; border: none; color: #e25858; font-weight: bold; cursor: pointer; padding: 0 4px; font-size: 14px;">✕</button>
             `;
             dynamicTimelineContainer.appendChild(div);
@@ -20049,7 +20092,7 @@
                     <div style="flex: 1; min-height: 38px; display: flex; align-items: stretch; justify-content: stretch; background: ${cellBg}; box-sizing: border-box;">
                         <div class="smart-input-container">
                             <div class="smart-overlay">${renderTokensToHtml(rm.text)}</div>
-                            <textarea class="smart-textarea" spellcheck="false">${rm.text || ''}</textarea>
+                            <textarea class="smart-textarea" spellcheck="false" autocomplete="off">${rm.text || ''}</textarea>
                         </div>
                     </div>
                 `;
@@ -20071,7 +20114,7 @@
                     <div style="flex: 1; min-width: 0; min-height: 38px; display: flex; align-items: stretch; justify-content: stretch; background: ${cellBg}; box-sizing: border-box;">
                         <div class="smart-input-container">
                             <div class="smart-overlay">${renderTokensToHtml(rm.text)}</div>
-                            <textarea class="smart-textarea" spellcheck="false">${rm.text || ''}</textarea>
+                            <textarea class="smart-textarea" spellcheck="false" autocomplete="off">${rm.text || ''}</textarea>
                         </div>
                     </div>
                 `;
@@ -20248,7 +20291,7 @@
                         <div style="flex: 1; min-width: 0; display: flex; align-items: stretch; justify-content: center; background: #ffffff; box-sizing: border-box;">
                             <div class="smart-input-container room-scale-1">
                                 <div class="smart-overlay">${renderTokensToHtml(floorState.selfEvac ? floorState.selfEvac.text : '')}</div>
-                                <textarea class="smart-textarea textarea-self-evac" placeholder="비고 내용 직접 입력 (예: 자력대피 10명, 자택대기 2명 등)" spellcheck="false">${floorState.selfEvac ? floorState.selfEvac.text : ''}</textarea>
+                                <textarea class="smart-textarea textarea-self-evac" placeholder="비고 내용 직접 입력 (예: 자력대피 10명, 자택대기 2명 등)" spellcheck="false" autocomplete="off">${floorState.selfEvac ? floorState.selfEvac.text : ''}</textarea>
                             </div>
                         </div>
                     ` : `<div style="flex: 1; background: #f8fafc;"></div>`}
@@ -20298,7 +20341,7 @@
                             <div style="flex: 1; background: ${floorState.rooftop.isFire ? '#fef2f2' : '#ffffff'}; display: flex; align-items: stretch; justify-content: center; box-sizing: border-box;">
                                 <div class="smart-input-container room-scale-1">
                                     <div class="smart-overlay">${renderTokensToHtml(floorState.rooftop.text)}</div>
-                                    <textarea class="smart-textarea" spellcheck="false">${floorState.rooftop.text}</textarea>
+                                    <textarea class="smart-textarea" spellcheck="false" autocomplete="off">${floorState.rooftop.text}</textarea>
                                 </div>
                             </div>
                         ` : `<div style="flex: 1; background: #f8fafc;"></div>`}
@@ -20361,8 +20404,8 @@
             if (partialFloorEnd) partialFloorEnd.value = floorState.partialSetting?.floorEnd || '';
             if (partialRoomStart) partialRoomStart.value = floorState.partialSetting?.roomStart || '';
             if (partialRoomEnd) partialRoomEnd.value = floorState.partialSetting?.roomEnd || '';
-            applyPartialSettingUpdate();
             if (floorState.syncAllRooms) applyBuildingFloorUsageToFloors();
+            applyPartialSettingUpdate();
             updateFloorBannerTitle();
             openModal(floorStatusModal);
             renderTable();
@@ -20377,8 +20420,8 @@
             if (partialInputsContainer) {
                 partialInputsContainer.style.display = e.target.checked ? 'flex' : 'none';
             }
-            applyPartialSettingUpdate();
             if (floorState.syncAllRooms) applyBuildingFloorUsageToFloors();
+            applyPartialSettingUpdate();
             updateFloorBannerTitle();
             renderTable();
             calculateStatsAndSummary();
@@ -20411,8 +20454,8 @@
                 }
 
                 if (floorState.partialSetting.enabled) {
-                    applyPartialSettingUpdate();
                     if (floorState.syncAllRooms) applyBuildingFloorUsageToFloors();
+                    applyPartialSettingUpdate();
                     updateFloorBannerTitle();
                     renderTable();
                     calculateStatsAndSummary();
@@ -20444,8 +20487,9 @@
             const usageMap = explicitMap || getAvailableBldFloorUsageMap();
             if (!usageMap || Object.keys(usageMap).length === 0) return false;
             floorState.bldFloorUsageMap = JSON.parse(JSON.stringify(usageMap));
+            const hasPartialRooms = !!(floorState.partialSetting?.enabled && (floorState.partialSetting.roomStart || floorState.partialSetting.roomEnd));
             floorState.floors.forEach(fl => {
-                if (!forceOverwriteManual && fl.manualRoomsOverride) return;
+                if (!forceOverwriteManual && (fl.manualRoomsOverride || hasPartialRooms)) return;
                 delete fl.manualRoomsOverride;
                 const prevFirst = (fl.rooms && fl.rooms.length > 0) ? fl.rooms[0] : null;
                 fl.rooms = [{
@@ -20469,10 +20513,10 @@
                     showToast('먼저 2번 [건축물/소방시설 조회]에서 건축물을 조회해 주세요.');
                     return;
                 }
+                applyBuildingFloorUsageToFloors(usageMap, true);
                 if (floorState.partialSetting && floorState.partialSetting.enabled) {
                     applyPartialSettingUpdate();
                 }
-                applyBuildingFloorUsageToFloors(usageMap, true);
                 renderTable();
                 calculateStatsAndSummary();
                 showToast('2번 건축물 조회 층별 용도를 불러왔습니다.');
@@ -21310,6 +21354,11 @@
         function startApp() {
             try {
                 setupCasualtyEvents();
+                document.querySelectorAll('input, textarea, form').forEach(el => {
+                    el.setAttribute('autocomplete', 'off');
+                    el.setAttribute('autocorrect', 'off');
+                    el.setAttribute('autocapitalize', 'off');
+                });
                 // 당일 09시~익일 09시 이전기록만 불러오고 만료된 기록은 즉시 정리
                 loadFromLocalStorageHistory();
                 // 홈페이지 새로 진입/재접속 시 항상 깨끗한 '상황 1' 초기화면으로 시작
