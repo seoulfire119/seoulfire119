@@ -20249,13 +20249,55 @@
                 const isUsageFire = !!(blankFireTarget && blankFireTarget.isFire);
                 const usageCol = document.createElement('div');
                 usageCol.className = 'floor-usage-col';
-                const simplifiedUsageText = String(usageText || '')
-                    .replace(/\((?:[^()]*?(?:다세대주택|다가구주택|연립주택|다중주택|도시형생활주택|아파트|단독주택|공동주택|주택)[^()]*?[-·\s\/(]*)(\d+\s*(?:세대|가구))\)?\)/g, '($1)');
-                const cleanUsageHtml = simplifiedUsageText
-                    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-                    .replace(/([^\s,(])\s*\(/g, '$1<br>(')
-                    .replace(/,\s*/g, ',<br>')
-                    .replace(/-/g, '-<wbr>');
+                const formatUsageForCellHtml = (rawText) => {
+                    let s = String(rawText || '').trim();
+                    if (!s) return '';
+                    // 괄호 안 중복 주택명 제거 (예: 다세대주택(다세대주택 3세대) -> 다세대주택(3세대))
+                    s = s.replace(/\((?:[^()]*?(?:다세대주택|다가구주택|연립주택|다중주택|도시형생활주택|아파트|단독주택|공동주택|주택)[^()]*?[-·\s\/(]*)(\d+\s*(?:세대|가구))\)?\)/g, '($1)');
+                    // 붙여쓰기된 복합 설비명 분리 (예: 기계전기실 -> 기계실\n전기실)
+                    s = s
+                        .replace(/기계\s*[·\/,]?\s*전기실/g, '기계실\n전기실')
+                        .replace(/전기\s*[·\/,]?\s*발전실/g, '전기실\n발전실')
+                        .replace(/전기\s*[·\/,]?\s*통신실/g, '전기실\n통신실')
+                        .replace(/기계\s*[·\/,]?\s*펌프실/g, '기계실\n펌프실')
+                        .replace(/기계\s*[·\/,]?\s*공조실/g, '기계실\n공조실')
+                        .replace(/통신\s*[·\/,]?\s*방재실/g, '통신실\n방재실');
+                    // 공백·쉼표 없이 붙어있는 시설 단어들 사이를 단어 단위로 줄바꿈 분리
+                    const facTerms = [
+                        '제1종근린생활시설', '제2종근린생활시설', '근린생활시설', '근생시설', '교육연구시설',
+                        '입주자대표회의실', '주민공동시설', '커뮤니티시설', '기계식주차장', '어린이놀이터',
+                        '피트니스센터', '지하주차장', '옥내주차장', '옥외주차장', '부설주차장', '지하대피소',
+                        '관리사무소', '작은도서관', '물품보관실', '일반음식점', '휴게음식점',
+                        '수변전실', '발전기실', '물탱크실', '저수조실', '정화조실', '보일러실', '열교환실',
+                        '대피시설', '복리시설', '부대시설', '어린이집', '주차장', '대피소', '방공호',
+                        '변전실', '발전실', '저수조', '정화조', '기계실', '전기실', '펌프실', '공조실',
+                        '방재실', '통신실', 'MDF실', '경비실', '관리실', '경로당', '노인정', '피트층',
+                        '세탁실', '화장실', '사무소', '소매점', '독서실', '창고', '로비', '현관', '학원', '의원'
+                    ];
+                    // 긴 단어부터 우선 소비(match)하여 지하주차장이 지하+주차장으로 쪼개지지 않도록 단어 단위 분리
+                    const facTermRegex = new RegExp(`(${facTerms.join('|')})`, 'g');
+                    s = s.replace(facTermRegex, '\n$1\n');
+                    // 괄호 앞 줄바꿈, 쉼표·가운뎃점·슬래시 줄바꿈, 괄호 내부 공백(숫자+세대/가구 제외) 단어 단위 줄바꿈
+                    s = s
+                        .replace(/([^\s,(\n])\s*\(/g, '$1\n(')
+                        .replace(/[,·\/]+\s*/g, '\n')
+                        .replace(/\(([^)]*)\)/g, (_, inner) => {
+                            const splitInner = inner
+                                .trim()
+                                .replace(/\s+(?!세대|가구|호|실|층)/g, '\n')
+                                .replace(/\n+/g, '\n');
+                            return '(' + splitInner + ')';
+                        })
+                        .replace(/\(\n+/g, '(')
+                        .replace(/\n+\)/g, ')')
+                        .replace(/\n{2,}/g, '\n')
+                        .trim();
+                    return s
+                        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+                        .replace(/\n/g, '<br>')
+                        .replace(/-/g, '-<wbr>');
+                };
+                const cleanUsageHtml = formatUsageForCellHtml(usageText);
                 usageCol.style.cssText = `width: max(76px, calc((100% - 40px) / 6)); flex: 0 0 max(76px, calc((100% - 40px) / 6)); min-width: 0; overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; font-size: 11px; font-weight: 900; background: ${isUsageFire ? '#dc2626' : '#e2e8f0'}; color: ${isUsageFire ? '#ffffff' : '#0f172a'}; border-right: 1.5px solid #0f172a; padding: 3px 4px; text-align: center; line-height: 1.25; word-break: keep-all; overflow-wrap: anywhere; letter-spacing: -0.03em; user-select: none; box-sizing: border-box; ${blankFireTarget ? 'cursor: pointer;' : ''}`;
                 usageCol.innerHTML = `
                     <span style="display: block; width: 100%; max-width: 100%; word-break: keep-all; overflow-wrap: anywhere;">${cleanUsageHtml}</span>
