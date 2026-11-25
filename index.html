@@ -11487,35 +11487,69 @@
             }
 
             const hasFlr1000In4PlusOrSub = (maxFlr4PlusOrSubArea >= 1000);
-            const rawPurps = `${mainPurpsCdNm || ''} ${etcPurps || ''} ${bldNameHint || ''} ${ledgerType || ''} ${flrUsageStrings}`.trim();
-            const fullContext = `${rawPurps} ${combinedContext || ''}`;
+            const primaryPurpsStr = String(mainPurpsCdNm || '').trim();
+            const etcPurpsStr = String(etcPurps || '').trim();
+            const ledgerTypeStr = String(ledgerType || '').trim();
+            const subPurps = `${primaryPurpsStr} ${etcPurpsStr} ${flrUsageStrings}`.trim();
+            const rawPurps = `${primaryPurpsStr} ${etcPurpsStr} ${ledgerTypeStr} ${flrUsageStrings}`.trim();
+            const fullContext = `${subPurps} ${bldNameHint || ''}`.trim();
 
-            // 용도 분류 (스프링클러 설비.pdf 목차 1~30번 기준)
-            const isAptOrDorm = /공동주택|아파트|연립주택|연립|다세대주택|다세대|기숙사/.test(rawPurps);
-            const isRowOrMultiHouse = /연립주택|연립|다세대주택|다세대/.test(rawPurps) && !/아파트/.test(rawPurps);
-            const isComm = /근린생활|제1종근린|제2종근린|근생/.test(rawPurps);
-            const isPostpartum = /조산원|산후조리원/.test(fullContext);
-            const isInpatientClinic = (/의원|치과의원|한의원/.test(fullContext) && /입원/.test(fullContext));
-            const isGosiwon = /고시원/.test(fullContext);
-            const isCulture = /문화 및 집회|문화집회|공연장|집회장|관람장|전시장|영화상영관|극장|예식장/.test(rawPurps);
-            const isReligion = /종교시설|종교|교회|성당|사찰/.test(rawPurps);
-            const isSales = /판매시설|판매|백화점|쇼핑센터|대형마트|시장|상점/.test(rawPurps);
-            const isTransport = /운수시설|여객자동차|철도시설|공항시설|항만시설/.test(rawPurps);
-            const isMedical = /의료시설|병원|종합병원|요양병원|치과병원|한방병원|정신의료|격리병원|재활시설/.test(rawPurps);
-            const isNursingHosp = /요양병원/.test(fullContext);
-            const isPsychOrRehab = /정신의료|의료재활/.test(fullContext);
-            const isEdu = /교육연구|학교|교육원|직업훈련소|학원|연구소|도서관/.test(rawPurps);
-            const isElderlyChild = /노유자|아동관련|노인복지|어린이집|유치원|요양원|주야간보호|장애인/.test(rawPurps);
-            const isTraining = /수련시설|생활권수련|자연권수련|유스호스텔/.test(rawPurps);
-            const isSports = /운동시설|체육관|운동장/.test(rawPurps);
-            const isOffice = /업무시설|오피스텔|청사|사무소|오피스/.test(rawPurps);
-            const isLodging = /숙박시설|호텔|여관|모텔|여인숙|호스텔|휴양콘도/.test(rawPurps);
-            const isAmusement = /위락시설|단란주점|유흥주점|무도장|무도학원|카지노/.test(rawPurps);
-            const isFactory = /공장/.test(rawPurps);
-            const isWarehouse = /창고시설|창고|하역장|물류터미널|집배송/.test(rawPurps);
-            const isLogisticsTerminal = /물류터미널/.test(fullContext);
-            const isUndergroundMall = /지하상가|지하가/.test(fullContext);
-            const isComplexBld = /복합건축물|주상복합/.test(fullContext) || ((isAptOrDorm || isLodging) && (isComm || isOffice || isSales));
+            // 건축물대장 표제부 '주용도(mainPurpsCdNm)' 최우선 단일 분류
+            // (부속층 용도나 단지 전체 건물명 '워커힐호텔' 등이 주용도인 숙박시설·근린생활시설을 덮어쓰지 않도록 차단)
+            const detectPrimaryCategory = (str) => {
+                const s = String(str || '').trim();
+                if (!s) return '';
+                if (/공동주택|아파트|연립주택|연립|다세대주택|다세대|기숙사/.test(s)) return 'apt';
+                if (/숙박시설|호텔|여관|모텔|여인숙|호스텔|휴양콘도/.test(s)) return 'lodging';
+                if (/근린생활|제1종근린|제2종근린|근생|휴게음식점|일반음식점/.test(s)) return 'comm';
+                if (/의료시설|병원|종합병원|요양병원|치과병원|한방병원|정신의료|격리병원|재활시설/.test(s)) return 'medical';
+                if (/노유자|아동관련|노인복지|어린이집|유치원|요양원|주야간보호|장애인/.test(s)) return 'elderly';
+                if (/문화 및 집회|문화집회|공연장|집회장|관람장|전시장|영화상영관|극장|예식장/.test(s)) return 'culture';
+                if (/종교시설|종교|교회|성당|사찰/.test(s)) return 'religion';
+                if (/운동시설|체육관|운동장/.test(s)) return 'sports';
+                if (/판매시설|판매|백화점|쇼핑센터|대형마트|시장|상점/.test(s)) return 'sales';
+                if (/운수시설|여객자동차|철도시설|공항시설|항만시설/.test(s)) return 'transport';
+                if (/교육연구|학교|교육원|직업훈련소|학원|연구소|도서관/.test(s)) return 'edu';
+                if (/수련시설|생활권수련|자연권수련|유스호스텔/.test(s)) return 'training';
+                if (/업무시설|오피스텔|청사|사무소|오피스/.test(s)) return 'office';
+                if (/창고시설|창고|하역장|물류터미널|집배송/.test(s)) return 'warehouse';
+                if (/위락시설|단란주점|유흥주점|무도장|무도학원|카지노/.test(s)) return 'amusement';
+                if (/공장/.test(s)) return 'factory';
+                return '';
+            };
+
+            const primaryCat =
+                detectPrimaryCategory(primaryPurpsStr) ||
+                detectPrimaryCategory(etcPurpsStr) ||
+                detectPrimaryCategory(ledgerTypeStr) ||
+                detectPrimaryCategory(`${bldNameHint || ''} ${flrUsageStrings}`);
+
+            // 용도 분류 (스프링클러 설비.pdf 목차 1~30번 기준 — 주용도 단일 매칭)
+            const isAptOrDorm = (primaryCat === 'apt');
+            const isRowOrMultiHouse = isAptOrDorm && /연립주택|연립|다세대주택|다세대/.test(subPurps) && !/아파트/.test(subPurps);
+            const isComm = (primaryCat === 'comm');
+            const isPostpartum = isComm && /조산원|산후조리원/.test(subPurps);
+            const isInpatientClinic = isComm && (/의원|치과의원|한의원/.test(subPurps) && /입원/.test(subPurps));
+            const isGosiwon = isComm && /고시원/.test(subPurps);
+            const isCulture = (primaryCat === 'culture');
+            const isReligion = (primaryCat === 'religion');
+            const isSales = (primaryCat === 'sales');
+            const isTransport = (primaryCat === 'transport');
+            const isMedical = (primaryCat === 'medical');
+            const isNursingHosp = isMedical && /요양병원/.test(subPurps);
+            const isPsychOrRehab = isMedical && /정신의료|의료재활/.test(subPurps);
+            const isEdu = (primaryCat === 'edu');
+            const isElderlyChild = (primaryCat === 'elderly');
+            const isTraining = (primaryCat === 'training');
+            const isSports = (primaryCat === 'sports');
+            const isOffice = (primaryCat === 'office');
+            const isLodging = (primaryCat === 'lodging');
+            const isAmusement = (primaryCat === 'amusement');
+            const isFactory = (primaryCat === 'factory');
+            const isWarehouse = (primaryCat === 'warehouse');
+            const isLogisticsTerminal = isWarehouse && /물류터미널/.test(subPurps);
+            const isUndergroundMall = /지하상가|지하가/.test(`${primaryPurpsStr} ${etcPurpsStr}`);
+            const isComplexBld = /복합건축물|주상복합/.test(`${primaryPurpsStr} ${etcPurpsStr}`);
 
             // 1. 공동주택 (아파트등, 연립주택, 다세대주택, 기숙사) - PDF p.1~2
             if (isAptOrDorm) {
@@ -11750,21 +11784,28 @@
                 }
             }
 
-            // 11. 기타 모든 특정소방대상물 공통 기준 (위락, 공장, 창고, 위험물, 항공기, 동식물, 자원순환, 교정군사, 방송통신, 발전, 묘지, 관광휴게, 장례 등 - PDF p.18~32)
+            // 11. 기타 모든 특정소방대상물 공통 기준 (주용도가 식별된 경우 해당 주용도 명칭 유지)
+            const primaryCatLabelMap = {
+                apt: '공동주택', lodging: '숙박시설', comm: '근린생활시설', medical: '의료시설',
+                elderly: '노유자시설', culture: '문화 및 집회시설', religion: '종교시설', sports: '운동시설',
+                sales: '판매시설', transport: '운수시설', edu: '교육연구시설', training: '수련시설',
+                office: '업무시설', warehouse: '창고시설', amusement: '위락시설', factory: '공장'
+            };
+            const commonFacLabel = primaryCatLabelMap[primaryCat] || '특정소방대상물';
             if (ymd >= 20180128 && grndFlr >= 6) {
-                return { isInstalled: true, type: 'full', text: '스프링클러 전층 설치', detail: makeSpDetail(`특정소방대상물 ('18.1.28) 층수가 6층 이상인 경우 모든 층`) };
+                return { isInstalled: true, type: 'full', text: '스프링클러 전층 설치', detail: makeSpDetail(`${commonFacLabel} ('18.1.28) 층수가 6층 이상인 경우 모든 층`) };
             }
             if (ymd >= 20050101 && grndFlr >= 11) {
-                return { isInstalled: true, type: 'full', text: '스프링클러 전층 설치', detail: makeSpDetail(`특정소방대상물 ('05.1.1) 층수가 11층 이상인 경우 모든 층`) };
+                return { isInstalled: true, type: 'full', text: '스프링클러 전층 설치', detail: makeSpDetail(`${commonFacLabel} ('05.1.1) 층수가 11층 이상인 경우 모든 층`) };
             }
             if (ymd >= 19950810 && isComplexBld && totalAreaNum >= 5000) {
                 return { isInstalled: true, type: 'full', text: '스프링클러 전층 설치', detail: makeSpDetail(`복합건축물 ('95.8.10) 연면적 5,000㎡ 이상인 것은 전층`) };
             }
             if (ymd >= 19920728 && grndFlr >= 11) {
-                return { isInstalled: true, type: 'partial', text: '스프링클러 11층 이상 설치', detail: makeSpDetail(`특정소방대상물 ('92.7.28) 11층 이상인 것은 11층 이상인 층`) };
+                return { isInstalled: true, type: 'partial', text: '스프링클러 11층 이상 설치', detail: makeSpDetail(`${commonFacLabel} ('92.7.28) 11층 이상인 것은 11층 이상인 층`) };
             }
             if (hasFlr1000In4PlusOrSub) {
-                return { isInstalled: true, type: 'partial', text: '스프링클러 설치 (해당 층)', detail: makeSpDetail(`특정소방대상물 지하층·무창층·4층 이상인 층이 바닥면적 1,000㎡ 이상인 경우 해당 층`) };
+                return { isInstalled: true, type: 'partial', text: '스프링클러 설치 (해당 층)', detail: makeSpDetail(`${commonFacLabel} 지하층·무창층·4층 이상인 층이 바닥면적 1,000㎡ 이상인 경우 해당 층`) };
             }
 
             let unmetRuleDesc = (ymd >= 20180128)
