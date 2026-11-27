@@ -11506,7 +11506,7 @@
                 .replace(/단지내\s*상가/g, '단지내상가')
                 .replace(/제\s*[12]\s*종\s*근린\s*생활\s*시설?/g, '근린생활시설')
                 .replace(/도시형\s*생활\s*주택/g, '도시형생활주택');
-            outsideParens.split(/[,/·ㆍ+\s]+|(?:\s*및\s*)/).filter(Boolean).forEach(addIfMajor);
+            outsideParens.split(/[,/·ㆍ+\s]+|(?:\s+및\s+)/).filter(Boolean).forEach(addIfMajor);
             // 2) 괄호 내부는 명시적 시설군 키워드(오피스텔·근린생활시설·업무시설 등)만 추출하여 '제2종근생(사무소)' 등 오탐 차단
             const parenMatches = cleanedRaw.match(/\(([^)]*)\)/g) || [];
             parenMatches.forEach(pm => {
@@ -18699,7 +18699,13 @@
                 }
                 const isExplicitComplexName = /복합\s*건축물|주상\s*복합|복합\s*주거\s*시설|복합\s*시설|복합\s*건물/.test(`${bldNm} ${etcPurps} ${mainPurps}`);
                 const hasSingleHouseOnly = /단독주택|다가구|다중주택/.test(purpsPair) && !/공동주택|아파트|다세대|연립/.test(purpsPair);
-                if (!isSeparateAuxDong && !hasSingleHouseOnly && (isExplicitComplexName || ledgerMajorCats.size >= 2)) {
+                const mainPurpsCat = detectPdfFacilityCategory(mainPurps);
+                // 숙박·의료·종교·교육·노유자·공장·창고·업무 등 명확한 단일 주용도 건물에 1층 근린생활시설(약국·상가 등)이 섞인 경우는 주용도 그대로 유지
+                const isAptComplexMix = ledgerMajorCats.has('apt') && ledgerMajorCats.size >= 2;
+                const nonCommMajorCount = [...ledgerMajorCats].filter(c => c !== 'comm').length;
+                const isProtectedSingleMain = ['lodging', 'medical', 'religion', 'edu', 'elderly', 'factory', 'warehouse', 'sports', 'culture'].includes(mainPurpsCat);
+                const isLargeMultiUseComplex = !isProtectedSingleMain && totArea >= 5000 && ledgerMajorCats.size >= 3 && nonCommMajorCount >= 2;
+                if (!isSeparateAuxDong && !hasSingleHouseOnly && (isExplicitComplexName || isAptComplexMix || isLargeMultiUseComplex)) {
                     return '복합건축물';
                 }
 
