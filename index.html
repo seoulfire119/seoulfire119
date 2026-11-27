@@ -19798,8 +19798,41 @@
 
             const jt = formatTime(timeJiryeong.value);
             const addr = eventAddrInput.value.trim();
+            const extractReportGu = () => {
+                const guFromText = (str) => {
+                    const s = String(str || '').trim();
+                    if (!s) return '';
+                    if (typeof SIGUNGU_CODE_MAP !== 'undefined') {
+                        for (const gu of Object.keys(SIGUNGU_CODE_MAP)) {
+                            if (s.includes(gu)) return gu;
+                        }
+                    }
+                    const m = s.match(/([가-힣]{1,5}구)(?=\s|$)/);
+                    return m ? m[1] : '';
+                };
+                let gu = guFromText(loc);
+                if (!gu && typeof safetyMapRaw !== 'undefined' && safetyMapRaw) {
+                    gu = guFromText(safetyMapRaw.value);
+                }
+                if (!gu && typeof currentFacilitySelectedBld !== 'undefined' && currentFacilitySelectedBld && currentFacilitySelectedBld.item) {
+                    const bIt = currentFacilitySelectedBld.item;
+                    gu = guFromText(`${bIt.newPlatPlc || ''} ${bIt.platPlc || ''}`);
+                    if (!gu && bIt.sigunguCd && typeof SIGUNGU_CODE_MAP !== 'undefined') {
+                        const found = Object.entries(SIGUNGU_CODE_MAP).find(([, code]) => code === String(bIt.sigunguCd).trim());
+                        if (found) gu = found[0];
+                    }
+                }
+                if (!gu && typeof lastExtractedDistrictWithSpace !== 'undefined' && lastExtractedDistrictWithSpace) {
+                    gu = guFromText(lastExtractedDistrictWithSpace);
+                }
+                return gu;
+            };
+            const reportGu = extractReportGu();
+            const reportAddr = (addr && reportGu && !/[가-힣]{1,5}구(?:\s|$)/.test(addr))
+                ? `${reportGu} ${addr}`
+                : addr;
             const fl = formatFloors(bldFloorsInput.value);
-            const prefix = (jt || addr) ? `${jt ? `금일 ${jt}` : '금일'}${addr ? ` ${addr}${fl},` : ''}` : '';
+            const prefix = (jt || reportAddr) ? `${jt ? `금일 ${jt}` : '금일'}${reportAddr ? ` ${reportAddr}${fl},` : ''}` : '';
 
             const dispatchStr = getDispatchStr();
             if (dispatchPreview) dispatchPreview.innerText = dispatchStr ? dispatchStr.replace(/^,\s*/, '') : '-';
