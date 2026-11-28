@@ -18762,8 +18762,14 @@
                     return '복합건축물';
                 }
 
+                // 0-1-b) 오피스텔 판별 (공동주택 복합건축물이 아닌 순수·근생혼재 오피스텔은 '오피스텔'로 명확히 세팅)
+                const hasOfficetelInFlr = Array.isArray(flrItems) && flrItems.some(f => /오피스텔/.test(`${f.mainPurpsCdNm || ''} ${f.etcPurps || ''}`));
+                if ((/오피스텔/.test(`${bldNm} ${dongNm} ${etcPurps} ${mainPurps}`) || hasOfficetelInFlr) && !hasJointHouseInBld && !/도시형\s*생활\s*주택|아파트/.test(mergedPurps)) {
+                    return '오피스텔';
+                }
+
                 // 0-2) 근생시설 + 단독/다가구주택 복합 용도 (상가주택 등 일반건축물) -> '일반건축물'
-                if (hasCommInBld && hasSingleHouseInBld && !/도시형\s*생활\s*주택|아파트/.test(mergedPurps)) {
+                if (hasCommInBld && hasSingleHouseInBld && !/도시형\s*생활\s*주택|아파트|오피스텔/.test(mergedPurps)) {
                     return '일반건축물';
                 }
 
@@ -18789,7 +18795,7 @@
 
                 // 2) 복합건축물 명시 또는 복수 용도(오피스텔 + 판매/업무 등)
                 if (/복합\s*건축물|주상\s*복합/.test(mergedPurps)) return '복합건축물';
-                if (etcPurps.includes('오피스텔') && (etcPurps.includes('판매') || etcPurps.includes('업무'))) {
+                if (etcPurps.includes('오피스텔') && etcPurps.includes('판매')) {
                     return '복합건축물';
                 }
 
